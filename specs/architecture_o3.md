@@ -8,30 +8,34 @@ MLB Watchability is a Python‑based system that ranks every Major League Base
 
 ### 2.1 Context (C4 Level 1)
 
+```mermaid
 flowchart TD
-Fan[MLB Fan] --> CLI[mlb-watchability CLI / API]
-CLI -->|JSON gNERD table| Fan
-subgraph MLB & Public Feeds
-MLBDB[(pybaseball / Statcast / FanGraphs APIs)]
-end
-CLI <-->|Minimal stats queries| MLBDB
-CLI -->|Build & Test Artifacts| GitHub[GitHub Actions CI]
+    Fan[MLB Fan] --> CLI[mlb-watchability CLI / API]
+    CLI -->|JSON gNERD table| Fan
+    subgraph MLB & Public Feeds
+    MLBDB[(pybaseball / Statcast / FanGraphs APIs)]
+    end
+    CLI <-->|Minimal stats queries| MLBDB
+    CLI -->|Build & Test Artifacts| GitHub[GitHub Actions CI]
+```
 
 ### 2.2 Component interactions (Level 2)
 
+```mermaid
 sequenceDiagram
-participant Scheduler
-participant DataRetriever
-participant CalcEngine
-participant Formatter
-participant User
+    participant Scheduler
+    participant DataRetriever
+    participant CalcEngine
+    participant Formatter
+    participant User
 
-Scheduler->>DataRetriever: get_games(date)
-DataRetriever->>MLBAPIs: fetch starters & team stats
-DataRetriever-->>Scheduler: raw_stats.json
-Scheduler->>CalcEngine: compute(raw_stats.json)
-CalcEngine-->>Formatter: scores.json
-Formatter-->>User: pretty table / JSON
+    Scheduler->>DataRetriever: get_games(date)
+    DataRetriever->>MLBAPIs: fetch starters & team stats
+    DataRetriever-->>Scheduler: raw_stats.json
+    Scheduler->>CalcEngine: compute(raw_stats.json)
+    CalcEngine-->>Formatter: scores.json
+    Formatter-->>User: pretty table / JSON
+```
 
 ## 3. Tech‑stack recommendations
 
@@ -99,3 +103,7 @@ Formatter-->>User: pretty table / JSON
 - Parallel data pulls – switch to `httpx` + async for faster retrieval.
 - Containerised microservice – expose `/games?date=` endpoint; scale with Kubernetes HPA on opening week traffic.
 - ML enhancements – train model to predict “watchability” using additional inputs (e.g. playoff impact, rivalry flag).
+
+```
+
+```
