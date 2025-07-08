@@ -76,3 +76,4 @@ mlb_watchability/
 - Statistical formulas are complex and specific - refer to the original FanGraphs methodology
 - Handle missing data gracefully with appropriate defaults or errors
 - Respect rate limits when calling external APIs through pybaseball
+- All titles and bolded/important text in specs and UI should be sentence case.
