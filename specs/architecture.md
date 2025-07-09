@@ -76,15 +76,19 @@ sequenceDiagram
 
 ## 4. High‑level modules / services
 
-| Module               | Responsibilities                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| game_loader          | Query schedule for a target date; return list of games & probable starters.                                         |
-| stat_retriever       | Pull only the stats required for pNERD/tNERD for the identified starters & teams (minimises API calls).             |
-| nerd_calculator      | Vectorised computation of z-scores and formulas; enforce caps and positive-only rules.                              |
-| score_formatter      | Merge results, sort by gNERD, output JSON/pretty table.                                                             |
-| cli_app              | Glue layer using Typer; parse date flag, invoke modules, print to stdout.                                           |
-| tests/               | Unit tests (calculator with fixed fixtures) and integration tests (network calls mocked or live, behind `-m live`). |
-| scheduler (optional) | GitHub Actions workflow or cron to run daily and push artefact/site.                                                |
+| Module                | Responsibilities                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| console_application   | Main CLI entry point using Typer; parse date flag, orchestrate data retrieval and scoring, handle output.           |
+| data_retrieval_module | Centralized data access layer; coordinates calls to pybaseball for games, pitcher stats, and team stats.            |
+| game_score_calculator | Core scoring engine; orchestrates pNERD and tNERD calculations to produce final gNERD scores.                       |
+| pnerd_calculator      | Pitcher-specific statistics calculator; computes z-scores and applies pNERD formula with caps and positive rules.   |
+| tnerd_calculator      | Team-specific statistics calculator; computes z-scores and applies tNERD formula with caps and positive rules.      |
+| pitcher_statistics    | Data structures and validation for pitcher statistical data required for pNERD calculations.                        |
+| team_statistics       | Data structures and validation for team statistical data required for tNERD calculations.                           |
+| json_output           | JSON formatting module; structures game scores as JSON for programmatic consumption.                                |
+| console_output        | Console formatting module; creates human-readable tables and displays for terminal output.                          |
+| tests/                | Unit tests (calculator with fixed fixtures) and integration tests (network calls mocked or live, behind `-m live`). |
+| scheduler (optional)  | GitHub Actions workflow or cron to run daily and push artefact/site.                                                |
 
 ## 5. Data storage / access
 
@@ -96,7 +100,7 @@ sequenceDiagram
 
 | Environment          | Details                                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Local dev            | `uv install` → `uv run mlb-watchability --date 2025-07-04`.                                                          |
+| Local dev            | `uv install` → `uv run mlb-watchability-cli --date 2025-07-04`.                                                      |
 | CI pipeline          | GitHub Actions: matrix on OS / Python; `uv pip sync`, run tests, build wheel.                                        |
 | Daily job            | Scheduled workflow (or AWS Lambda with EventBridge) calls CLI, commits `scores-YYYY-MM-DD.json` to `gh-pages` or S3. |
 | Container (optional) | Distroless image with CPython, UV, app code; used for Lambda or K8s CronJob.                                         |
