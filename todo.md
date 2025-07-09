@@ -4,9 +4,9 @@ This TODO list drives the implementation of the MLB Watchability project, follow
 
 Foundation & Setup
 
-1. Set up project structure with pyproject.toml configuration for UV, dependencies (typer, pybaseball, polars/pandas, pytest, ruff, mypy, black), and entry point
+1. ~~Set up project structure with pyproject.toml configuration for UV, dependencies (typer, pybaseball, polars/pandas, pytest, ruff, mypy, black), and entry point~~
 
-2. Create basic CLI entry point with Typer that accepts date parameter and prints 'Hello World'
+2. ~~Create basic CLI entry point with Typer that accepts date parameter and prints 'Hello World'~~
 
 3. Set up basic GitHub Actions CI/CD workflow that runs tests, ruff linting, and mypy type checking
 
