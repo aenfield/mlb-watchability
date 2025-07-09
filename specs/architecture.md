@@ -62,17 +62,18 @@ sequenceDiagram
 
 ## 3. Tech‑stack recommendations
 
-| Layer                | Choice                       | Rationale                                                                                       |
-| -------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
-| Language             | Python ≥ 3.12                | Matches constraint to use “recent Python”; strong data-science ecosystem.                       |
-| Dependency mgr       | UV                           | Ultrafast resolver; single tool for venv + lock; aligns with requirement.                       |
-| Data access          | pybaseball                   | Provides Statcast, FanGraphs, and Baseball-Reference endpoints with one API; already suggested. |
-| CLI framework        | Typer                        | Modern, type-safe CLI over Click; easy testing.                                                 |
-| DataFrame            | Polars (or Pandas)           | Columnar, fast, zero-copy; simplifies z-score & vector math.                                    |
-| Testing              | pytest + pytest-mock         | De-facto standard, rich fixtures; mock network calls.                                           |
-| CI/CD                | GitHub Actions               | Native to repo; schedule workflows; free minutes.                                               |
-| Packaging            | PEP 621 + pyproject.toml     | Declarative; works with UV.                                                                     |
-| Optional persistence | SQLite (duckdb for columnar) | Zero-config; store historical scores if desired.                                                |
+| Layer                        | Choice                       | Rationale                                                                                               |
+| ---------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Language                     | Python ≥ 3.12                | Matches constraint to use “recent Python”; strong data-science ecosystem.                               |
+| Dependency mgr               | UV                           | Ultrafast resolver; single tool for venv + lock; aligns with requirement.                               |
+| Data access                  | pybaseball                   | Provides Statcast, FanGraphs, and Baseball-Reference endpoints with one API; already suggested.         |
+| CLI framework                | Typer                        | Modern, type-safe CLI over Click; easy testing.                                                         |
+| DataFrame                    | Polars (or Pandas)           | Columnar, fast, zero-copy; simplifies z-score & vector math.                                            |
+| Testing                      | pytest + pytest-mock         | De-facto standard, rich fixtures; mock network calls.                                                   |
+| CI/CD                        | GitHub Actions               | Native to repo; schedule workflows; free minutes.                                                       |
+| Packaging                    | PEP 621 + pyproject.toml     | Declarative; works with UV.                                                                             |
+| Optional persistence         | SQLite (duckdb for columnar) | Zero-config; store historical scores if desired.                                                        |
+| Additional development tools | ruff, mypy                   | Code formatting with AND fast linting and code quality checks with ruff, static type-checking with mypy |
 
 ## 4. High‑level modules / services
 
