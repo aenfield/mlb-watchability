@@ -7,7 +7,7 @@ name = "mlb-watchability"
 version = "0.1.0"
 description = "MLB Watchability - Calculate Game NERD scores for MLB games"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "Andrew Enfield", email = "andrewenfield@gmail.com"},
@@ -17,10 +17,7 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "typer>=0.9.0",
@@ -78,7 +75,7 @@ addopts = [
 [tool.ruff]
 src = ["src", "tests"]
 line-length = 88
-target-version = "py39"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -109,7 +106,7 @@ ignore = [
 "tests/*" = ["ARG", "S101", "TRY", "PLR2004"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
@@ -133,7 +130,7 @@ ignore_missing_imports = true
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 (
