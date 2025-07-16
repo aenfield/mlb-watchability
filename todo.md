@@ -12,7 +12,7 @@ Foundation & Setup
 
 Core Implementation
 
-4. Create basic data retrieval module that can fetch game schedule for a given date using pybaseball
+4. Create basic data retrieval module that can fetch game schedule for a given date using pybaseball, remembering to create unit tests first
 
 5. Write integration tests for data retrieval module with mocked pybaseball calls
 
