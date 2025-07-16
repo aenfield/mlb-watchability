@@ -8,75 +8,74 @@ Foundation & Setup
 
 2. ~~Create basic CLI entry point with Typer that accepts date parameter and prints 'Hello World'~~
 
-3. Set up basic GitHub Actions CI/CD workflow that runs tests, ruff linting, and mypy type checking
+3. ~~Set up basic GitHub Actions CI/CD workflow that runs tests, ruff linting, and mypy type checking~~
 
 Core Implementation
 
-4. Create data structures for pitcher statistics (xFIP-, SwStrk, Strk, Velo, Age, Pace, Luck, KN) with validation
+4. Create basic data retrieval module that can fetch game schedule for a given date using pybaseball
 
-5. Create data structures for team statistics (Bat, HR%, BsR, Bull, Def, Pay, Age, Luck) with validation
+5. Write integration tests for data retrieval module with mocked pybaseball calls
 
-6. Write unit tests for pitcher statistics data structures with hardcoded test data
+6. Connect CLI application to data retrieval module to fetch real game data
 
-7. Write unit tests for team statistics data structures with hardcoded test data
+7. Create data structures for pitcher statistics (xFIP-, SwStrk, Strk, Velo, Age, Pace, Luck, KN) with validation
 
-8. Create basic data retrieval module that can fetch game schedule for a given date using pybaseball
+8. Write unit tests for pitcher statistics data structures with hardcoded test data
 
-9. Write integration tests for data retrieval module with mocked pybaseball calls
+9. Expand data retrieval module to fetch pitcher statistics for starting pitchers using pybaseball
 
-10. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
+10. Write integration tests for pitcher statistics retrieval with mocked pybaseball calls
 
-11. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
+11. Create data structures for team statistics (Bat, HR%, BsR, Bull, Def, Pay, Age, Luck) with validation
 
-12. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
+12. Write unit tests for team statistics data structures with hardcoded test data
 
-13. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
+13. Expand data retrieval module to fetch team statistics using pybaseball
 
-14. Expand data retrieval module to fetch pitcher statistics for starting pitchers using pybaseball
+14. Write integration tests for team statistics retrieval with mocked pybaseball calls
 
-15. Write integration tests for pitcher statistics retrieval with mocked pybaseball calls
+15. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
 
-16. Expand data retrieval module to fetch team statistics using pybaseball
+16. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
 
-17. Write integration tests for team statistics retrieval with mocked pybaseball calls
+17. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
 
-18. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
+18. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
 
-19. Write unit tests for game score calculator with hardcoded pitcher and team data
+19. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
 
-20. Implement JSON output formatter that structures game scores according to specified format
+20. Write unit tests for game score calculator with hardcoded pitcher and team data
 
-21. Write unit tests for JSON output formatter with expected output structure
+21. Implement JSON output formatter that structures game scores according to specified format
 
-22. Implement console output formatter for human-readable terminal display
+22. Write unit tests for JSON output formatter with expected output structure
 
-23. Write unit tests for console output formatter with expected display format
+23. Implement console output formatter for human-readable terminal display
+
+24. Write unit tests for console output formatter with expected display format
 
 Integration & Enhancement
-
-24. Connect CLI application to data retrieval module to fetch real game data
 
 25. Connect CLI application to game score calculator to process retrieved data
 
 26. Connect CLI application to output formatters to display results
 
-27. Write end-to-end integration tests for complete workflow from date input to score output
+27. Add end-to-end integration tests for complete workflow from date input to score output
 
-28. Add error handling for missing data, API failures, and edge cases throughout the application
+28. Review error handling for missing data, API failures, and edge cases throughout the application, and add/augment where useful
 
-29. Write tests for error handling scenarios (missing pitchers, API timeouts, invalid dates)
+29. Check for need for additional tests to improve error handling - for example, missing pitchers, API timeouts, invalid dates
 
-30. Add rate limiting and retry logic for pybaseball API calls
+30. Add retry logic for pybaseball API calls
 
-31. Optimize data retrieval to minimize API calls and improve performance
+31. Enhance comprehensive logging throughout the application for debugging and monitoring
 
-32. Add comprehensive logging throughout the application for debugging and monitoring
+32. Create comprehensive documentation with usage examples and API reference
 
-33. Enhance GitHub Actions workflow with matrix testing across Python versions and operating systems
+## Additional TODO possibilities, depending on need
 
-34. Add code coverage reporting to CI/CD pipeline
-
-35. Create comprehensive documentation with usage examples and API reference
+- Add rate limiting for pybaseball calls.
+- Optimize data retrieval to minimize API calls and improve performance
 
 ## Implementation Notes
 
