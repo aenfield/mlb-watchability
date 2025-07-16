@@ -18,9 +18,9 @@ Core Implementation
 
 6. ~~Connect CLI application to data retrieval module to fetch real game data~~
 
-7. Create data structures for pitcher statistics (xFIP-, SwStrk, Strk, Velo, Age, Pace, Luck, KN) with validation, using the formula in vision-and-reqs.md
+7. ~~Create data structures for pitcher statistics (xFIP-, SwStrk, Strk, Velo, Age, Pace, Luck, KN) with validation, using the formula in vision-and-reqs.md~~
 
-8. Write unit tests for pitcher statistics data structures with hardcoded test data
+8. ~~Write unit tests for pitcher statistics data structures with hardcoded test data~~
 
 9. Expand data retrieval module to fetch pitcher statistics for starting pitchers using pybaseball
 
