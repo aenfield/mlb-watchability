@@ -41,7 +41,8 @@ def format_games_output(games: list[dict[str, Any]], date: str) -> str:
     for game in games:
         away_starter = game["away_starter"] or "TBD"
         home_starter = game["home_starter"] or "TBD"
-        lines.append(f"  {game['away_team']} @ {game['home_team']} - {away_starter} vs {home_starter}")
+        game_time = game["time"] or "TBD"
+        lines.append(f"  {game_time} - {game['away_team']} @ {game['home_team']} - {away_starter} vs {home_starter}")
 
     return "\n".join(lines)
 

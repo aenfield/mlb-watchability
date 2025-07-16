@@ -2,12 +2,12 @@
 
 from unittest.mock import patch
 
-import pandas as pd
 import pytest
 
 from mlb_watchability.data_retrieval import get_game_schedule
 
-@pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
+
+#@pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
 class TestGetGameSchedule:
     """Test cases for the get_game_schedule function."""
 
@@ -15,87 +15,92 @@ class TestGetGameSchedule:
         """Test that get_game_schedule returns games for a valid date."""
 
         test_date = "2024-07-15"
-        mock_statcast_data = pd.DataFrame({
-            "game_date": ["2024-07-15", "2024-07-15", "2024-07-15", "2024-07-15"],
-            "home_team": ["TEX", "TEX", "BOS", "BOS"],
-            "away_team": ["LAA", "LAA", "NYY", "NYY"],
-            "inning": [1, 1, 1, 1],
-            "inning_topbot": ["Top", "Bot", "Top", "Bot"],
-            "player_name": ["Tyler Anderson", "Nathan Eovaldi", "Gerrit Cole", "Brayan Bello"],
-        })
+        mock_schedule_data = [
+            {
+                "game_id": 123,
+                "game_datetime": "2024-07-15T20:05:00Z",
+                "away_name": "Los Angeles Angels",
+                "home_name": "Texas Rangers",
+                "away_probable_pitcher": "Tyler Anderson",
+                "home_probable_pitcher": "Nathan Eovaldi",
+            },
+            {
+                "game_id": 124,
+                "game_datetime": "2024-07-15T19:10:00Z",
+                "away_name": "New York Yankees",
+                "home_name": "Boston Red Sox",
+                "away_probable_pitcher": "Gerrit Cole",
+                "home_probable_pitcher": "Brayan Bello",
+            },
+        ]
 
         expected_games = [
             {
                 "date": "2024-07-15",
-                "away_team": "LAA",
-                "home_team": "TEX",
-                "time": None,
-                "away_starter": "Nathan Eovaldi",
-                "home_starter": "Tyler Anderson",
+                "away_team": "Los Angeles Angels",
+                "home_team": "Texas Rangers",
+                "time": "16:05",  # 20:05 UTC -> 16:05 Eastern (July, EDT)
+                "away_starter": "Tyler Anderson",
+                "home_starter": "Nathan Eovaldi",
             },
             {
                 "date": "2024-07-15",
-                "away_team": "NYY",
-                "home_team": "BOS",
-                "time": None,
-                "away_starter": "Brayan Bello",
-                "home_starter": "Gerrit Cole",
+                "away_team": "New York Yankees",
+                "home_team": "Boston Red Sox",
+                "time": "15:10",  # 19:10 UTC -> 15:10 Eastern (July, EDT)
+                "away_starter": "Gerrit Cole",
+                "home_starter": "Brayan Bello",
             },
         ]
 
-        with patch("mlb_watchability.data_retrieval.statcast") as mock_statcast:
-            mock_statcast.return_value = mock_statcast_data
+        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+            mock_schedule.return_value = mock_schedule_data
             result = get_game_schedule(test_date)
 
             assert result == expected_games
-            mock_statcast.assert_called_once()
+            mock_schedule.assert_called_once()
 
     def test_get_game_schedule_with_empty_schedule(self) -> None:
         """Test that get_game_schedule returns empty list when no games scheduled."""
 
         test_date = "2024-12-01"  # Off-season date
-        mock_empty_schedule = pd.DataFrame({
-            "game_date": [],
-            "home_team": [],
-            "away_team": [],
-            "inning": [],
-            "inning_topbot": [],
-            "player_name": [],
-        })
+        mock_empty_schedule = []
 
-        with patch("mlb_watchability.data_retrieval.statcast") as mock_statcast:
-            mock_statcast.return_value = mock_empty_schedule
+        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+            mock_schedule.return_value = mock_empty_schedule
             result = get_game_schedule(test_date)
 
             assert result == []
-            mock_statcast.assert_called_once()
+            mock_schedule.assert_called_once()
 
     def test_get_game_schedule_with_missing_starters(self) -> None:
         """Test that get_game_schedule handles missing starting pitcher data."""
 
         test_date = "2024-07-15"
-        mock_statcast_data = pd.DataFrame({
-            "game_date": ["2024-07-15"],
-            "home_team": ["TEX"],
-            "away_team": ["LAA"],
-            "inning": [1],
-            "inning_topbot": ["Top"],
-            "player_name": ["Tyler Anderson"],
-        })
+        mock_schedule_data = [
+            {
+                "game_id": 123,
+                "game_datetime": "2024-07-15T20:05:00Z",
+                "away_name": "Los Angeles Angels",
+                "home_name": "Texas Rangers",
+                "away_probable_pitcher": "Tyler Anderson",
+                "home_probable_pitcher": "",  # Empty string for missing pitcher
+            },
+        ]
 
         expected_games = [
             {
                 "date": "2024-07-15",
-                "away_team": "LAA",
-                "home_team": "TEX",
-                "time": None,
-                "away_starter": None,
-                "home_starter": "Tyler Anderson",
+                "away_team": "Los Angeles Angels",
+                "home_team": "Texas Rangers",
+                "time": "16:05",  # 20:05 UTC -> 16:05 Eastern (July, EDT)
+                "away_starter": "Tyler Anderson",
+                "home_starter": None,
             },
         ]
 
-        with patch("mlb_watchability.data_retrieval.statcast") as mock_statcast:
-            mock_statcast.return_value = mock_statcast_data
+        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+            mock_schedule.return_value = mock_schedule_data
             result = get_game_schedule(test_date)
 
             assert result == expected_games
@@ -112,17 +117,10 @@ class TestGetGameSchedule:
         """Test that get_game_schedule handles future dates appropriately."""
 
         future_date = "2030-07-15"
-        mock_empty_schedule = pd.DataFrame({
-            "Date": [],
-            "Away": [],
-            "Home": [],
-            "Time": [],
-            "Away_SP": [],
-            "Home_SP": [],
-        })
+        mock_empty_schedule = []
 
-        with patch("mlb_watchability.data_retrieval.statcast") as mock_statcast:
-            mock_statcast.return_value = mock_empty_schedule
+        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+            mock_schedule.return_value = mock_empty_schedule
             result = get_game_schedule(future_date)
 
             assert result == []
@@ -132,8 +130,8 @@ class TestGetGameSchedule:
 
         test_date = "2024-07-15"
 
-        with patch("mlb_watchability.data_retrieval.statcast") as mock_statcast:
-            mock_statcast.side_effect = Exception("API Error")
+        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+            mock_schedule.side_effect = Exception("API Error")
 
             with pytest.raises(RuntimeError, match="Failed to retrieve game schedule"):
                 get_game_schedule(test_date)
@@ -154,7 +152,7 @@ class TestGetGameSchedule:
                 get_game_schedule(invalid_date)
 
 
-@pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
+#@pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
 class TestGetGameScheduleIntegration:
     """Integration tests that call the real pybaseball API."""
 
@@ -184,16 +182,16 @@ class TestGetGameScheduleIntegration:
                 assert game["date"] == test_date
                 assert isinstance(game["away_team"], str)
                 assert isinstance(game["home_team"], str)
-                assert game["time"] is None  # Time not available in statcast data
+                assert game["time"] is not None  # Time should be available in MLB-StatsAPI (Eastern time)
                 # Starting pitchers can be None or string
                 if game["away_starter"] is not None:
                     assert isinstance(game["away_starter"], str)
                 if game["home_starter"] is not None:
                     assert isinstance(game["home_starter"], str)
 
-                # Team codes should be 3 characters
-                assert len(game["away_team"]) == 3
-                assert len(game["home_team"]) == 3
+                # Team names should be non-empty strings
+                assert len(game["away_team"]) > 0
+                assert len(game["home_team"]) > 0
 
     def test_get_game_schedule_integration_with_offseason_date(self) -> None:
         """Test that get_game_schedule works with real API for an off-season date."""

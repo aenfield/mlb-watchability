@@ -12,11 +12,11 @@ Foundation & Setup
 
 Core Implementation
 
-4. Create basic data retrieval module that can fetch game schedule for a given date using pybaseball, remembering to create unit tests first
+4. ~~Create basic data retrieval module that can fetch game schedule for a given date, remembering to create unit tests first~~
 
-5. Write integration tests for data retrieval module with mocked pybaseball calls
+5. ~~Write integration tests for data retrieval module with mocked pybaseball calls~~
 
-6. Connect CLI application to data retrieval module to fetch real game data
+6. ~~Connect CLI application to data retrieval module to fetch real game data~~
 
 7. Create data structures for pitcher statistics (xFIP-, SwStrk, Strk, Velo, Age, Pace, Luck, KN) with validation
 
