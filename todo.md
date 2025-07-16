@@ -28,9 +28,9 @@ Core Implementation
 
 11. ~~Write integration tests for pitcher statistics retrieval and using actual calls to pybaseball~~
 
-12. Create data structures for team statistics (Bat, HR%, BsR, Bull, Def, Pay, Age, Luck) with validation, using the formula in vision-and-reqs.md
+12. ~~Create data structures for team statistics (Bat, HR%, BsR, Bull, Def, Pay, Age, Luck) with validation, using the formula in vision-and-reqs.md~~
 
-13. Write unit tests for team statistics data structures with hardcoded test data
+13. ~~Write unit tests for team statistics data structures with hardcoded test data~~
 
 14. Expand data retrieval module to fetch team statistics using pybaseball
 
