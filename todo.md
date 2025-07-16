@@ -36,25 +36,27 @@ Core Implementation
 
 15. Write integration tests for team statistics retrieval with mocked pybaseball calls
 
-16. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
+16. Write integration tests for team statistics retrieval with actual calls to pybaseball
 
-17. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
+17. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
 
-18. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
+18. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
 
-19. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
+19. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
 
-20. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
+20. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
 
-21. Write unit tests for game score calculator with hardcoded pitcher and team data
+21. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
 
-22. Implement JSON output formatter that structures game scores according to specified format
+22. Write unit tests for game score calculator with hardcoded pitcher and team data
 
-23. Write unit tests for JSON output formatter with expected output structure
+23. Implement JSON output formatter that structures game scores according to specified format
 
-24. Implement console output formatter for human-readable terminal display
+24. Write unit tests for JSON output formatter with expected output structure
 
-25. Write unit tests for console output formatter with expected display format
+25. Implement console output formatter for human-readable terminal display
+
+26. Write unit tests for console output formatter with expected display format
 
 Integration & Enhancement
 
