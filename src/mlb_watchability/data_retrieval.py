@@ -4,7 +4,11 @@ import zoneinfo
 from datetime import datetime
 from typing import Any
 
+import pandas as pd
+import pybaseball as pb
 import statsapi  # type: ignore
+
+from .pitcher_stats import PitcherStats
 
 
 def get_game_schedule(date: str) -> list[dict[str, Any]]:
@@ -83,3 +87,65 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
         ) from e
     else:
         return games
+
+
+def get_all_pitcher_stats(season: int = 2024) -> dict[str, PitcherStats]:
+    """
+    Retrieve pitcher statistics for all starting pitchers using pybaseball.
+
+    Args:
+        season: Season year (default: 2024)
+
+    Returns:
+        Dictionary mapping pitcher names to PitcherStats objects
+
+    Raises:
+        RuntimeError: If API call fails or data retrieval fails
+    """
+    try:
+        # Fetch pitcher statistics for the season
+        # Using qual=20 to get starting pitchers with at least 20 innings pitched
+        pitcher_stats_df = pb.pitching_stats(season, qual=20)
+
+        # Filter for starting pitchers only (pitchers with at least 1 game started)
+        starting_pitchers = pitcher_stats_df[pitcher_stats_df["GS"] > 0]
+
+        pitcher_stats_dict = {}
+
+        for _, pitcher_row in starting_pitchers.iterrows():
+            # Calculate Strike Rate from Strikes/Pitches
+            strike_rate = pitcher_row["Strikes"] / pitcher_row["Pitches"]
+
+            # Calculate Luck (ERA- minus xFIP-)
+            luck = pitcher_row["ERA-"] - pitcher_row["xFIP-"]
+
+            # Handle KN% NaN values by setting to 0
+            kn_rate = pitcher_row.get("KN%", 0.0)
+            if pd.isna(kn_rate):
+                kn_rate = 0.0
+
+            # Use FBv for velocity as it has better coverage
+            velocity = pitcher_row["FBv"]
+
+            # Create PitcherStats object
+            pitcher_stats = PitcherStats(
+                name=pitcher_row["Name"],
+                team=pitcher_row["Team"],
+                xfip_minus=pitcher_row["xFIP-"],
+                swinging_strike_rate=pitcher_row["SwStr%"],
+                strike_rate=strike_rate,
+                velocity=velocity,
+                age=pitcher_row["Age"],
+                pace=pitcher_row["Pace"],
+                luck=luck,
+                knuckleball_rate=kn_rate,
+            )
+
+            pitcher_stats_dict[pitcher_row["Name"]] = pitcher_stats
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to retrieve pitcher statistics for season {season}: {str(e)}"
+        ) from e
+    else:
+        return pitcher_stats_dict

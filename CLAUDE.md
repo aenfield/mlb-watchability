@@ -35,12 +35,14 @@ Additional testing information is in architecture.md.
 
 ## Development notes
 
-- The project uses UV for dependency management - always use `uv` commands instead of `pip`
-- Data is not persisted between runs - the application is stateless
-- Statistical formulas are complex and specific - refer to the original FanGraphs methodology as documented in vision-and-reqs.md
-- Handle missing data gracefully with appropriate defaults or errors
-- Respect rate limits when calling external APIs through pybaseball
-- All titles and bolded/important text in specs and UI should be sentence case
+- The project uses UV for dependency management - always use `uv` commands instead of `pip`.
+- Data is not persisted between runs - the application is stateless.
+- Statistical formulas are complex and specific - refer to the original FanGraphs methodology as documented in specs/vision-and-reqs.md.
+- Also don't forget to consider the information in specs/architecture.md.
+- Handle missing data gracefully with appropriate defaults or errors.
+- Respect rate limits when calling external APIs through pybaseball.
+- All titles and bolded/important text in specs and UI should be sentence case.
 - When using the specs and documentation as context - which you should do almost always - use the files in the specs/ directory, and ignore the files in the source-archive directory (becaus that directory holds older content that has been superceded or incorporated into the actualy files in the root specs/ directory)
 - Don't mark off items in todo.md unless I specifically tell you to do that.
-- You can use ./run_all_checks.sh to double-check that everything is good before a commit - i.e., black, ruff, mypy, tests.
+- You can use ./run-all-checks.sh to double-check that everything is good before a commit - i.e., black, ruff, mypy, tests.
+- If you add new tests, run them then and there so you can more easily fix issues surfaced by the tests before you do other things.

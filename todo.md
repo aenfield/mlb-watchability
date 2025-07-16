@@ -22,37 +22,39 @@ Core Implementation
 
 8. ~~Write unit tests for pitcher statistics data structures with hardcoded test data~~
 
-9. Expand data retrieval module to fetch pitcher statistics for starting pitchers using pybaseball
+9. ~~Expand data retrieval module to fetch pitcher statistics for starting pitchers using pybaseball~~
 
-10. Write integration tests for pitcher statistics retrieval with mocked pybaseball calls
+10. ~~Write integration tests for pitcher statistics retrieval with mocked pybaseball calls~~
 
-11. Create data structures for team statistics (Bat, HR%, BsR, Bull, Def, Pay, Age, Luck) with validation, using the formula in vision-and-reqs.md
+11. ~~Write integration tests for pitcher statistics retrieval and using actual calls to pybaseball~~
 
-12. Write unit tests for team statistics data structures with hardcoded test data
+12. Create data structures for team statistics (Bat, HR%, BsR, Bull, Def, Pay, Age, Luck) with validation, using the formula in vision-and-reqs.md
 
-13. Expand data retrieval module to fetch team statistics using pybaseball
+13. Write unit tests for team statistics data structures with hardcoded test data
 
-14. Write integration tests for team statistics retrieval with mocked pybaseball calls
+14. Expand data retrieval module to fetch team statistics using pybaseball
 
-15. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
+15. Write integration tests for team statistics retrieval with mocked pybaseball calls
 
-16. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
+16. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
 
-17. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
+17. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
 
-18. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
+18. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
 
-19. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
+19. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
 
-20. Write unit tests for game score calculator with hardcoded pitcher and team data
+20. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
 
-21. Implement JSON output formatter that structures game scores according to specified format
+21. Write unit tests for game score calculator with hardcoded pitcher and team data
 
-22. Write unit tests for JSON output formatter with expected output structure
+22. Implement JSON output formatter that structures game scores according to specified format
 
-23. Implement console output formatter for human-readable terminal display
+23. Write unit tests for JSON output formatter with expected output structure
 
-24. Write unit tests for console output formatter with expected display format
+24. Implement console output formatter for human-readable terminal display
+
+25. Write unit tests for console output formatter with expected display format
 
 Integration & Enhancement
 

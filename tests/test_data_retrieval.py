@@ -3,9 +3,12 @@
 from typing import Any
 from unittest.mock import patch
 
+import numpy as np
+import pandas as pd
 import pytest
 
-from mlb_watchability.data_retrieval import get_game_schedule
+from mlb_watchability.data_retrieval import get_all_pitcher_stats, get_game_schedule
+from mlb_watchability.pitcher_stats import PitcherStats
 
 
 # @pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
@@ -250,3 +253,271 @@ class TestGetGameScheduleIntegration:
 
             # Date should match what we requested
             assert game["date"] == test_date
+
+
+class TestGetAllPitcherStats:
+    """Test cases for the get_all_pitcher_stats function."""
+
+    def test_get_all_pitcher_stats_with_valid_data(self) -> None:
+        """Test that get_all_pitcher_stats returns statistics for all starting pitchers."""
+
+        # Mock data for pybaseball.pitching_stats
+        mock_pitcher_data = pd.DataFrame(
+            {
+                "Name": [
+                    "Tarik Skubal",
+                    "Matt Waldron",
+                    "Gerrit Cole",
+                    "Spencer Strider",
+                ],
+                "Team": ["DET", "SD", "NYY", "ATL"],
+                "GS": [25, 20, 30, 28],
+                "IP": [150.0, 120.0, 180.0, 165.0],
+                "xFIP-": [85, 105, 90, 80],
+                "SwStr%": [0.12, 0.09, 0.11, 0.15],
+                "Strikes": [1200, 950, 1350, 1280],
+                "Pitches": [2000, 1600, 2200, 2100],
+                "FBv": [94.5, 89.2, 96.1, 98.5],
+                "Age": [27, 26, 33, 25],
+                "Pace": [22.5, 25.1, 20.8, 19.2],
+                "ERA-": [75, 110, 85, 70],
+                "KN%": [0.0, 0.0, 0.0, 0.0],
+            }
+        )
+
+        with patch(
+            "mlb_watchability.data_retrieval.pb.pitching_stats"
+        ) as mock_pitching_stats:
+            mock_pitching_stats.return_value = mock_pitcher_data
+
+            result = get_all_pitcher_stats(season=2024)
+
+            # Should return stats for all pitchers
+            assert len(result) == 4
+            assert "Tarik Skubal" in result
+            assert "Matt Waldron" in result
+            assert "Gerrit Cole" in result
+            assert "Spencer Strider" in result
+
+            # Verify Tarik Skubal stats
+            skubal_stats = result["Tarik Skubal"]
+            assert isinstance(skubal_stats, PitcherStats)
+            assert skubal_stats.name == "Tarik Skubal"
+            assert skubal_stats.team == "DET"
+            assert skubal_stats.xfip_minus == 85
+            assert skubal_stats.swinging_strike_rate == 0.12
+            assert skubal_stats.strike_rate == 0.6  # 1200/2000
+            assert skubal_stats.velocity == 94.5
+            assert skubal_stats.age == 27
+            assert skubal_stats.pace == 22.5
+            assert skubal_stats.luck == -10.0  # 75 - 85
+            assert skubal_stats.knuckleball_rate == 0.0
+
+            # Verify Matt Waldron stats
+            waldron_stats = result["Matt Waldron"]
+            assert isinstance(waldron_stats, PitcherStats)
+            assert waldron_stats.name == "Matt Waldron"
+            assert waldron_stats.team == "SD"
+            assert waldron_stats.strike_rate == 0.59375  # 950/1600
+            assert waldron_stats.luck == 5.0  # 110 - 105
+
+            mock_pitching_stats.assert_called_once_with(2024, qual=20)
+
+    def test_get_all_pitcher_stats_with_knuckleball_nan(self) -> None:
+        """Test that get_all_pitcher_stats handles NaN KN% values correctly."""
+
+        # Mock data with NaN KN% values
+        mock_pitcher_data = pd.DataFrame(
+            {
+                "Name": ["Test Pitcher"],
+                "Team": ["TEST"],
+                "GS": [25],
+                "IP": [150.0],
+                "xFIP-": [100],
+                "SwStr%": [0.10],
+                "Strikes": [1000],
+                "Pitches": [1800],
+                "FBv": [92.0],
+                "Age": [28],
+                "Pace": [23.0],
+                "ERA-": [95],
+                "KN%": [float("nan")],  # NaN value
+            }
+        )
+
+        with patch(
+            "mlb_watchability.data_retrieval.pb.pitching_stats"
+        ) as mock_pitching_stats:
+            mock_pitching_stats.return_value = mock_pitcher_data
+
+            result = get_all_pitcher_stats(season=2024)
+
+            # Should handle NaN KN% by setting to 0
+            assert len(result) == 1
+            pitcher_stats = result["Test Pitcher"]
+            assert pitcher_stats.knuckleball_rate == 0.0
+
+    def test_get_all_pitcher_stats_with_no_starting_pitchers(self) -> None:
+        """Test that get_all_pitcher_stats handles data with no starting pitchers."""
+
+        # Mock data with pitchers that have 0 games started
+        mock_pitcher_data = pd.DataFrame(
+            {
+                "Name": ["Relief Pitcher"],
+                "Team": ["TEST"],
+                "GS": [0],  # No games started
+                "IP": [50.0],
+                "xFIP-": [100],
+                "SwStr%": [0.10],
+                "Strikes": [400],
+                "Pitches": [700],
+                "FBv": [92.0],
+                "Age": [28],
+                "Pace": [20.0],
+                "ERA-": [95],
+                "KN%": [0.0],
+            }
+        )
+
+        with patch(
+            "mlb_watchability.data_retrieval.pb.pitching_stats"
+        ) as mock_pitching_stats:
+            mock_pitching_stats.return_value = mock_pitcher_data
+
+            result = get_all_pitcher_stats(season=2024)
+
+            # Should return empty dict since no starting pitchers
+            assert len(result) == 0
+
+    def test_get_all_pitcher_stats_with_api_error(self) -> None:
+        """Test that get_all_pitcher_stats handles API errors gracefully."""
+
+        with patch(
+            "mlb_watchability.data_retrieval.pb.pitching_stats"
+        ) as mock_pitching_stats:
+            mock_pitching_stats.side_effect = Exception("API Error")
+
+            with pytest.raises(
+                RuntimeError, match="Failed to retrieve pitcher statistics"
+            ):
+                get_all_pitcher_stats(season=2024)
+
+    def test_get_all_pitcher_stats_with_different_season(self) -> None:
+        """Test that get_all_pitcher_stats works with different seasons."""
+
+        # Mock data
+        mock_pitcher_data = pd.DataFrame(
+            {
+                "Name": ["Historic Pitcher"],
+                "Team": ["OLD"],
+                "GS": [30],
+                "IP": [200.0],
+                "xFIP-": [95],
+                "SwStr%": [0.08],
+                "Strikes": [1500],
+                "Pitches": [2500],
+                "FBv": [90.0],
+                "Age": [30],
+                "Pace": [25.0],
+                "ERA-": [100],
+                "KN%": [0.0],
+            }
+        )
+
+        with patch(
+            "mlb_watchability.data_retrieval.pb.pitching_stats"
+        ) as mock_pitching_stats:
+            mock_pitching_stats.return_value = mock_pitcher_data
+
+            result = get_all_pitcher_stats(season=2023)
+
+            # Should call with the correct season
+            assert len(result) == 1
+            mock_pitching_stats.assert_called_once_with(2023, qual=20)
+
+
+class TestGetAllPitcherStatsIntegration:
+    """Integration tests that call the real pybaseball API."""
+
+    def test_get_all_pitcher_stats_integration_with_real_data(self) -> None:
+        """Test that get_all_pitcher_stats works with real API data."""
+
+        # Call the real API
+        result = get_all_pitcher_stats(season=2024)
+
+        # Basic validation that we got reasonable data
+        assert isinstance(result, dict)
+
+        # We should get multiple pitchers (depends on season timing)
+        if result:
+            # Should have multiple starting pitchers
+            assert len(result) >= 10  # At least 10 starting pitchers in a season
+
+            # Check a few random pitchers
+            for _, pitcher_stats in list(result.items())[:5]:
+                assert isinstance(pitcher_stats, PitcherStats)
+                assert pitcher_stats.name
+                assert pitcher_stats.team
+
+                # Validate data types and reasonable ranges
+                assert isinstance(
+                    pitcher_stats.xfip_minus, int | float | np.integer | np.floating
+                )
+                assert 0 <= pitcher_stats.xfip_minus <= 300
+
+                assert isinstance(
+                    pitcher_stats.swinging_strike_rate, float | np.floating
+                )
+                assert 0.0 <= pitcher_stats.swinging_strike_rate <= 1.0
+
+                assert isinstance(pitcher_stats.strike_rate, float | np.floating)
+                assert 0.0 <= pitcher_stats.strike_rate <= 1.0
+
+                assert isinstance(
+                    pitcher_stats.velocity, int | float | np.integer | np.floating
+                )
+                assert 70.0 <= pitcher_stats.velocity <= 110.0
+
+                assert isinstance(pitcher_stats.age, int | np.integer)
+                assert 18 <= pitcher_stats.age <= 50
+
+                assert isinstance(
+                    pitcher_stats.pace, int | float | np.integer | np.floating
+                )
+                assert 10.0 <= pitcher_stats.pace <= 40.0
+
+                assert isinstance(
+                    pitcher_stats.luck, int | float | np.integer | np.floating
+                )
+                assert -100.0 <= pitcher_stats.luck <= 200.0
+
+                assert isinstance(pitcher_stats.knuckleball_rate, float | np.floating)
+                assert 0.0 <= pitcher_stats.knuckleball_rate <= 1.0
+
+    def test_get_all_pitcher_stats_integration_with_previous_season(self) -> None:
+        """Test that get_all_pitcher_stats works with previous season data."""
+
+        # Call the real API for 2023 season
+        result = get_all_pitcher_stats(season=2023)
+
+        # Basic validation
+        assert isinstance(result, dict)
+
+        # Should have multiple starting pitchers from 2023
+        if result:
+            assert len(result) >= 10  # At least 10 starting pitchers in 2023
+
+            # Validate some of the data
+            for pitcher_name, pitcher_stats in list(result.items())[:3]:
+                assert isinstance(pitcher_stats, PitcherStats)
+                assert pitcher_stats.name == pitcher_name
+                assert pitcher_stats.team  # Should have a team
+
+                # Validate reasonable statistics
+                assert isinstance(
+                    pitcher_stats.velocity, int | float | np.integer | np.floating
+                )
+                assert 70.0 <= pitcher_stats.velocity <= 110.0
+
+                assert isinstance(pitcher_stats.age, int | np.integer)
+                assert 18 <= pitcher_stats.age <= 50

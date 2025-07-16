@@ -12,7 +12,7 @@ from mlb_watchability.pitcher_stats import (
 class TestPitcherStats:
     """Test cases for PitcherStats data structure."""
 
-    def test_valid_pitcher_stats_creation(self):
+    def test_valid_pitcher_stats_creation(self) -> None:
         """Test creating valid pitcher statistics."""
         stats = PitcherStats(
             name="Jacob deGrom",
@@ -38,7 +38,7 @@ class TestPitcherStats:
         assert stats.luck == -5.0
         assert stats.knuckleball_rate == 0.0
 
-    def test_knuckleball_pitcher_stats(self):
+    def test_knuckleball_pitcher_stats(self) -> None:
         """Test pitcher statistics for a knuckleball pitcher."""
         stats = PitcherStats(
             name="Tim Wakefield",
@@ -56,7 +56,7 @@ class TestPitcherStats:
         assert stats.knuckleball_rate == 0.85
         assert stats.velocity == 72.5  # Low velocity for knuckleball
 
-    def test_empty_name_validation(self):
+    def test_empty_name_validation(self) -> None:
         """Test that empty pitcher name raises ValueError."""
         with pytest.raises(ValueError, match="Pitcher name cannot be empty"):
             PitcherStats(
@@ -72,7 +72,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_empty_team_validation(self):
+    def test_empty_team_validation(self) -> None:
         """Test that empty team raises ValueError."""
         with pytest.raises(ValueError, match="Team cannot be empty"):
             PitcherStats(
@@ -88,7 +88,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_xfip_minus_validation(self):
+    def test_xfip_minus_validation(self) -> None:
         """Test xFIP- validation."""
         with pytest.raises(ValueError, match="xFIP- must be between 0 and 300"):
             PitcherStats(
@@ -104,7 +104,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_swinging_strike_rate_validation(self):
+    def test_swinging_strike_rate_validation(self) -> None:
         """Test swinging strike rate validation."""
         with pytest.raises(
             ValueError, match="Swinging strike rate must be between 0.0 and 1.0"
@@ -122,7 +122,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_strike_rate_validation(self):
+    def test_strike_rate_validation(self) -> None:
         """Test strike rate validation."""
         with pytest.raises(ValueError, match="Strike rate must be between 0.0 and 1.0"):
             PitcherStats(
@@ -138,7 +138,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_velocity_validation(self):
+    def test_velocity_validation(self) -> None:
         """Test velocity validation."""
         with pytest.raises(
             ValueError, match="Velocity must be between 70.0 and 110.0 mph"
@@ -156,7 +156,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_age_validation(self):
+    def test_age_validation(self) -> None:
         """Test age validation."""
         with pytest.raises(ValueError, match="Age must be between 18 and 50 years"):
             PitcherStats(
@@ -172,7 +172,7 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_pace_validation(self):
+    def test_pace_validation(self) -> None:
         """Test pace validation."""
         with pytest.raises(
             ValueError, match="Pace must be between 10.0 and 40.0 seconds"
@@ -190,9 +190,9 @@ class TestPitcherStats:
                 knuckleball_rate=0.0,
             )
 
-    def test_luck_validation(self):
+    def test_luck_validation(self) -> None:
         """Test luck validation."""
-        with pytest.raises(ValueError, match="Luck must be between -100.0 and 100.0"):
+        with pytest.raises(ValueError, match="Luck must be between -100.0 and 200.0"):
             PitcherStats(
                 name="Bad Pitcher",
                 team="BAD",
@@ -202,11 +202,11 @@ class TestPitcherStats:
                 velocity=95.5,
                 age=34,
                 pace=18.2,
-                luck=150.0,  # Too high
+                luck=250.0,  # Too high
                 knuckleball_rate=0.0,
             )
 
-    def test_knuckleball_rate_validation(self):
+    def test_knuckleball_rate_validation(self) -> None:
         """Test knuckleball rate validation."""
         with pytest.raises(
             ValueError, match="Knuckleball rate must be between 0.0 and 1.0"
@@ -228,7 +228,7 @@ class TestPitcherStats:
 class TestPitcherNerdStats:
     """Test cases for PitcherNerdStats data structure."""
 
-    def create_sample_pitcher_stats(self):
+    def create_sample_pitcher_stats(self) -> PitcherStats:
         """Create sample pitcher statistics for testing."""
         return PitcherStats(
             name="Test Pitcher",
@@ -243,7 +243,7 @@ class TestPitcherNerdStats:
             knuckleball_rate=0.0,
         )
 
-    def test_valid_pitcher_nerd_stats_creation(self):
+    def test_valid_pitcher_nerd_stats_creation(self) -> None:
         """Test creating valid pitcher NERD statistics."""
         pitcher_stats = self.create_sample_pitcher_stats()
 
@@ -273,7 +273,7 @@ class TestPitcherNerdStats:
         assert nerd_stats.adjusted_luck == 0.0
         assert nerd_stats.pnerd_score == 12.5
 
-    def test_z_score_validation(self):
+    def test_z_score_validation(self) -> None:
         """Test z-score validation."""
         pitcher_stats = self.create_sample_pitcher_stats()
 
@@ -292,7 +292,7 @@ class TestPitcherNerdStats:
                 pnerd_score=12.5,
             )
 
-    def test_adjusted_velocity_validation(self):
+    def test_adjusted_velocity_validation(self) -> None:
         """Test adjusted velocity validation."""
         pitcher_stats = self.create_sample_pitcher_stats()
 
@@ -313,7 +313,7 @@ class TestPitcherNerdStats:
                 pnerd_score=12.5,
             )
 
-    def test_adjusted_age_validation(self):
+    def test_adjusted_age_validation(self) -> None:
         """Test adjusted age validation."""
         pitcher_stats = self.create_sample_pitcher_stats()
 
@@ -334,7 +334,7 @@ class TestPitcherNerdStats:
                 pnerd_score=12.5,
             )
 
-    def test_adjusted_luck_validation(self):
+    def test_adjusted_luck_validation(self) -> None:
         """Test adjusted luck validation."""
         pitcher_stats = self.create_sample_pitcher_stats()
 
@@ -355,7 +355,7 @@ class TestPitcherNerdStats:
                 pnerd_score=12.5,
             )
 
-    def test_pnerd_score_validation(self):
+    def test_pnerd_score_validation(self) -> None:
         """Test pNERD score validation."""
         pitcher_stats = self.create_sample_pitcher_stats()
 
@@ -380,7 +380,7 @@ class TestPitcherNerdStats:
 class TestCalculatePnerdScore:
     """Test cases for pNERD score calculation."""
 
-    def create_sample_league_stats(self):
+    def create_sample_league_stats(self) -> tuple[dict[str, float], dict[str, float]]:
         """Create sample league statistics for testing."""
         league_means = {
             "xfip_minus": 100,
@@ -402,7 +402,7 @@ class TestCalculatePnerdScore:
 
         return league_means, league_std_devs
 
-    def test_calculate_pnerd_score_basic(self):
+    def test_calculate_pnerd_score_basic(self) -> None:
         """Test basic pNERD score calculation."""
         pitcher_stats = PitcherStats(
             name="Test Pitcher",
@@ -453,7 +453,7 @@ class TestCalculatePnerdScore:
 
         assert abs(nerd_stats.pnerd_score - expected_pnerd) < 0.001
 
-    def test_calculate_pnerd_score_with_knuckleball(self):
+    def test_calculate_pnerd_score_with_knuckleball(self) -> None:
         """Test pNERD score calculation with knuckleball pitcher."""
         pitcher_stats = PitcherStats(
             name="Knuckleball Pitcher",
@@ -479,7 +479,7 @@ class TestCalculatePnerdScore:
         knuckleball_bonus = 0.8 * 5  # 4.0
         assert knuckleball_bonus == 4.0
 
-    def test_calculate_pnerd_score_caps_applied(self):
+    def test_calculate_pnerd_score_caps_applied(self) -> None:
         """Test that caps are properly applied in pNERD calculation."""
         pitcher_stats = PitcherStats(
             name="Extreme Pitcher",
@@ -503,7 +503,7 @@ class TestCalculatePnerdScore:
         assert nerd_stats.adjusted_age == 1.75  # -z_age = -(-1.75) = 1.75, not capped
         assert nerd_stats.adjusted_luck == 1.0  # Should be capped at 1.0
 
-    def test_calculate_pnerd_score_negative_adjustments(self):
+    def test_calculate_pnerd_score_negative_adjustments(self) -> None:
         """Test that negative values are set to zero for velocity, age, and luck."""
         pitcher_stats = PitcherStats(
             name="Negative Pitcher",
