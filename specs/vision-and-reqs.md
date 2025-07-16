@@ -18,12 +18,12 @@
 - The pNERD score comes from these pitcher-specific statistics and exists for each of the starting pitchers in each game:
   - xFIP-
   - Swinging-Strike Rate (SwStrk)
-  - Strike Rate (Strk)
-  - Velocity (Velo)
+  - Strike Rate (Strk) - it looks like this isn't available directly and already calculated via pybaseball.pitching_stats (which I think comes from Fangraph's pitching stats), so for this one get the total strikes ('Strikes') and divide by total pitches ('Pitches')
+  - Velocity (Velo) - use the 'FBv' stat (there are other fields that have data from different sources - Statcast and Pitch Info - but FBv exists for more pitchers)
   - Age
   - Pace
   - ERA- minus xFIP- (Luck)
-  - Knuckleball Rate (KN)
+  - Knuckleball Rate (KN) - For pitchers that don't throw knucklers, this will be NaN, so be sure that a lack of this number doesn't crash anything - instead, pitchers with a NaN should just get zero contribution for KN rate
 - The formula for pNERD is (zxFIP- _ 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (zPace / 2) + (Luck / 20) + (KN _ 5) + Constant. Any variable preceded by a z represents the z-score — or standard deviations from the mean — of the relevant metric. The population used for determining the mean in this case includes all pitchers who’ve thrown 20 innings as a starter. Players are never assessed negative, but only positive, scores for Velo, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Velo and Age are capped at 2.0; Luck, at 1.0. The constant at the moment is about 3.8.
 - The tNERD score comes from these team-specific statistics:
   - Park-Adjusted Batting Runs Above Average (Bat)
