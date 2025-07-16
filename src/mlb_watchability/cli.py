@@ -42,7 +42,9 @@ def format_games_output(games: list[dict[str, Any]], date: str) -> str:
         away_starter = game["away_starter"] or "TBD"
         home_starter = game["home_starter"] or "TBD"
         game_time = game["time"] or "TBD"
-        lines.append(f"  {game_time} - {game['away_team']} @ {game['home_team']} - {away_starter} vs {home_starter}")
+        lines.append(
+            f"  {game_time} - {game['away_team']} @ {game['home_team']} - {away_starter} vs {home_starter}"
+        )
 
     return "\n".join(lines)
 
@@ -73,7 +75,9 @@ def main(
         # Last Sunday games
         try:
             sunday_games = get_game_schedule(last_sunday)
-            typer.echo(format_games_output(sunday_games, f"Last Sunday ({last_sunday})"))
+            typer.echo(
+                format_games_output(sunday_games, f"Last Sunday ({last_sunday})")
+            )
         except Exception as e:
             typer.echo(f"Error retrieving games for last Sunday: {e}", err=True)
 
@@ -82,7 +86,9 @@ def main(
         # This Friday games
         try:
             friday_games = get_game_schedule(this_friday)
-            typer.echo(format_games_output(friday_games, f"This Friday ({this_friday})"))
+            typer.echo(
+                format_games_output(friday_games, f"This Friday ({this_friday})")
+            )
         except Exception as e:
             typer.echo(f"Error retrieving games for this Friday: {e}", err=True)
 

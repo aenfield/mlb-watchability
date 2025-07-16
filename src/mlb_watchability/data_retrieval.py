@@ -1,10 +1,10 @@
 """Data retrieval module for MLB Watchability."""
 
+import zoneinfo
 from datetime import datetime
 from typing import Any
-import zoneinfo
 
-import statsapi
+import statsapi  # type: ignore
 
 
 def get_game_schedule(date: str) -> list[dict[str, Any]]:
@@ -25,7 +25,9 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
     try:
         datetime.strptime(date, "%Y-%m-%d")
     except ValueError as e:
-        raise ValueError(f"Invalid date format. Expected YYYY-MM-DD, got: {date}") from e
+        raise ValueError(
+            f"Invalid date format. Expected YYYY-MM-DD, got: {date}"
+        ) from e
 
     try:
         # Convert YYYY-MM-DD to MM/DD/YYYY format for MLB-StatsAPI
@@ -39,25 +41,27 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
         games = []
         for game in schedule_data:
             # Extract starting pitcher info if available
-            away_starter = game.get('away_probable_pitcher') or None
-            home_starter = game.get('home_probable_pitcher') or None
+            away_starter = game.get("away_probable_pitcher") or None
+            home_starter = game.get("home_probable_pitcher") or None
 
             # Format game time if available, convert to Eastern time
             game_time = None
-            if 'game_datetime' in game:
+            if "game_datetime" in game:
                 try:
                     # Parse UTC datetime
-                    game_datetime = game['game_datetime']
-                    if game_datetime.endswith('Z'):
+                    game_datetime = game["game_datetime"]
+                    if game_datetime.endswith("Z"):
                         # Parse as UTC
                         utc_dt = datetime.strptime(game_datetime, "%Y-%m-%dT%H:%M:%SZ")
-                        utc_dt = utc_dt.replace(tzinfo=zoneinfo.ZoneInfo('UTC'))
+                        utc_dt = utc_dt.replace(tzinfo=zoneinfo.ZoneInfo("UTC"))
                     else:
                         # Try with timezone info
-                        utc_dt = datetime.fromisoformat(game_datetime.replace('Z', '+00:00'))
-                    
+                        utc_dt = datetime.fromisoformat(
+                            game_datetime.replace("Z", "+00:00")
+                        )
+
                     # Convert to Eastern time
-                    eastern_tz = zoneinfo.ZoneInfo('America/New_York')
+                    eastern_tz = zoneinfo.ZoneInfo("America/New_York")
                     eastern_dt = utc_dt.astimezone(eastern_tz)
                     game_time = eastern_dt.strftime("%H:%M")
                 except (ValueError, TypeError):
@@ -65,8 +69,8 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
 
             game_dict = {
                 "date": date,
-                "away_team": game.get('away_name', ''),
-                "home_team": game.get('home_name', ''),
+                "away_team": game.get("away_name", ""),
+                "home_team": game.get("home_name", ""),
                 "time": game_time,
                 "away_starter": away_starter,
                 "home_starter": home_starter,
@@ -74,7 +78,8 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
             games.append(game_dict)
 
     except Exception as e:
-        raise RuntimeError(f"Failed to retrieve game schedule for {date}: {str(e)}") from e
+        raise RuntimeError(
+            f"Failed to retrieve game schedule for {date}: {str(e)}"
+        ) from e
     else:
         return games
-

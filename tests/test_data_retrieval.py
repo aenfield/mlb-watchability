@@ -1,5 +1,6 @@
 """Tests for the data retrieval module."""
 
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -7,7 +8,7 @@ import pytest
 from mlb_watchability.data_retrieval import get_game_schedule
 
 
-#@pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
+# @pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
 class TestGetGameSchedule:
     """Test cases for the get_game_schedule function."""
 
@@ -53,7 +54,9 @@ class TestGetGameSchedule:
             },
         ]
 
-        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+        with patch(
+            "mlb_watchability.data_retrieval.statsapi.schedule"
+        ) as mock_schedule:
             mock_schedule.return_value = mock_schedule_data
             result = get_game_schedule(test_date)
 
@@ -64,9 +67,11 @@ class TestGetGameSchedule:
         """Test that get_game_schedule returns empty list when no games scheduled."""
 
         test_date = "2024-12-01"  # Off-season date
-        mock_empty_schedule = []
+        mock_empty_schedule: list[dict[str, Any]] = []
 
-        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+        with patch(
+            "mlb_watchability.data_retrieval.statsapi.schedule"
+        ) as mock_schedule:
             mock_schedule.return_value = mock_empty_schedule
             result = get_game_schedule(test_date)
 
@@ -99,7 +104,9 @@ class TestGetGameSchedule:
             },
         ]
 
-        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+        with patch(
+            "mlb_watchability.data_retrieval.statsapi.schedule"
+        ) as mock_schedule:
             mock_schedule.return_value = mock_schedule_data
             result = get_game_schedule(test_date)
 
@@ -117,9 +124,11 @@ class TestGetGameSchedule:
         """Test that get_game_schedule handles future dates appropriately."""
 
         future_date = "2030-07-15"
-        mock_empty_schedule = []
+        mock_empty_schedule: list[dict[str, Any]] = []
 
-        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+        with patch(
+            "mlb_watchability.data_retrieval.statsapi.schedule"
+        ) as mock_schedule:
             mock_schedule.return_value = mock_empty_schedule
             result = get_game_schedule(future_date)
 
@@ -130,7 +139,9 @@ class TestGetGameSchedule:
 
         test_date = "2024-07-15"
 
-        with patch("mlb_watchability.data_retrieval.statsapi.schedule") as mock_schedule:
+        with patch(
+            "mlb_watchability.data_retrieval.statsapi.schedule"
+        ) as mock_schedule:
             mock_schedule.side_effect = Exception("API Error")
 
             with pytest.raises(RuntimeError, match="Failed to retrieve game schedule"):
@@ -142,9 +153,9 @@ class TestGetGameSchedule:
         invalid_dates = [
             "2024-13-01",  # Invalid month
             "2024-02-30",  # Invalid day
-            "24-07-15",    # Wrong year format
+            "24-07-15",  # Wrong year format
             "2024/07/15",  # Wrong separator
-            "",            # Empty string
+            "",  # Empty string
         ]
 
         for invalid_date in invalid_dates:
@@ -152,7 +163,7 @@ class TestGetGameSchedule:
                 get_game_schedule(invalid_date)
 
 
-#@pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
+# @pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
 class TestGetGameScheduleIntegration:
     """Integration tests that call the real pybaseball API."""
 
@@ -182,7 +193,9 @@ class TestGetGameScheduleIntegration:
                 assert game["date"] == test_date
                 assert isinstance(game["away_team"], str)
                 assert isinstance(game["home_team"], str)
-                assert game["time"] is not None  # Time should be available in MLB-StatsAPI (Eastern time)
+                assert (
+                    game["time"] is not None
+                )  # Time should be available in MLB-StatsAPI (Eastern time)
                 # Starting pitchers can be None or string
                 if game["away_starter"] is not None:
                     assert isinstance(game["away_starter"], str)
@@ -224,7 +237,14 @@ class TestGetGameScheduleIntegration:
             # Check first game structure
             game = result[0]
             assert isinstance(game, dict)
-            required_keys = ["date", "away_team", "home_team", "time", "away_starter", "home_starter"]
+            required_keys = [
+                "date",
+                "away_team",
+                "home_team",
+                "time",
+                "away_starter",
+                "home_starter",
+            ]
             for key in required_keys:
                 assert key in game
 

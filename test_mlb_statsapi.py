@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """Quick test script for MLB-StatsAPI library."""
 
+import statsapi  # type: ignore
 
-def main():
-    try:
-        import statsapi
-        print("MLB-StatsAPI library loaded successfully")
-    except ImportError:
-        print("MLB-StatsAPI not installed. Install with: pip install MLB-StatsAPI")
-        return
+
+def main() -> None:
 
     # Test 1: Basic schedule query
     print("\n=== Test 1: Schedule for a specific date ===")
@@ -67,8 +63,8 @@ def main():
             print(f"Game found: {game}")
 
             # Try to get boxscore if game has an ID
-            if isinstance(game, dict) and 'game_id' in game:
-                boxscore = statsapi.boxscore(game['game_id'])
+            if isinstance(game, dict) and "game_id" in game:
+                boxscore = statsapi.boxscore(game["game_id"])
                 print(f"Boxscore type: {type(boxscore)}")
                 if isinstance(boxscore, str):
                     print(f"Boxscore length: {len(boxscore)} characters")
@@ -89,6 +85,7 @@ def main():
         print(f"Error looking up player: {e}")
 
     print("\n=== Library exploration complete ===")
+
 
 if __name__ == "__main__":
     main()

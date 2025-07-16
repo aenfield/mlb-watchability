@@ -43,3 +43,4 @@ Additional testing information is in architecture.md.
 - All titles and bolded/important text in specs and UI should be sentence case
 - When using the specs and documentation as context - which you should do almost always - use the files in the specs/ directory, and ignore the files in the source-archive directory (becaus that directory holds older content that has been superceded or incorporated into the actualy files in the root specs/ directory)
 - Don't mark off items in todo.md unless I specifically tell you to do that.
+- You can use ./run_all_checks.sh to double-check that everything is good before a commit - i.e., black, ruff, mypy, tests.
