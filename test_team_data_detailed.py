@@ -294,9 +294,10 @@ def test_detailed_team_stats():
             print(f"Teams: {len(team_fielding)}")
             print()
 
-            print("Sample team fielding data (first 5 teams):")
-            print(team_fielding.head().to_string())
-            print()
+            # doesn't work well UI-wise with a normal terminal width
+            # print("Sample team fielding data (first 5 teams):")
+            # print(team_fielding.head().to_string())
+            # print()
 
             # Look for defensive metrics
             print("Searching for defensive metrics:")

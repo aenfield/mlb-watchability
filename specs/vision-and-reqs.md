@@ -15,27 +15,51 @@
 ## Statistics/input data and NERD score calculation details
 
 - "Game NERD Score" (or gNERD) is the average of the "Pitcher NERD Score" (pNERD) for each of the two starting pitchers plus the average of the "Team NERD Score" (tNERD) for each of the two teams. Each game has its own gNERD.
-- The pNERD score comes from these pitcher-specific statistics and exists for each of the starting pitchers in each game:
-  - xFIP-
-  - Swinging-Strike Rate (SwStrk)
-  - Strike Rate (Strk) - it looks like this isn't available directly and already calculated via pybaseball.pitching_stats (which I think comes from Fangraph's pitching stats), so for this one get the total strikes ('Strikes') and divide by total pitches ('Pitches')
-  - Velocity (Velo) - use the 'FBv' stat (there are other fields that have data from different sources - Statcast and Pitch Info - but FBv exists for more pitchers)
-  - Age
-  - Pace
-  - ERA- minus xFIP- (Luck)
-  - Knuckleball Rate (KN) - For pitchers that don't throw knucklers, this will be NaN, so be sure that a lack of this number doesn't crash anything - instead, pitchers with a NaN should just get zero contribution for KN rate
-- The formula for pNERD is (zxFIP- _ 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (zPace / 2) + (Luck / 20) + (KN _ 5) + Constant. Any variable preceded by a z represents the z-score — or standard deviations from the mean — of the relevant metric. The population used for determining the mean in this case includes all pitchers who’ve thrown 20 innings as a starter. Players are never assessed negative, but only positive, scores for Velo, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Velo and Age are capped at 2.0; Luck, at 1.0. The constant at the moment is about 3.8.
-- The tNERD score comes from these team-specific statistics:
-  - Park-Adjusted Batting Runs Above Average (Bat)
-  - Park-Adjusted Home Run Rate (HR%)
-  - Baserunning Runs (BsR)
-  - Bullpen xFIP (Bull)
-  - Defensive Runs (Def)
-  - Payroll, Where Below Average Is Better (Pay)
-  - Batter Age, Where Younger Is Better (Age)
-  - Expected Wins, Per WAR, Minus Actual Wins (Luck)
-- The formula for tNERD is zBat + zHR% + zBsR + (zBull / 2) + (zDef / 2) + zPay + zAge + (Luck / 2) + Constant. As with pitcher NERD, any variable preceded by a z represents the z-score of the relevant metric — in this case, relative to averages for the whole league. Teams are never assessed negative, but only positive, scores for Pay, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Luck is capped at 2.0. The constant for team NERD is currently at about 4.0.
-- For more details of the score calculations, see https://blogs.fangraphs.com/nerd-scores-return-with-something-not-unlike-a-vengeance/ and https://blogs.fangraphs.com/one-night-only-previews-for-weekend-of-may-13th/. For background on why team NERD is what it is, which is interesting by itself and also useful because on its face it doesn't look like at least a decent number of the stats he chose originally (15 years ago) aren't (or are no longer because they've been superceded?) available from the Fangraphs team stats pages, so it probably makes sense to update them, and I can work from his thought process, Carson on [team NERD](https://blogs.fangraphs.com/introducing-team-nerd). There's an overview on Wikipedia at https://en.wikipedia.org/wiki/NERD_%28sabermetrics.
+
+### Pitcher NERD - pNERD
+
+The pNERD score comes from these pitcher-specific statistics and exists for each of the starting pitchers in each game:
+
+- xFIP-
+- Swinging-Strike Rate (SwStrk)
+- Strike Rate (Strk) - it looks like this isn't available directly and already calculated via pybaseball.pitching_stats (which I think comes from Fangraph's pitching stats), so for this one get the total strikes ('Strikes') and divide by total pitches ('Pitches')
+- Velocity (Velo) - use the 'FBv' stat (there are other fields that have data from different sources - Statcast and Pitch Info - but FBv exists for more pitchers)
+- Age
+- Pace
+- ERA- minus xFIP- (Luck) - pitchers that have been unlucky in the sense that their ERA is higher than the corresponding defense-independent stat can be expected regress (positively)
+- Knuckleball Rate (KN) - for pitchers that don't throw knucklers, this will be NaN, so be sure that a lack of this number doesn't crash anything - instead, pitchers with a NaN should just get zero contribution for KN rate
+
+The formula for pNERD is (zxFIP- _ 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (zPace / 2) + (Luck / 20) + (KN _ 5) + Constant. Any variable preceded by a z represents the z-score — or standard deviations from the mean — of the relevant metric. The population used for determining the mean in this case includes all pitchers who’ve thrown 20 innings as a starter. Players are never assessed negative, but only positive, scores for Velo, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Velo and Age are capped at 2.0; Luck, at 1.0. The constant at the moment is about 3.8.
+
+### Team NERD - tNERD
+
+In contrast to pNERD, the tNERD calculation I'm using is different from the historical/original tNERD - it has the same goal and rough components, but uses mostly different statistics. The original tNERD was developed around 2010, and used a bunch of stats that aren't available today via Fangraphs (accessed via pybaseball). Fortunately, I think there are good replacements for the original stats, and so I've put together a first cut as below. (I'm not an expert, and could easily be wrong - there might be better stats, for example - but this is a start.)
+
+The tNERD score comes from these team-specific statistics:
+
+- Park-adjusted batting runs above average based on wOBA ('Bat' field) - use pybaseball
+- Barrel % ('Barrel%') - use pybaseball, note that barrel % is generally park-independent (barrel rate doesn't change much in Colorado, but the outcome from barrels does)
+- Base running runs above average ('BsR') - use pybaseball
+- Fielding runs above average ('Fld') - use pybaseball
+- Payroll, where below average is better ('Pay') - retrieve this data from the static file at data/payroll-spotrac.2025.csv (it's not available from pybaseball)
+- Batter age, where younger is better ('Age') - retrieve this data from the static file at data/payroll-spotrac.2025.csv (pybaseball does have age, but it seems a bit less precise, FWIW)
+- Luck - calculate as 'wRC' minus 'Runs', use pybaseball; this is expected runs minus actual runs, so teams that have been unlucky by scoring fewer runs than expected get a positive luck boost, as they can be expected to regress (positively); note that the order around the substraction is opposite than for pNERD luck because the stats used for pNERD luck are better when lower while the stats used here for tNERD luck are better when higher
+
+The formula for tNERD is zBat + zBarrel% + zBsR + zFld + zPay + zAge + zLuck + Constant. As with pitcher NERD, any variable preceded by a z represents the z-score of the relevant metric — in this case, relative to averages for the whole league. Teams are never assessed negative, but only positive, scores for Pay, Age, and Luck, so any number that would be below zero is simply rendered as zero. Luck is capped at 2.0. The constant for team NERD is currently at 4.0 (I may change this in the future)
+
+In the future I could extend tNERD to include additional things, like the following, but won't do this to start - the basic idea is to try to capture as metrics different things that make a team fun to watch/listen to:
+
+- Something about bullpen - right now the non-age and payroll parts of tNERD leave out the pitchers, which is logical because we have pNERD for the starter, but that does mean we don't have anything for the bullpen, and lockdown bullpens are fun to watch; the old one had bullpen xFIP, but I don't see any team-specific and bullpen-only/non-starter stats so I'd have to do more
+- Goodness of the park
+- Goodness of the broadcast teams
+- There might be more ideas in some of the references below
+
+### Additional NERD notes
+
+This section has a few historical notes and more data on NERD. Note again that the specific details we're using are described in the document above - the stuff in the resources at the links below is for background, and is overridden by the specifics above. For example, again as noted already, the tNERD we specify above is substantially different from the historical tNERD described in the references below.
+
+- For more details of the score calculations, see https://blogs.fangraphs.com/nerd-scores-return-with-something-not-unlike-a-vengeance/ and https://blogs.fangraphs.com/one-night-only-previews-for-weekend-of-may-13th/.
+- For background on why team NERD is what it is, which is interesting by itself and also useful because on its face it doesn't look like at least a decent number of the stats he chose originally (15 years ago) aren't (or are no longer because they've been superceded?) available from the Fangraphs team stats pages, so it probably makes sense to update them, and I can work from his thought process, Carson on [team NERD](https://blogs.fangraphs.com/introducing-team-nerd).
 
 ## Requirements
 
