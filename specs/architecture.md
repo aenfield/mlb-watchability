@@ -6,7 +6,7 @@ NOTE: I had o3 and Sonnet 4 generate their own takes on architecture.md files us
 
 ## 1. Overview
 
-MLB Watchability is a Python‑based system that ranks every Major League Baseball game on a given day by an overall “Game NERD” (gNERD) score so fans can quickly decide which match‑ups are the most entertaining to watch or listen to. A daily job gathers the minimal statistics needed, computes pitcher (pNERD), team (tNERD), and game (gNERD) scores, and exposes them via a CLI today (with room to grow into an API or web UI). (raw.githubusercontent.com (https://raw.githubusercontent.com/aenfield/mlb-watchability/main/specs/vision-and-reqs.md))
+MLB Watchability is a Python‑based system that ranks every Major League Baseball game on a given day by an overall “Game NERD” (gNERD) score so fans can quickly decide which match‑ups are the most entertaining to watch or listen to. A daily job gathers the minimal statistics needed, computes pitcher (pNERD), team (tNERD), and game (gNERD) scores, and exposes them via a CLI today (with room to grow into an API or web UI).
 
 ## 2. System design
 

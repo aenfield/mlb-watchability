@@ -188,9 +188,10 @@ def test_detailed_team_stats():
             print(f"Teams: {len(team_batting)}")
             print()
 
-            print("Sample team batting data (first 5 teams):")
-            print(team_batting.head().to_string())
-            print()
+            # doesn't work well UI-wise with a normal terminal width
+            # print("Sample team batting data (first 5 teams):")
+            # print(team_batting.head().to_string())
+            # print()
 
             print("Key columns for tNERD calculation:")
             key_batting_cols = [
@@ -262,9 +263,10 @@ def test_detailed_team_stats():
             print(f"Teams: {len(team_pitching)}")
             print()
 
-            print("Sample team pitching data (first 5 teams):")
-            print(team_pitching.head().to_string())
-            print()
+            # doesn't work well UI-wise with a normal terminal width
+            # print("Sample team pitching data (first 5 teams):")
+            # print(team_pitching.head().to_string())
+            # print()
 
             # Look for bullpen-specific stats
             print("Searching for bullpen/relief pitching stats:")

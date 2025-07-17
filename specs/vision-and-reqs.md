@@ -35,7 +35,7 @@
   - Batter Age, Where Younger Is Better (Age)
   - Expected Wins, Per WAR, Minus Actual Wins (Luck)
 - The formula for tNERD is zBat + zHR% + zBsR + (zBull / 2) + (zDef / 2) + zPay + zAge + (Luck / 2) + Constant. As with pitcher NERD, any variable preceded by a z represents the z-score of the relevant metric — in this case, relative to averages for the whole league. Teams are never assessed negative, but only positive, scores for Pay, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Luck is capped at 2.0. The constant for team NERD is currently at about 4.0.
-- For more details of the score calculations, see https://blogs.fangraphs.com/nerd-scores-return-with-something-not-unlike-a-vengeance/ and https://blogs.fangraphs.com/one-night-only-previews-for-weekend-of-may-13th/.
+- For more details of the score calculations, see https://blogs.fangraphs.com/nerd-scores-return-with-something-not-unlike-a-vengeance/ and https://blogs.fangraphs.com/one-night-only-previews-for-weekend-of-may-13th/. For background on why team NERD is what it is, which is interesting by itself and also useful because on its face it doesn't look like at least a decent number of the stats he chose originally (15 years ago) aren't (or are no longer because they've been superceded?) available from the Fangraphs team stats pages, so it probably makes sense to update them, and I can work from his thought process, Carson on [team NERD](https://blogs.fangraphs.com/introducing-team-nerd). There's an overview on Wikipedia at https://en.wikipedia.org/wiki/NERD_%28sabermetrics.
 
 ## Requirements
 
