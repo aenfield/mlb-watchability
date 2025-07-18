@@ -32,11 +32,11 @@ Core Implementation
 
 13. ~~Write unit tests for team statistics data structures with hardcoded test data~~
 
-14. Expand data retrieval module to fetch team statistics using pybaseball
+14. ~~Expand data retrieval module to fetch team statistics using pybaseball~~
 
-15. Write integration tests for team statistics retrieval with mocked pybaseball calls
+15. ~~Write integration tests for team statistics retrieval with mocked pybaseball calls~~
 
-16. Write integration tests for team statistics retrieval with actual calls to pybaseball
+16. ~~Write integration tests for team statistics retrieval with actual calls to pybaseball~~
 
 17. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
 
