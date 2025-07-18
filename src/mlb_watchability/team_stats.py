@@ -35,46 +35,6 @@ class TeamStats:
         if not self.name or not self.name.strip():
             raise ValueError("Team name cannot be empty")
 
-        # Batting runs validation (typically -100 to +100 runs above/below average)
-        if not -200.0 <= self.batting_runs <= 200.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Batting runs must be between -200.0 and 200.0, got {self.batting_runs}"
-            )
-
-        # Barrel rate validation (typically 0.02-0.12)
-        if not 0.0 <= self.barrel_rate <= 0.15:  # noqa: PLR2004
-            raise ValueError(
-                f"Barrel rate must be between 0.0 and 0.15, got {self.barrel_rate}"
-            )
-
-        # Baserunning runs validation (typically -30 to +30 runs)
-        if not -50.0 <= self.baserunning_runs <= 50.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Baserunning runs must be between -50.0 and 50.0, got {self.baserunning_runs}"
-            )
-
-        # Fielding runs validation (typically -50 to +50 runs)
-        if not -100.0 <= self.fielding_runs <= 100.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Fielding runs must be between -100.0 and 100.0, got {self.fielding_runs}"
-            )
-
-        # Payroll validation (typically in millions, 50-300)
-        if not 30.0 <= self.payroll <= 500.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Payroll must be between 30.0 and 500.0 million, got {self.payroll}"
-            )
-
-        # Age validation (typically 24-32 years average)
-        if not 20.0 <= self.age <= 40.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Team age must be between 20.0 and 40.0 years, got {self.age}"
-            )
-
-        # Luck validation (can be negative - wRC minus Runs)
-        if not -100.0 <= self.luck <= 100.0:  # noqa: PLR2004
-            raise ValueError(f"Luck must be between -100.0 and 100.0, got {self.luck}")
-
 
 @dataclass
 class TeamNerdStats:
@@ -109,23 +69,6 @@ class TeamNerdStats:
 
     def _validate_nerd_stats(self) -> None:
         """Validate that all NERD statistics are reasonable."""
-
-        # Z-scores should typically be within -3 to +3 standard deviations, but allow extreme values
-        z_scores = [
-            self.z_batting_runs,
-            self.z_barrel_rate,
-            self.z_baserunning_runs,
-            self.z_fielding_runs,
-            self.z_payroll,
-            self.z_age,
-            self.z_luck,
-        ]
-
-        for z_score in z_scores:
-            if not -10.0 <= z_score <= 10.0:  # noqa: PLR2004
-                raise ValueError(
-                    f"Z-score must be between -10.0 and 10.0, got {z_score}"
-                )
 
         # Adjusted values validation
         if not 0.0 <= self.adjusted_payroll <= 10.0:  # noqa: PLR2004

@@ -39,48 +39,6 @@ class PitcherStats:
         if not self.team or not self.team.strip():
             raise ValueError("Team cannot be empty")
 
-        # xFIP- validation (typically 50-150, where 100 is league average)
-        if not 0 <= self.xfip_minus <= 300:  # noqa: PLR2004
-            raise ValueError(f"xFIP- must be between 0 and 300, got {self.xfip_minus}")
-
-        # Swinging strike rate validation (typically 0.05-0.20)
-        if not 0.0 <= self.swinging_strike_rate <= 1.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Swinging strike rate must be between 0.0 and 1.0, got {self.swinging_strike_rate}"
-            )
-
-        # Strike rate validation (typically 0.50-0.80)
-        if not 0.0 <= self.strike_rate <= 1.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Strike rate must be between 0.0 and 1.0, got {self.strike_rate}"
-            )
-
-        # Velocity validation (typically 85-105 mph)
-        if not 70.0 <= self.velocity <= 110.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Velocity must be between 70.0 and 110.0 mph, got {self.velocity}"
-            )
-
-        # Age validation (typically 20-45 years)
-        if not 18 <= self.age <= 50:  # noqa: PLR2004
-            raise ValueError(f"Age must be between 18 and 50 years, got {self.age}")
-
-        # Pace validation (typically 15-30 seconds)
-        if not 10.0 <= self.pace <= 40.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Pace must be between 10.0 and 40.0 seconds, got {self.pace}"
-            )
-
-        # Luck validation (can be negative - no strict bounds)
-        if not -100.0 <= self.luck <= 200.0:  # noqa: PLR2004
-            raise ValueError(f"Luck must be between -100.0 and 200.0, got {self.luck}")
-
-        # Knuckleball rate validation (typically 0.0-1.0, but most pitchers have 0.0)
-        if not 0.0 <= self.knuckleball_rate <= 1.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Knuckleball rate must be between 0.0 and 1.0, got {self.knuckleball_rate}"
-            )
-
 
 @dataclass
 class PitcherNerdStats:
@@ -114,22 +72,6 @@ class PitcherNerdStats:
 
     def _validate_nerd_stats(self) -> None:
         """Validate that all NERD statistics are reasonable."""
-
-        # Z-scores should typically be within -3 to +3 standard deviations, but allow extreme values
-        z_scores = [
-            self.z_xfip_minus,
-            self.z_swinging_strike_rate,
-            self.z_strike_rate,
-            self.z_velocity,
-            self.z_age,
-            self.z_pace,
-        ]
-
-        for z_score in z_scores:
-            if not -10.0 <= z_score <= 10.0:  # noqa: PLR2004
-                raise ValueError(
-                    f"Z-score must be between -10.0 and 10.0, got {z_score}"
-                )
 
         # Adjusted values validation
         if not 0.0 <= self.adjusted_velocity <= 2.0:  # noqa: PLR2004
