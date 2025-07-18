@@ -17,10 +17,9 @@ class TestTeamStats:
         stats = TeamStats(
             name="Los Angeles Dodgers",
             batting_runs=45.2,
-            home_run_rate=0.045,
+            barrel_rate=0.089,
             baserunning_runs=8.5,
-            bullpen_xfip=3.85,
-            defensive_runs=12.3,
+            fielding_runs=12.3,
             payroll=285.6,
             age=28.5,
             luck=3.2,
@@ -28,10 +27,9 @@ class TestTeamStats:
 
         assert stats.name == "Los Angeles Dodgers"
         assert stats.batting_runs == 45.2
-        assert stats.home_run_rate == 0.045
+        assert stats.barrel_rate == 0.089
         assert stats.baserunning_runs == 8.5
-        assert stats.bullpen_xfip == 3.85
-        assert stats.defensive_runs == 12.3
+        assert stats.fielding_runs == 12.3
         assert stats.payroll == 285.6
         assert stats.age == 28.5
         assert stats.luck == 3.2
@@ -41,10 +39,9 @@ class TestTeamStats:
         stats = TeamStats(
             name="Pittsburgh Pirates",
             batting_runs=-35.8,
-            home_run_rate=0.028,
+            barrel_rate=0.028,
             baserunning_runs=-12.1,
-            bullpen_xfip=4.85,
-            defensive_runs=-8.7,
+            fielding_runs=-8.7,
             payroll=65.2,
             age=26.8,
             luck=-5.5,
@@ -60,10 +57,9 @@ class TestTeamStats:
             TeamStats(
                 name="",
                 batting_runs=45.2,
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
+                fielding_runs=12.3,
                 payroll=285.6,
                 age=28.5,
                 luck=3.2,
@@ -77,27 +73,25 @@ class TestTeamStats:
             TeamStats(
                 name="Bad Team",
                 batting_runs=250.0,  # Too high
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
+                fielding_runs=12.3,
                 payroll=285.6,
                 age=28.5,
                 luck=3.2,
             )
 
-    def test_home_run_rate_validation(self) -> None:
-        """Test home run rate validation."""
+    def test_barrel_rate_validation(self) -> None:
+        """Test barrel rate validation."""
         with pytest.raises(
-            ValueError, match="Home run rate must be between 0.0 and 0.15"
+            ValueError, match="Barrel rate must be between 0.0 and 0.15"
         ):
             TeamStats(
                 name="Bad Team",
                 batting_runs=45.2,
-                home_run_rate=0.2,  # Too high
+                barrel_rate=0.2,  # Too high
                 baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
+                fielding_runs=12.3,
                 payroll=285.6,
                 age=28.5,
                 luck=3.2,
@@ -111,47 +105,42 @@ class TestTeamStats:
             TeamStats(
                 name="Bad Team",
                 batting_runs=45.2,
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=-75.0,  # Too low
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
+                fielding_runs=12.3,
                 payroll=285.6,
                 age=28.5,
                 luck=3.2,
             )
 
-    def test_bullpen_xfip_validation(self) -> None:
-        """Test bullpen xFIP validation."""
+    def test_fielding_runs_validation(self) -> None:
+        """Test fielding runs validation."""
         with pytest.raises(
-            ValueError, match="Bullpen xFIP must be between 2.0 and 8.0"
+            ValueError, match="Fielding runs must be between -100.0 and 100.0"
         ):
             TeamStats(
                 name="Bad Team",
                 batting_runs=45.2,
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=8.5,
-                bullpen_xfip=9.0,  # Too high
-                defensive_runs=12.3,
+                fielding_runs=110.0,  # Too high
                 payroll=285.6,
                 age=28.5,
                 luck=3.2,
             )
 
-    def test_defensive_runs_validation(self) -> None:
-        """Test defensive runs validation."""
-        with pytest.raises(
-            ValueError, match="Defensive runs must be between -100.0 and 100.0"
-        ):
+    def test_luck_validation(self) -> None:
+        """Test luck validation."""
+        with pytest.raises(ValueError, match="Luck must be between -100.0 and 100.0"):
             TeamStats(
                 name="Bad Team",
                 batting_runs=45.2,
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=150.0,  # Too high
+                fielding_runs=12.3,
                 payroll=285.6,
                 age=28.5,
-                luck=3.2,
+                luck=150.0,  # Too high
             )
 
     def test_payroll_validation(self) -> None:
@@ -162,10 +151,9 @@ class TestTeamStats:
             TeamStats(
                 name="Bad Team",
                 batting_runs=45.2,
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
+                fielding_runs=12.3,
                 payroll=25.0,  # Too low
                 age=28.5,
                 luck=3.2,
@@ -179,28 +167,12 @@ class TestTeamStats:
             TeamStats(
                 name="Bad Team",
                 batting_runs=45.2,
-                home_run_rate=0.045,
+                barrel_rate=0.045,
                 baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
+                fielding_runs=12.3,
                 payroll=285.6,
                 age=45.0,  # Too old
                 luck=3.2,
-            )
-
-    def test_luck_validation(self) -> None:
-        """Test luck validation."""
-        with pytest.raises(ValueError, match="Luck must be between -30.0 and 30.0"):
-            TeamStats(
-                name="Bad Team",
-                batting_runs=45.2,
-                home_run_rate=0.045,
-                baserunning_runs=8.5,
-                bullpen_xfip=3.85,
-                defensive_runs=12.3,
-                payroll=285.6,
-                age=28.5,
-                luck=40.0,  # Too high
             )
 
 
@@ -212,10 +184,9 @@ class TestTeamNerdStats:
         return TeamStats(
             name="Test Team",
             batting_runs=25.0,
-            home_run_rate=0.040,
+            barrel_rate=0.040,
             baserunning_runs=5.0,
-            bullpen_xfip=4.20,
-            defensive_runs=8.0,
+            fielding_runs=8.0,
             payroll=150.0,
             age=27.5,
             luck=2.0,
@@ -228,10 +199,10 @@ class TestTeamNerdStats:
         nerd_stats = TeamNerdStats(
             team_stats=team_stats,
             z_batting_runs=0.8,
-            z_home_run_rate=0.5,
+            z_barrel_rate=0.5,
             z_baserunning_runs=0.3,
-            z_bullpen_xfip=-0.2,
-            z_defensive_runs=0.6,
+            z_fielding_runs=0.6,
+            z_luck=-0.2,
             z_payroll=0.4,
             z_age=-0.3,
             adjusted_payroll=0.0,
@@ -242,10 +213,10 @@ class TestTeamNerdStats:
 
         assert nerd_stats.team_stats == team_stats
         assert nerd_stats.z_batting_runs == 0.8
-        assert nerd_stats.z_home_run_rate == 0.5
+        assert nerd_stats.z_barrel_rate == 0.5
         assert nerd_stats.z_baserunning_runs == 0.3
-        assert nerd_stats.z_bullpen_xfip == -0.2
-        assert nerd_stats.z_defensive_runs == 0.6
+        assert nerd_stats.z_fielding_runs == 0.6
+        assert nerd_stats.z_luck == -0.2
         assert nerd_stats.z_payroll == 0.4
         assert nerd_stats.z_age == -0.3
         assert nerd_stats.adjusted_payroll == 0.0
@@ -261,10 +232,10 @@ class TestTeamNerdStats:
             TeamNerdStats(
                 team_stats=team_stats,
                 z_batting_runs=12.0,  # Too high
-                z_home_run_rate=0.5,
+                z_barrel_rate=0.5,
                 z_baserunning_runs=0.3,
-                z_bullpen_xfip=-0.2,
-                z_defensive_runs=0.6,
+                z_fielding_runs=0.6,
+                z_luck=-0.2,
                 z_payroll=0.4,
                 z_age=-0.3,
                 adjusted_payroll=0.0,
@@ -283,10 +254,10 @@ class TestTeamNerdStats:
             TeamNerdStats(
                 team_stats=team_stats,
                 z_batting_runs=0.8,
-                z_home_run_rate=0.5,
+                z_barrel_rate=0.5,
                 z_baserunning_runs=0.3,
-                z_bullpen_xfip=-0.2,
-                z_defensive_runs=0.6,
+                z_fielding_runs=0.6,
+                z_luck=-0.2,
                 z_payroll=0.4,
                 z_age=-0.3,
                 adjusted_payroll=-0.5,  # Too low
@@ -305,10 +276,10 @@ class TestTeamNerdStats:
             TeamNerdStats(
                 team_stats=team_stats,
                 z_batting_runs=0.8,
-                z_home_run_rate=0.5,
+                z_barrel_rate=0.5,
                 z_baserunning_runs=0.3,
-                z_bullpen_xfip=-0.2,
-                z_defensive_runs=0.6,
+                z_fielding_runs=0.6,
+                z_luck=-0.2,
                 z_payroll=0.4,
                 z_age=-0.3,
                 adjusted_payroll=0.0,
@@ -327,10 +298,10 @@ class TestTeamNerdStats:
             TeamNerdStats(
                 team_stats=team_stats,
                 z_batting_runs=0.8,
-                z_home_run_rate=0.5,
+                z_barrel_rate=0.5,
                 z_baserunning_runs=0.3,
-                z_bullpen_xfip=-0.2,
-                z_defensive_runs=0.6,
+                z_fielding_runs=0.6,
+                z_luck=-0.2,
                 z_payroll=0.4,
                 z_age=-0.3,
                 adjusted_payroll=0.0,
@@ -349,10 +320,10 @@ class TestTeamNerdStats:
             TeamNerdStats(
                 team_stats=team_stats,
                 z_batting_runs=0.8,
-                z_home_run_rate=0.5,
+                z_barrel_rate=0.5,
                 z_baserunning_runs=0.3,
-                z_bullpen_xfip=-0.2,
-                z_defensive_runs=0.6,
+                z_fielding_runs=0.6,
+                z_luck=-0.2,
                 z_payroll=0.4,
                 z_age=-0.3,
                 adjusted_payroll=0.0,
@@ -369,20 +340,20 @@ class TestCalculateTnerdScore:
         """Create sample league statistics for testing."""
         league_means = {
             "batting_runs": 0.0,
-            "home_run_rate": 0.035,
+            "barrel_rate": 0.035,
             "baserunning_runs": 0.0,
-            "bullpen_xfip": 4.20,
-            "defensive_runs": 0.0,
+            "fielding_runs": 4.20,
+            "luck": 0.0,
             "payroll": 140.0,
             "age": 28.5,
         }
 
         league_std_devs = {
             "batting_runs": 30.0,
-            "home_run_rate": 0.008,
+            "barrel_rate": 0.008,
             "baserunning_runs": 15.0,
-            "bullpen_xfip": 0.40,
-            "defensive_runs": 20.0,
+            "fielding_runs": 0.40,
+            "luck": 20.0,
             "payroll": 50.0,
             "age": 1.5,
         }
@@ -394,10 +365,9 @@ class TestCalculateTnerdScore:
         team_stats = TeamStats(
             name="Test Team",
             batting_runs=30.0,  # Above average
-            home_run_rate=0.043,  # Above average
+            barrel_rate=0.043,  # Above average
             baserunning_runs=15.0,  # Above average
-            bullpen_xfip=3.80,  # Better than average (lower is better)
-            defensive_runs=20.0,  # Above average
+            fielding_runs=20.0,  # Above average
             payroll=90.0,  # Below average (better for tNERD)
             age=26.0,  # Younger than average (better)
             luck=4.0,  # Lucky
@@ -409,10 +379,10 @@ class TestCalculateTnerdScore:
 
         # Check that z-scores are calculated correctly
         assert nerd_stats.z_batting_runs == (30.0 - 0.0) / 30.0  # 1.0
-        assert nerd_stats.z_home_run_rate == (0.043 - 0.035) / 0.008  # 1.0
+        assert nerd_stats.z_barrel_rate == (0.043 - 0.035) / 0.008  # 1.0
         assert nerd_stats.z_baserunning_runs == (15.0 - 0.0) / 15.0  # 1.0
-        assert nerd_stats.z_bullpen_xfip == (3.80 - 4.20) / 0.40  # -1.0
-        assert nerd_stats.z_defensive_runs == (20.0 - 0.0) / 20.0  # 1.0
+        assert nerd_stats.z_fielding_runs == (20.0 - 4.20) / 0.40  # 39.5
+        assert nerd_stats.z_luck == (4.0 - 0.0) / 20.0  # 0.2
         assert nerd_stats.z_payroll == (90.0 - 140.0) / 50.0  # -1.0
         assert nerd_stats.z_age == (26.0 - 28.5) / 1.5  # -1.67 (approximately)
 
@@ -423,18 +393,17 @@ class TestCalculateTnerdScore:
         assert (
             abs(nerd_stats.adjusted_age - 1.67) < 0.01
         )  # -z_age = -(-1.67) = 1.67, younger is better
-        assert nerd_stats.adjusted_luck == 2.0  # luck is 4.0, capped at 2.0
+        assert nerd_stats.adjusted_luck == 0.2  # luck is 0.2, not capped
 
         # Check tNERD score calculation
         expected_tnerd = (
             1.0  # z_batting_runs
-            + 1.0  # z_home_run_rate
+            + 1.0  # z_barrel_rate
             + 1.0  # z_baserunning_runs
-            + (-1.0 / 2)  # z_bullpen_xfip / 2
-            + (1.0 / 2)  # z_defensive_runs / 2
+            + 39.5  # z_fielding_runs
             + 1.0  # adjusted_payroll
             + 1.67  # adjusted_age (approximately)
-            + (2.0 / 2)  # adjusted_luck / 2
+            + 0.2  # adjusted_luck
             + 4.0  # constant
         )
 
@@ -445,10 +414,9 @@ class TestCalculateTnerdScore:
         team_stats = TeamStats(
             name="Negative Team",
             batting_runs=-45.0,
-            home_run_rate=0.025,
+            barrel_rate=0.025,
             baserunning_runs=-20.0,
-            bullpen_xfip=5.00,  # Worse than average
-            defensive_runs=-30.0,
+            fielding_runs=-30.0,
             payroll=200.0,  # Above average (worse for tNERD)
             age=31.0,  # Older than average (worse)
             luck=-8.0,  # Unlucky
@@ -468,10 +436,9 @@ class TestCalculateTnerdScore:
         team_stats = TeamStats(
             name="Very Lucky Team",
             batting_runs=0.0,
-            home_run_rate=0.035,
+            barrel_rate=0.035,
             baserunning_runs=0.0,
-            bullpen_xfip=4.20,
-            defensive_runs=0.0,
+            fielding_runs=0.0,
             payroll=140.0,
             age=28.5,
             luck=15.0,  # Very lucky
@@ -489,10 +456,9 @@ class TestCalculateTnerdScore:
         team_stats = TeamStats(
             name="Average Team",
             batting_runs=0.0,  # League average
-            home_run_rate=0.035,  # League average
+            barrel_rate=0.035,  # League average
             baserunning_runs=0.0,  # League average
-            bullpen_xfip=4.20,  # League average
-            defensive_runs=0.0,  # League average
+            fielding_runs=0.0,  # League average
             payroll=140.0,  # League average
             age=28.5,  # League average
             luck=0.0,  # No luck
@@ -504,10 +470,10 @@ class TestCalculateTnerdScore:
 
         # All z-scores should be 0.0
         assert nerd_stats.z_batting_runs == 0.0
-        assert nerd_stats.z_home_run_rate == 0.0
+        assert nerd_stats.z_barrel_rate == 0.0
         assert nerd_stats.z_baserunning_runs == 0.0
-        assert nerd_stats.z_bullpen_xfip == 0.0
-        assert nerd_stats.z_defensive_runs == 0.0
+        assert nerd_stats.z_fielding_runs == (0.0 - 4.20) / 0.40  # -10.5
+        assert nerd_stats.z_luck == 0.0
         assert nerd_stats.z_payroll == 0.0
         assert nerd_stats.z_age == 0.0
 
@@ -516,5 +482,6 @@ class TestCalculateTnerdScore:
         assert nerd_stats.adjusted_age == 0.0
         assert nerd_stats.adjusted_luck == 0.0
 
-        # tNERD score should be just the constant
-        assert nerd_stats.tnerd_score == 4.0
+        # tNERD score should be the constant plus the z_fielding_runs contribution
+        expected_tnerd = 4.0 + (-10.5)  # constant + z_fielding_runs
+        assert abs(nerd_stats.tnerd_score - expected_tnerd) < 0.01

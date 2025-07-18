@@ -17,13 +17,12 @@ class TeamStats:
 
     name: str
     batting_runs: float  # Park-Adjusted Batting Runs Above Average (Bat)
-    home_run_rate: float  # Park-Adjusted Home Run Rate (HR%)
+    barrel_rate: float  # Barrel % (Barrel%)
     baserunning_runs: float  # Baserunning Runs (BsR)
-    bullpen_xfip: float  # Bullpen xFIP (Bull)
-    defensive_runs: float  # Defensive Runs (Def)
+    fielding_runs: float  # Fielding Runs Above Average (Fld)
     payroll: float  # Payroll, Where Below Average Is Better (Pay)
     age: float  # Batter Age, Where Younger Is Better (Age)
-    luck: float  # Expected Wins, Per WAR, Minus Actual Wins (Luck)
+    luck: float  # wRC minus Runs (Luck)
 
     def __post_init__(self) -> None:
         """Validate team statistics after initialization."""
@@ -42,10 +41,10 @@ class TeamStats:
                 f"Batting runs must be between -200.0 and 200.0, got {self.batting_runs}"
             )
 
-        # Home run rate validation (typically 0.02-0.08)
-        if not 0.0 <= self.home_run_rate <= 0.15:  # noqa: PLR2004
+        # Barrel rate validation (typically 0.02-0.12)
+        if not 0.0 <= self.barrel_rate <= 0.15:  # noqa: PLR2004
             raise ValueError(
-                f"Home run rate must be between 0.0 and 0.15, got {self.home_run_rate}"
+                f"Barrel rate must be between 0.0 and 0.15, got {self.barrel_rate}"
             )
 
         # Baserunning runs validation (typically -30 to +30 runs)
@@ -54,16 +53,10 @@ class TeamStats:
                 f"Baserunning runs must be between -50.0 and 50.0, got {self.baserunning_runs}"
             )
 
-        # Bullpen xFIP validation (typically 3.00-6.00)
-        if not 2.0 <= self.bullpen_xfip <= 8.0:  # noqa: PLR2004
+        # Fielding runs validation (typically -50 to +50 runs)
+        if not -100.0 <= self.fielding_runs <= 100.0:  # noqa: PLR2004
             raise ValueError(
-                f"Bullpen xFIP must be between 2.0 and 8.0, got {self.bullpen_xfip}"
-            )
-
-        # Defensive runs validation (typically -50 to +50 runs)
-        if not -100.0 <= self.defensive_runs <= 100.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Defensive runs must be between -100.0 and 100.0, got {self.defensive_runs}"
+                f"Fielding runs must be between -100.0 and 100.0, got {self.fielding_runs}"
             )
 
         # Payroll validation (typically in millions, 50-300)
@@ -78,9 +71,9 @@ class TeamStats:
                 f"Team age must be between 20.0 and 40.0 years, got {self.age}"
             )
 
-        # Luck validation (can be negative - expected wins minus actual wins)
-        if not -30.0 <= self.luck <= 30.0:  # noqa: PLR2004
-            raise ValueError(f"Luck must be between -30.0 and 30.0, got {self.luck}")
+        # Luck validation (can be negative - wRC minus Runs)
+        if not -100.0 <= self.luck <= 100.0:  # noqa: PLR2004
+            raise ValueError(f"Luck must be between -100.0 and 100.0, got {self.luck}")
 
 
 @dataclass
@@ -95,12 +88,12 @@ class TeamNerdStats:
 
     # Z-scores (standard deviations from mean)
     z_batting_runs: float
-    z_home_run_rate: float
+    z_barrel_rate: float
     z_baserunning_runs: float
-    z_bullpen_xfip: float
-    z_defensive_runs: float
+    z_fielding_runs: float
     z_payroll: float
     z_age: float
+    z_luck: float
 
     # Adjusted values (after caps and positive-only rules)
     adjusted_payroll: float  # Positive only (below average is better)
@@ -120,12 +113,12 @@ class TeamNerdStats:
         # Z-scores should typically be within -3 to +3 standard deviations, but allow extreme values
         z_scores = [
             self.z_batting_runs,
-            self.z_home_run_rate,
+            self.z_barrel_rate,
             self.z_baserunning_runs,
-            self.z_bullpen_xfip,
-            self.z_defensive_runs,
+            self.z_fielding_runs,
             self.z_payroll,
             self.z_age,
+            self.z_luck,
         ]
 
         for z_score in z_scores:
@@ -166,7 +159,7 @@ def calculate_tnerd_score(
     """
     Calculate tNERD score for a team.
 
-    Formula: zBat + zHR% + zBsR + (zBull / 2) + (zDef / 2) + zPay + zAge + (Luck / 2) + Constant
+    Formula: zBat + zBarrel% + zBsR + zFld + zPay + zAge + zLuck + Constant
 
     Args:
         team_stats: Team statistics
@@ -182,22 +175,20 @@ def calculate_tnerd_score(
     z_batting_runs = (
         team_stats.batting_runs - league_means["batting_runs"]
     ) / league_std_devs["batting_runs"]
-    z_home_run_rate = (
-        team_stats.home_run_rate - league_means["home_run_rate"]
-    ) / league_std_devs["home_run_rate"]
+    z_barrel_rate = (
+        team_stats.barrel_rate - league_means["barrel_rate"]
+    ) / league_std_devs["barrel_rate"]
     z_baserunning_runs = (
         team_stats.baserunning_runs - league_means["baserunning_runs"]
     ) / league_std_devs["baserunning_runs"]
-    z_bullpen_xfip = (
-        team_stats.bullpen_xfip - league_means["bullpen_xfip"]
-    ) / league_std_devs["bullpen_xfip"]
-    z_defensive_runs = (
-        team_stats.defensive_runs - league_means["defensive_runs"]
-    ) / league_std_devs["defensive_runs"]
+    z_fielding_runs = (
+        team_stats.fielding_runs - league_means["fielding_runs"]
+    ) / league_std_devs["fielding_runs"]
     z_payroll = (team_stats.payroll - league_means["payroll"]) / league_std_devs[
         "payroll"
     ]
     z_age = (team_stats.age - league_means["age"]) / league_std_devs["age"]
+    z_luck = (team_stats.luck - league_means["luck"]) / league_std_devs["luck"]
 
     # Apply caps and positive-only rules
     # For payroll, below average is better, so we want negative z_payroll values
@@ -206,30 +197,30 @@ def calculate_tnerd_score(
     # For age, younger is better, so we want negative z_age values (below mean age)
     # We flip the sign and then apply positive-only rules
     adjusted_age = max(0.0, -z_age)
-    adjusted_luck = max(0.0, min(2.0, team_stats.luck))
+    # For luck, apply positive-only rule and cap at 2.0
+    adjusted_luck = max(0.0, min(2.0, z_luck))
 
     # Calculate tNERD score using the formula
     tnerd_score = (
         z_batting_runs
-        + z_home_run_rate
+        + z_barrel_rate
         + z_baserunning_runs
-        + (z_bullpen_xfip / 2)
-        + (z_defensive_runs / 2)
+        + z_fielding_runs
         + adjusted_payroll
         + adjusted_age
-        + (adjusted_luck / 2)
+        + adjusted_luck
         + constant
     )
 
     return TeamNerdStats(
         team_stats=team_stats,
         z_batting_runs=z_batting_runs,
-        z_home_run_rate=z_home_run_rate,
+        z_barrel_rate=z_barrel_rate,
         z_baserunning_runs=z_baserunning_runs,
-        z_bullpen_xfip=z_bullpen_xfip,
-        z_defensive_runs=z_defensive_runs,
+        z_fielding_runs=z_fielding_runs,
         z_payroll=z_payroll,
         z_age=z_age,
+        z_luck=z_luck,
         adjusted_payroll=adjusted_payroll,
         adjusted_age=adjusted_age,
         adjusted_luck=adjusted_luck,

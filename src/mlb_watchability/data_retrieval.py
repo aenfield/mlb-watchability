@@ -9,6 +9,12 @@ import pybaseball as pb
 import statsapi  # type: ignore
 
 from .pitcher_stats import PitcherStats
+from .team_stats import TeamStats
+
+
+def _raise_missing_columns_error(missing_columns: list[str]) -> None:
+    """Raise a RuntimeError for missing columns."""
+    raise RuntimeError(f"Missing required columns: {missing_columns}")
 
 
 def get_game_schedule(date: str) -> list[dict[str, Any]]:
@@ -149,3 +155,90 @@ def get_all_pitcher_stats(season: int = 2024) -> dict[str, PitcherStats]:
         ) from e
     else:
         return pitcher_stats_dict
+
+
+def get_all_team_stats(season: int = 2025) -> dict[str, TeamStats]:
+    """
+    Retrieve team statistics for all teams using pybaseball and payroll data.
+
+    Args:
+        season: Season year (default: 2025)
+
+    Returns:
+        Dictionary mapping team names to TeamStats objects
+
+    Raises:
+        RuntimeError: If API call fails or data retrieval fails
+    """
+    try:
+        # Fetch team batting statistics for the season
+        team_batting_df = pb.team_batting(season)
+
+        # Load payroll data from CSV file
+        payroll_df = pd.read_csv("data/payroll-spotrac.2025.csv")
+
+        # Create team abbreviation mapping for payroll data to match batting stats
+        payroll_to_batting_mapping = {
+            "TB": "TBR",
+            "WSH": "WSN",
+            "SD": "SDP",
+            "SF": "SFG",
+            "KC": "KCR",
+        }
+
+        # Apply team name mapping to payroll data
+        payroll_df["Team"] = payroll_df["Team"].replace(payroll_to_batting_mapping)
+
+        # Rename Age column in payroll data to avoid conflict
+        payroll_df = payroll_df.rename(columns={"Age": "Payroll_Age"})
+
+        # Merge batting stats with payroll data
+        merged_df = pd.merge(team_batting_df, payroll_df, on="Team", how="inner")
+
+        # Check for required columns
+        required_columns = ["Bat", "Barrel%", "BsR", "Fld", "wRC", "R"]
+        missing_columns = [
+            col for col in required_columns if col not in merged_df.columns
+        ]
+
+        if missing_columns:
+            _raise_missing_columns_error(missing_columns)
+
+        team_stats_dict = {}
+
+        for _, team_row in merged_df.iterrows():
+            # Calculate luck as wRC minus Runs (opposite of pNERD luck)
+            luck = team_row["wRC"] - team_row["R"]
+
+            # Convert payroll from total to millions for readability
+            payroll_millions = team_row["Payroll"] / 1_000_000
+
+            # Handle missing Barrel% values
+            barrel_rate = team_row.get("Barrel%", 0.0)
+            if pd.isna(barrel_rate):
+                barrel_rate = 0.0
+
+            # Convert barrel rate from percentage to decimal if needed
+            if barrel_rate > 1.0:
+                barrel_rate = barrel_rate / 100.0
+
+            # Create TeamStats object
+            team_stats = TeamStats(
+                name=team_row["Team"],
+                batting_runs=team_row["Bat"],
+                barrel_rate=barrel_rate,
+                baserunning_runs=team_row["BsR"],
+                fielding_runs=team_row["Fld"],
+                payroll=payroll_millions,
+                age=team_row["Payroll_Age"],
+                luck=luck,
+            )
+
+            team_stats_dict[team_row["Team"]] = team_stats
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to retrieve team statistics for season {season}: {str(e)}"
+        ) from e
+    else:
+        return team_stats_dict
