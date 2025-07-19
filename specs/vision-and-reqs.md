@@ -25,7 +25,7 @@ The pNERD score comes from these pitcher-specific statistics and exists for each
 - Strike Rate (Strk) - it looks like this isn't available directly and already calculated via pybaseball.pitching_stats (which I think comes from Fangraph's pitching stats), so for this one get the total strikes ('Strikes') and divide by total pitches ('Pitches')
 - Velocity (Velo) - use the 'FBv' stat (there are other fields that have data from different sources - Statcast and Pitch Info - but FBv exists for more pitchers)
 - Age
-- Pace
+- Pace (faster/smaller is better)
 - ERA- minus xFIP- (Luck) - pitchers that have been unlucky in the sense that their ERA is higher than the corresponding defense-independent stat can be expected regress (positively)
 - Knuckleball Rate (KN) - for pitchers that don't throw knucklers, this will be NaN, so be sure that a lack of this number doesn't crash anything - instead, pitchers with a NaN should just get zero contribution for KN rate
 

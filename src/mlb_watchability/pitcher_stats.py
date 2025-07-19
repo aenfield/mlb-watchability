@@ -105,7 +105,7 @@ def calculate_pnerd_score(
     """
     Calculate pNERD score for a pitcher.
 
-    Formula: (zxFIP- * 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (zPace / 2) + (Luck / 20) + (KN * 5) + Constant
+    Formula: (zxFIP- * 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (-zPace / 2) + (Luck / 20) + (KN * 5) + Constant
 
     Args:
         pitcher_stats: Pitcher statistics
@@ -147,7 +147,7 @@ def calculate_pnerd_score(
         + (z_strike_rate / 2)
         + adjusted_velocity
         + adjusted_age
-        + (z_pace / 2)
+        + (-z_pace / 2)
         + (adjusted_luck / 20)
         + (pitcher_stats.knuckleball_rate * 5)
         + constant

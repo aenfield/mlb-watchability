@@ -78,6 +78,7 @@ Integration & Enhancement
 
 ## Additional TODO possibilities, depending on need
 
+- In diagnostics output, show the components of the pNERD and tNERD calcs, not just the raw stats and the z-scores - this'd make it easier to see/visually know where the overall scores come from because it'd show where things (like pitcher luck) are divided and where signs are changed (pitcher pace).
 - Add rate limiting for pybaseball calls.
 - Optimize data retrieval to minimize API calls and improve performance
 

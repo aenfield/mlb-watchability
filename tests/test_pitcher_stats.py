@@ -290,7 +290,7 @@ class TestCalculatePnerdScore:
             + (1.0 / 2)  # z_strike_rate / 2
             + 1.0  # adjusted_velocity
             + 0.75  # adjusted_age
-            + (-1.0 / 2)  # z_pace / 2
+            + (1.0 / 2)  # -z_pace / 2 (faster pace is better)
             + (1.0 / 20)  # adjusted_luck / 20
             + (0.0 * 5)  # knuckleball_rate * 5
             + 3.8  # constant
