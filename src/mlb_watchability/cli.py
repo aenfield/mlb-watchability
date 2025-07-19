@@ -4,15 +4,14 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import typer
-from scipy import stats  # type: ignore
 
 from mlb_watchability.data_retrieval import (
-    get_all_pitcher_stats,
-    get_all_team_stats,
+    calculate_detailed_pitcher_nerd_scores,
+    calculate_detailed_team_nerd_scores,
+    calculate_pitcher_nerd_scores,
+    calculate_team_nerd_scores,
     get_game_schedule,
 )
-from mlb_watchability.pitcher_stats import calculate_pnerd_score
-from mlb_watchability.team_stats import calculate_tnerd_score
 
 app = typer.Typer()
 
@@ -54,134 +53,6 @@ def get_team_abbreviation(full_name: str) -> str:
     return team_mapping.get(full_name, full_name)
 
 
-def calculate_team_nerd_scores(season: int = 2025) -> dict[str, float]:
-    """Calculate team NERD scores for all teams."""
-    detailed_stats = calculate_detailed_team_nerd_scores(season)
-    return {team: stats.tnerd_score for team, stats in detailed_stats.items()}
-
-
-def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, Any]:
-    """Calculate detailed team NERD scores for all teams."""
-    try:
-        # Get all team stats - note: payroll data is only available for 2025
-        # For other years, we'll use the team batting stats for that year but 2025 payroll/age data
-        team_stats_dict = get_all_team_stats(season)
-
-        # Calculate league means and standard deviations
-        all_teams = list(team_stats_dict.values())
-
-        # Extract values for each stat
-        batting_runs = [team.batting_runs for team in all_teams]
-        barrel_rates = [team.barrel_rate for team in all_teams]
-        baserunning_runs = [team.baserunning_runs for team in all_teams]
-        fielding_runs = [team.fielding_runs for team in all_teams]
-        payrolls = [team.payroll for team in all_teams]
-        ages = [team.age for team in all_teams]
-        luck_values = [team.luck for team in all_teams]
-
-        # Calculate means and standard deviations
-        league_means = {
-            "batting_runs": stats.tmean(batting_runs),
-            "barrel_rate": stats.tmean(barrel_rates),
-            "baserunning_runs": stats.tmean(baserunning_runs),
-            "fielding_runs": stats.tmean(fielding_runs),
-            "payroll": stats.tmean(payrolls),
-            "age": stats.tmean(ages),
-            "luck": stats.tmean(luck_values),
-        }
-
-        league_std_devs = {
-            "batting_runs": stats.tstd(batting_runs),
-            "barrel_rate": stats.tstd(barrel_rates),
-            "baserunning_runs": stats.tstd(baserunning_runs),
-            "fielding_runs": stats.tstd(fielding_runs),
-            "payroll": stats.tstd(payrolls),
-            "age": stats.tstd(ages),
-            "luck": stats.tstd(luck_values),
-        }
-
-        # Calculate tNERD for each team
-        team_nerd_details = {}
-        for team_abbr, team_stats in team_stats_dict.items():
-            try:
-                team_nerd_stats = calculate_tnerd_score(
-                    team_stats, league_means, league_std_devs
-                )
-                team_nerd_details[team_abbr] = team_nerd_stats
-            except ValueError:
-                # Skip teams with invalid tNERD scores (negative values)
-                continue
-
-    except Exception:
-        # If calculation fails, return empty dict
-        return {}
-    else:
-        return team_nerd_details
-
-
-def calculate_pitcher_nerd_scores(season: int = 2024) -> dict[str, float]:
-    """Calculate pitcher NERD scores for all pitchers."""
-    detailed_stats = calculate_detailed_pitcher_nerd_scores(season)
-    return {pitcher: stats.pnerd_score for pitcher, stats in detailed_stats.items()}
-
-
-def calculate_detailed_pitcher_nerd_scores(season: int = 2024) -> dict[str, Any]:
-    """Calculate detailed pitcher NERD scores for all pitchers."""
-    try:
-        # Get all pitcher stats
-        pitcher_stats_dict = get_all_pitcher_stats(season)
-
-        # Calculate league means and standard deviations
-        all_pitchers = list(pitcher_stats_dict.values())
-
-        # Extract values for each stat
-        xfip_minus_values = [pitcher.xfip_minus for pitcher in all_pitchers]
-        swinging_strike_rates = [
-            pitcher.swinging_strike_rate for pitcher in all_pitchers
-        ]
-        strike_rates = [pitcher.strike_rate for pitcher in all_pitchers]
-        velocities = [pitcher.velocity for pitcher in all_pitchers]
-        ages = [pitcher.age for pitcher in all_pitchers]
-        paces = [pitcher.pace for pitcher in all_pitchers]
-
-        # Calculate means and standard deviations
-        league_means = {
-            "xfip_minus": stats.tmean(xfip_minus_values),
-            "swinging_strike_rate": stats.tmean(swinging_strike_rates),
-            "strike_rate": stats.tmean(strike_rates),
-            "velocity": stats.tmean(velocities),
-            "age": stats.tmean(ages),
-            "pace": stats.tmean(paces),
-        }
-
-        league_std_devs = {
-            "xfip_minus": stats.tstd(xfip_minus_values),
-            "swinging_strike_rate": stats.tstd(swinging_strike_rates),
-            "strike_rate": stats.tstd(strike_rates),
-            "velocity": stats.tstd(velocities),
-            "age": stats.tstd(ages),
-            "pace": stats.tstd(paces),
-        }
-
-        # Calculate pNERD for each pitcher
-        pitcher_nerd_details = {}
-        for pitcher_name, pitcher_stats in pitcher_stats_dict.items():
-            try:
-                pitcher_nerd_stats = calculate_pnerd_score(
-                    pitcher_stats, league_means, league_std_devs
-                )
-                pitcher_nerd_details[pitcher_name] = pitcher_nerd_stats
-            except ValueError:
-                # Skip pitchers with invalid pNERD scores (negative values)
-                continue
-
-    except Exception:
-        # If calculation fails, return empty dict
-        return {}
-    else:
-        return pitcher_nerd_details
-
-
 def get_today() -> str:
     """Get today's date."""
     today = datetime.now()
@@ -217,7 +88,9 @@ def format_team_nerd_breakdown(team_nerd_details: dict[str, Any]) -> str:
     lines.append("-" * 120)
 
     # Sort teams by tNERD score (highest first)
-    sorted_teams = sorted(team_nerd_details.items(), key=lambda x: x[1].tnerd_score, reverse=True)
+    sorted_teams = sorted(
+        team_nerd_details.items(), key=lambda x: x[1].tnerd_score, reverse=True
+    )
 
     for team_abbr, team_nerd_stats in sorted_teams:
         team_stats = team_nerd_stats.team_stats
@@ -244,7 +117,9 @@ def format_team_nerd_breakdown(team_nerd_details: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def format_pitcher_nerd_breakdown(pitcher_nerd_details: dict[str, Any], games: list[dict[str, Any]] | None = None) -> str:
+def format_pitcher_nerd_breakdown(
+    pitcher_nerd_details: dict[str, Any], games: list[dict[str, Any]] | None = None
+) -> str:
     """Format detailed pitcher NERD breakdown for display."""
     if not pitcher_nerd_details:
         return "No pitcher NERD data available"
@@ -262,7 +137,8 @@ def format_pitcher_nerd_breakdown(pitcher_nerd_details: dict[str, Any], games: l
                 todays_pitchers.add(home_starter)
 
         filtered_pitcher_details = {
-            name: stats for name, stats in pitcher_nerd_details.items()
+            name: stats
+            for name, stats in pitcher_nerd_details.items()
             if name in todays_pitchers
         }
 
@@ -278,7 +154,9 @@ def format_pitcher_nerd_breakdown(pitcher_nerd_details: dict[str, Any], games: l
     lines.append("-" * 140)
 
     # Sort pitchers by pNERD score (highest first)
-    sorted_pitchers = sorted(filtered_pitcher_details.items(), key=lambda x: x[1].pnerd_score, reverse=True)
+    sorted_pitchers = sorted(
+        filtered_pitcher_details.items(), key=lambda x: x[1].pnerd_score, reverse=True
+    )
 
     for pitcher_name, pitcher_nerd_stats in sorted_pitchers:
         pitcher_stats = pitcher_nerd_stats.pitcher_stats
