@@ -5,12 +5,14 @@ from typing import Any
 
 import typer
 
-from mlb_watchability.data_retrieval import (
+from mlb_watchability.data_retrieval import get_game_schedule
+from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
-    calculate_detailed_team_nerd_scores,
     calculate_pitcher_nerd_scores,
+)
+from mlb_watchability.team_stats import (
+    calculate_detailed_team_nerd_scores,
     calculate_team_nerd_scores,
-    get_game_schedule,
 )
 
 app = typer.Typer()

@@ -8,16 +8,9 @@ import pandas as pd
 import pytest
 
 from mlb_watchability.data_retrieval import (
-    calculate_detailed_pitcher_nerd_scores,
-    calculate_detailed_team_nerd_scores,
-    calculate_pitcher_nerd_scores,
-    calculate_team_nerd_scores,
     get_all_pitcher_stats,
-    get_all_team_stats,
     get_game_schedule,
 )
-from mlb_watchability.pitcher_stats import PitcherStats
-from mlb_watchability.team_stats import TeamStats
 
 
 # @pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
@@ -310,25 +303,25 @@ class TestGetAllPitcherStats:
 
             # Verify Tarik Skubal stats
             skubal_stats = result["Tarik Skubal"]
-            assert isinstance(skubal_stats, PitcherStats)
-            assert skubal_stats.name == "Tarik Skubal"
-            assert skubal_stats.team == "DET"
-            assert skubal_stats.xfip_minus == 85
-            assert skubal_stats.swinging_strike_rate == 0.12
-            assert skubal_stats.strike_rate == 0.6  # 1200/2000
-            assert skubal_stats.velocity == 94.5
-            assert skubal_stats.age == 27
-            assert skubal_stats.pace == 22.5
-            assert skubal_stats.luck == -10.0  # 75 - 85
-            assert skubal_stats.knuckleball_rate == 0.0
+            assert isinstance(skubal_stats, dict)
+            assert skubal_stats["Name"] == "Tarik Skubal"
+            assert skubal_stats["Team"] == "DET"
+            assert skubal_stats["xFIP-"] == 85
+            assert skubal_stats["SwStr%"] == 0.12
+            assert skubal_stats["Strike_Rate"] == 0.6  # 1200/2000
+            assert skubal_stats["FBv"] == 94.5
+            assert skubal_stats["Age"] == 27
+            assert skubal_stats["Pace"] == 22.5
+            assert skubal_stats["Luck"] == -10.0  # 75 - 85
+            assert skubal_stats["KN%"] == 0.0
 
             # Verify Matt Waldron stats
             waldron_stats = result["Matt Waldron"]
-            assert isinstance(waldron_stats, PitcherStats)
-            assert waldron_stats.name == "Matt Waldron"
-            assert waldron_stats.team == "SD"
-            assert waldron_stats.strike_rate == 0.59375  # 950/1600
-            assert waldron_stats.luck == 5.0  # 110 - 105
+            assert isinstance(waldron_stats, dict)
+            assert waldron_stats["Name"] == "Matt Waldron"
+            assert waldron_stats["Team"] == "SD"
+            assert waldron_stats["Strike_Rate"] == 0.59375  # 950/1600
+            assert waldron_stats["Luck"] == 5.0  # 110 - 105
 
             mock_pitching_stats.assert_called_once_with(2024, qual=20)
 
@@ -364,7 +357,7 @@ class TestGetAllPitcherStats:
             # Should handle NaN KN% by setting to 0
             assert len(result) == 1
             pitcher_stats = result["Test Pitcher"]
-            assert pitcher_stats.knuckleball_rate == 0.0
+            assert pitcher_stats["KN%"] == 0.0
 
     def test_get_all_pitcher_stats_with_no_starting_pitchers(self) -> None:
         """Test that get_all_pitcher_stats handles data with no starting pitchers."""
@@ -464,30 +457,26 @@ class TestGetAllPitcherStatsIntegration:
 
             # Check a few random pitchers
             for _, pitcher_stats in list(result.items())[:5]:
-                assert isinstance(pitcher_stats, PitcherStats)
-                assert pitcher_stats.name
-                assert pitcher_stats.team
+                assert isinstance(pitcher_stats, dict)
+                assert pitcher_stats["Name"]
+                assert pitcher_stats["Team"]
 
                 # Validate data types and reasonable ranges
                 assert isinstance(
-                    pitcher_stats.xfip_minus, int | float | np.integer | np.floating
+                    pitcher_stats["xFIP-"], int | float | np.integer | np.floating
                 )
-                assert 0 <= pitcher_stats.xfip_minus <= 300
+                assert 0 <= pitcher_stats["xFIP-"] <= 300
+
+                assert isinstance(pitcher_stats["SwStr%"], float | np.floating)
+                assert 0.0 <= pitcher_stats["SwStr%"] <= 1.0
+
+                assert isinstance(pitcher_stats["Strike_Rate"], float | np.floating)
+                assert 0.0 <= pitcher_stats["Strike_Rate"] <= 1.0
 
                 assert isinstance(
-                    pitcher_stats.swinging_strike_rate, float | np.floating
+                    pitcher_stats["FBv"], int | float | np.integer | np.floating
                 )
-                assert 0.0 <= pitcher_stats.swinging_strike_rate <= 1.0
+                assert 70.0 <= pitcher_stats["FBv"] <= 110.0
 
-                assert isinstance(pitcher_stats.strike_rate, float | np.floating)
-                assert 0.0 <= pitcher_stats.strike_rate <= 1.0
-
-                assert isinstance(
-                    pitcher_stats.velocity, int | float | np.integer | np.floating
-                )
-                assert 70.0 <= pitcher_stats.velocity <= 110.0
-
-                assert isinstance(pitcher_stats.age, int | np.integer)
-                assert 18 <= pitcher_stats.age <= 50
-
-
+                assert isinstance(pitcher_stats["Age"], int | np.integer)
+                assert 18 <= pitcher_stats["Age"] <= 50

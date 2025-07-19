@@ -2,6 +2,10 @@
 
 from dataclasses import dataclass
 
+from scipy import stats  # type: ignore
+
+from .data_retrieval import get_all_team_stats
+
 # we skip ruff linting for magic values a bunch of places below with noqa for PLR2004, since it's
 # clearer and less verbose and we don't need to use these checks in other places
 
@@ -169,3 +173,108 @@ def calculate_tnerd_score(
         adjusted_luck=adjusted_luck,
         tnerd_score=tnerd_score,
     )
+
+
+def get_all_team_stats_objects(season: int = 2025) -> dict[str, TeamStats]:
+    """
+    Get all team statistics as TeamStats objects.
+
+    Args:
+        season: Season year (default: 2025)
+
+    Returns:
+        Dictionary mapping team names to TeamStats objects
+
+    Raises:
+        RuntimeError: If data retrieval fails
+    """
+    try:
+        # Get raw team data
+        raw_team_data = get_all_team_stats(season)
+
+        # Create TeamStats objects from raw data
+        team_stats_dict = {}
+        for team_name, raw_stats in raw_team_data.items():
+            team_stats = TeamStats(
+                name=raw_stats["Team"],
+                batting_runs=raw_stats["Bat"],
+                barrel_rate=raw_stats["Barrel%"],
+                baserunning_runs=raw_stats["BsR"],
+                fielding_runs=raw_stats["Fld"],
+                payroll=raw_stats["Payroll"],
+                age=raw_stats["Payroll_Age"],
+                luck=raw_stats["Luck"],
+            )
+            team_stats_dict[team_name] = team_stats
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to create team stats objects for season {season}: {str(e)}"
+        ) from e
+    else:
+        return team_stats_dict
+
+
+def calculate_team_nerd_scores(season: int = 2025) -> dict[str, float]:
+    """Calculate team NERD scores for all teams."""
+    detailed_stats = calculate_detailed_team_nerd_scores(season)
+    return {team: nerd_stats.tnerd_score for team, nerd_stats in detailed_stats.items()}
+
+
+def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNerdStats]:
+    """Calculate detailed team NERD scores for all teams."""
+    try:
+        # Get all team stats - note: payroll data is only available for 2025
+        # For other years, we'll use the team batting stats for that year but 2025 payroll/age data
+        team_stats_dict = get_all_team_stats_objects(season)
+
+        # Calculate league means and standard deviations
+        all_teams = list(team_stats_dict.values())
+
+        # Extract values for each stat
+        batting_runs = [team.batting_runs for team in all_teams]
+        barrel_rates = [team.barrel_rate for team in all_teams]
+        baserunning_runs = [team.baserunning_runs for team in all_teams]
+        fielding_runs = [team.fielding_runs for team in all_teams]
+        payrolls = [team.payroll for team in all_teams]
+        ages = [team.age for team in all_teams]
+        luck_values = [team.luck for team in all_teams]
+
+        # Calculate means and standard deviations
+        league_means = {
+            "batting_runs": stats.tmean(batting_runs),
+            "barrel_rate": stats.tmean(barrel_rates),
+            "baserunning_runs": stats.tmean(baserunning_runs),
+            "fielding_runs": stats.tmean(fielding_runs),
+            "payroll": stats.tmean(payrolls),
+            "age": stats.tmean(ages),
+            "luck": stats.tmean(luck_values),
+        }
+
+        league_std_devs = {
+            "batting_runs": stats.tstd(batting_runs),
+            "barrel_rate": stats.tstd(barrel_rates),
+            "baserunning_runs": stats.tstd(baserunning_runs),
+            "fielding_runs": stats.tstd(fielding_runs),
+            "payroll": stats.tstd(payrolls),
+            "age": stats.tstd(ages),
+            "luck": stats.tstd(luck_values),
+        }
+
+        # Calculate tNERD for each team
+        team_nerd_details = {}
+        for team_abbr, team_stats in team_stats_dict.items():
+            try:
+                team_nerd_stats = calculate_tnerd_score(
+                    team_stats, league_means, league_std_devs
+                )
+                team_nerd_details[team_abbr] = team_nerd_stats
+            except ValueError:
+                # Skip teams with invalid tNERD scores (negative values)
+                continue
+
+    except Exception:
+        # If calculation fails, return empty dict
+        return {}
+    else:
+        return team_nerd_details

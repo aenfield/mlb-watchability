@@ -2,6 +2,10 @@
 
 from dataclasses import dataclass
 
+from scipy import stats  # type: ignore
+
+from .data_retrieval import get_all_pitcher_stats
+
 # we skip ruff linting for magic values a bunch of places below with noqa for PLR2004, since it's
 # clearer and less verbose and we don't need to use these checks in other places
 
@@ -166,3 +170,113 @@ def calculate_pnerd_score(
         adjusted_luck=adjusted_luck,
         pnerd_score=pnerd_score,
     )
+
+
+def get_all_pitcher_stats_objects(season: int = 2025) -> dict[str, PitcherStats]:
+    """
+    Get all pitcher statistics as PitcherStats objects.
+
+    Args:
+        season: Season year (default: 2025)
+
+    Returns:
+        Dictionary mapping pitcher names to PitcherStats objects
+
+    Raises:
+        RuntimeError: If data retrieval fails
+    """
+    try:
+        # Get raw pitcher data
+        raw_pitcher_data = get_all_pitcher_stats(season)
+
+        # Create PitcherStats objects from raw data
+        pitcher_stats_dict = {}
+        for name, raw_stats in raw_pitcher_data.items():
+            pitcher_stats = PitcherStats(
+                name=raw_stats["Name"],
+                team=raw_stats["Team"],
+                xfip_minus=raw_stats["xFIP-"],
+                swinging_strike_rate=raw_stats["SwStr%"],
+                strike_rate=raw_stats["Strike_Rate"],
+                velocity=raw_stats["FBv"],
+                age=raw_stats["Age"],
+                pace=raw_stats["Pace"],
+                luck=raw_stats["Luck"],
+                knuckleball_rate=raw_stats["KN%"],
+            )
+            pitcher_stats_dict[name] = pitcher_stats
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to create pitcher stats objects for season {season}: {str(e)}"
+        ) from e
+    else:
+        return pitcher_stats_dict
+
+
+def calculate_pitcher_nerd_scores(season: int = 2025) -> dict[str, float]:
+    """Calculate pitcher NERD scores for all pitchers."""
+    detailed_stats = calculate_detailed_pitcher_nerd_scores(season)
+    return {
+        pitcher: nerd_stats.pnerd_score
+        for pitcher, nerd_stats in detailed_stats.items()
+    }
+
+
+def calculate_detailed_pitcher_nerd_scores(
+    season: int = 2025,
+) -> dict[str, PitcherNerdStats]:
+    """Calculate detailed pitcher NERD scores for all pitchers."""
+    try:
+        # Get all pitcher stats
+        pitcher_stats_dict = get_all_pitcher_stats_objects(season)
+
+        # Calculate league means and standard deviations
+        all_pitchers = list(pitcher_stats_dict.values())
+
+        # Extract values for each stat
+        xfip_minus_values = [pitcher.xfip_minus for pitcher in all_pitchers]
+        swinging_strike_rates = [
+            pitcher.swinging_strike_rate for pitcher in all_pitchers
+        ]
+        strike_rates = [pitcher.strike_rate for pitcher in all_pitchers]
+        velocities = [pitcher.velocity for pitcher in all_pitchers]
+        ages = [pitcher.age for pitcher in all_pitchers]
+        paces = [pitcher.pace for pitcher in all_pitchers]
+
+        # Calculate means and standard deviations
+        league_means = {
+            "xfip_minus": stats.tmean(xfip_minus_values),
+            "swinging_strike_rate": stats.tmean(swinging_strike_rates),
+            "strike_rate": stats.tmean(strike_rates),
+            "velocity": stats.tmean(velocities),
+            "age": stats.tmean(ages),
+            "pace": stats.tmean(paces),
+        }
+
+        league_std_devs = {
+            "xfip_minus": stats.tstd(xfip_minus_values),
+            "swinging_strike_rate": stats.tstd(swinging_strike_rates),
+            "strike_rate": stats.tstd(strike_rates),
+            "velocity": stats.tstd(velocities),
+            "age": stats.tstd(ages),
+            "pace": stats.tstd(paces),
+        }
+
+        # Calculate pNERD for each pitcher
+        pitcher_nerd_details = {}
+        for pitcher_name, pitcher_stats in pitcher_stats_dict.items():
+            try:
+                pitcher_nerd_stats = calculate_pnerd_score(
+                    pitcher_stats, league_means, league_std_devs
+                )
+                pitcher_nerd_details[pitcher_name] = pitcher_nerd_stats
+            except ValueError:
+                # Skip pitchers with invalid pNERD scores (negative values)
+                continue
+
+    except Exception:
+        # If calculation fails, return empty dict
+        return {}
+    else:
+        return pitcher_nerd_details

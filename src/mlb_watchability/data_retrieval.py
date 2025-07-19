@@ -7,10 +7,6 @@ from typing import Any
 import pandas as pd
 import pybaseball as pb
 import statsapi  # type: ignore
-from scipy import stats  # type: ignore
-
-from .pitcher_stats import PitcherStats, calculate_pnerd_score
-from .team_stats import TeamStats, calculate_tnerd_score
 
 
 def _raise_missing_columns_error(missing_columns: list[str]) -> None:
@@ -96,15 +92,15 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
         return games
 
 
-def get_all_pitcher_stats(season: int = 2024) -> dict[str, PitcherStats]:
+def get_all_pitcher_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
     """
     Retrieve pitcher statistics for all starting pitchers using pybaseball.
 
     Args:
-        season: Season year (default: 2024)
+        season: Season year (default: 2025)
 
     Returns:
-        Dictionary mapping pitcher names to PitcherStats objects
+        Dictionary mapping pitcher names to raw statistics dictionaries
 
     Raises:
         RuntimeError: If API call fails or data retrieval fails
@@ -134,21 +130,21 @@ def get_all_pitcher_stats(season: int = 2024) -> dict[str, PitcherStats]:
             # Use FBv for velocity as it has better coverage
             velocity = pitcher_row["FBv"]
 
-            # Create PitcherStats object
-            pitcher_stats = PitcherStats(
-                name=pitcher_row["Name"],
-                team=pitcher_row["Team"],
-                xfip_minus=pitcher_row["xFIP-"],
-                swinging_strike_rate=pitcher_row["SwStr%"],
-                strike_rate=strike_rate,
-                velocity=velocity,
-                age=pitcher_row["Age"],
-                pace=pitcher_row["Pace"],
-                luck=luck,
-                knuckleball_rate=kn_rate,
-            )
+            # Store raw statistics in dictionary
+            pitcher_raw_stats = {
+                "Name": pitcher_row["Name"],
+                "Team": pitcher_row["Team"],
+                "xFIP-": pitcher_row["xFIP-"],
+                "SwStr%": pitcher_row["SwStr%"],
+                "Strike_Rate": strike_rate,  # Calculated field
+                "FBv": velocity,
+                "Age": pitcher_row["Age"],
+                "Pace": pitcher_row["Pace"],
+                "Luck": luck,  # Calculated field
+                "KN%": kn_rate,
+            }
 
-            pitcher_stats_dict[pitcher_row["Name"]] = pitcher_stats
+            pitcher_stats_dict[pitcher_row["Name"]] = pitcher_raw_stats
 
     except Exception as e:
         raise RuntimeError(
@@ -158,7 +154,7 @@ def get_all_pitcher_stats(season: int = 2024) -> dict[str, PitcherStats]:
         return pitcher_stats_dict
 
 
-def get_all_team_stats(season: int = 2025) -> dict[str, TeamStats]:
+def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
     """
     Retrieve team statistics for all teams using pybaseball and payroll data.
 
@@ -166,7 +162,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, TeamStats]:
         season: Season year (default: 2025)
 
     Returns:
-        Dictionary mapping team names to TeamStats objects
+        Dictionary mapping team names to raw statistics dictionaries
 
     Raises:
         RuntimeError: If API call fails or data retrieval fails
@@ -223,19 +219,19 @@ def get_all_team_stats(season: int = 2025) -> dict[str, TeamStats]:
             if barrel_rate > 1.0:
                 barrel_rate = barrel_rate / 100.0
 
-            # Create TeamStats object
-            team_stats = TeamStats(
-                name=team_row["Team"],
-                batting_runs=team_row["Bat"],
-                barrel_rate=barrel_rate,
-                baserunning_runs=team_row["BsR"],
-                fielding_runs=team_row["Fld"],
-                payroll=payroll_millions,
-                age=team_row["Payroll_Age"],
-                luck=luck,
-            )
+            # Store raw statistics in dictionary
+            team_raw_stats = {
+                "Team": team_row["Team"],
+                "Bat": team_row["Bat"],
+                "Barrel%": barrel_rate,
+                "BsR": team_row["BsR"],
+                "Fld": team_row["Fld"],
+                "Payroll": payroll_millions,
+                "Payroll_Age": team_row["Payroll_Age"],
+                "Luck": luck,  # Calculated field
+            }
 
-            team_stats_dict[team_row["Team"]] = team_stats
+            team_stats_dict[team_row["Team"]] = team_raw_stats
 
     except Exception as e:
         raise RuntimeError(
@@ -243,131 +239,3 @@ def get_all_team_stats(season: int = 2025) -> dict[str, TeamStats]:
         ) from e
     else:
         return team_stats_dict
-
-
-def calculate_pitcher_nerd_scores(season: int = 2024) -> dict[str, float]:
-    """Calculate pitcher NERD scores for all pitchers."""
-    detailed_stats = calculate_detailed_pitcher_nerd_scores(season)
-    return {pitcher: stats.pnerd_score for pitcher, stats in detailed_stats.items()}
-
-
-def calculate_detailed_pitcher_nerd_scores(season: int = 2024) -> dict[str, Any]:
-    """Calculate detailed pitcher NERD scores for all pitchers."""
-    try:
-        # Get all pitcher stats
-        pitcher_stats_dict = get_all_pitcher_stats(season)
-
-        # Calculate league means and standard deviations
-        all_pitchers = list(pitcher_stats_dict.values())
-
-        # Extract values for each stat
-        xfip_minus_values = [pitcher.xfip_minus for pitcher in all_pitchers]
-        swinging_strike_rates = [
-            pitcher.swinging_strike_rate for pitcher in all_pitchers
-        ]
-        strike_rates = [pitcher.strike_rate for pitcher in all_pitchers]
-        velocities = [pitcher.velocity for pitcher in all_pitchers]
-        ages = [pitcher.age for pitcher in all_pitchers]
-        paces = [pitcher.pace for pitcher in all_pitchers]
-
-        # Calculate means and standard deviations
-        league_means = {
-            "xfip_minus": stats.tmean(xfip_minus_values),
-            "swinging_strike_rate": stats.tmean(swinging_strike_rates),
-            "strike_rate": stats.tmean(strike_rates),
-            "velocity": stats.tmean(velocities),
-            "age": stats.tmean(ages),
-            "pace": stats.tmean(paces),
-        }
-
-        league_std_devs = {
-            "xfip_minus": stats.tstd(xfip_minus_values),
-            "swinging_strike_rate": stats.tstd(swinging_strike_rates),
-            "strike_rate": stats.tstd(strike_rates),
-            "velocity": stats.tstd(velocities),
-            "age": stats.tstd(ages),
-            "pace": stats.tstd(paces),
-        }
-
-        # Calculate pNERD for each pitcher
-        pitcher_nerd_details = {}
-        for pitcher_name, pitcher_stats in pitcher_stats_dict.items():
-            try:
-                pitcher_nerd_stats = calculate_pnerd_score(
-                    pitcher_stats, league_means, league_std_devs
-                )
-                pitcher_nerd_details[pitcher_name] = pitcher_nerd_stats
-            except ValueError:
-                # Skip pitchers with invalid pNERD scores (negative values)
-                continue
-
-    except Exception:
-        # If calculation fails, return empty dict
-        return {}
-    else:
-        return pitcher_nerd_details
-
-
-def calculate_team_nerd_scores(season: int = 2025) -> dict[str, float]:
-    """Calculate team NERD scores for all teams."""
-    detailed_stats = calculate_detailed_team_nerd_scores(season)
-    return {team: stats.tnerd_score for team, stats in detailed_stats.items()}
-
-
-def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, Any]:
-    """Calculate detailed team NERD scores for all teams."""
-    try:
-        # Get all team stats - note: payroll data is only available for 2025
-        # For other years, we'll use the team batting stats for that year but 2025 payroll/age data
-        team_stats_dict = get_all_team_stats(season)
-
-        # Calculate league means and standard deviations
-        all_teams = list(team_stats_dict.values())
-
-        # Extract values for each stat
-        batting_runs = [team.batting_runs for team in all_teams]
-        barrel_rates = [team.barrel_rate for team in all_teams]
-        baserunning_runs = [team.baserunning_runs for team in all_teams]
-        fielding_runs = [team.fielding_runs for team in all_teams]
-        payrolls = [team.payroll for team in all_teams]
-        ages = [team.age for team in all_teams]
-        luck_values = [team.luck for team in all_teams]
-
-        # Calculate means and standard deviations
-        league_means = {
-            "batting_runs": stats.tmean(batting_runs),
-            "barrel_rate": stats.tmean(barrel_rates),
-            "baserunning_runs": stats.tmean(baserunning_runs),
-            "fielding_runs": stats.tmean(fielding_runs),
-            "payroll": stats.tmean(payrolls),
-            "age": stats.tmean(ages),
-            "luck": stats.tmean(luck_values),
-        }
-
-        league_std_devs = {
-            "batting_runs": stats.tstd(batting_runs),
-            "barrel_rate": stats.tstd(barrel_rates),
-            "baserunning_runs": stats.tstd(baserunning_runs),
-            "fielding_runs": stats.tstd(fielding_runs),
-            "payroll": stats.tstd(payrolls),
-            "age": stats.tstd(ages),
-            "luck": stats.tstd(luck_values),
-        }
-
-        # Calculate tNERD for each team
-        team_nerd_details = {}
-        for team_abbr, team_stats in team_stats_dict.items():
-            try:
-                team_nerd_stats = calculate_tnerd_score(
-                    team_stats, league_means, league_std_devs
-                )
-                team_nerd_details[team_abbr] = team_nerd_stats
-            except ValueError:
-                # Skip teams with invalid tNERD scores (negative values)
-                continue
-
-    except Exception:
-        # If calculation fails, return empty dict
-        return {}
-    else:
-        return team_nerd_details
