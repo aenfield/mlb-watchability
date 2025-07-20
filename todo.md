@@ -38,25 +38,27 @@ Core Implementation
 
 16. ~~Write integration tests for team statistics retrieval with actual calls to pybaseball~~
 
-17. Implement pNERD calculator with z-score calculations, caps, and positive-only rules
+17. ~~Implement pNERD calculator with z-score calculations, caps, and positive-only rules~~
 
-18. Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs
+18. ~~Write comprehensive unit tests for pNERD calculator with known inputs and expected outputs~~
 
-19. Implement tNERD calculator with z-score calculations, caps, and positive-only rules
+19. ~~Implement tNERD calculator with z-score calculations, caps, and positive-only rules~~
 
-20. Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs
+20. ~~Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs~~
 
 21. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
 
 22. Write unit tests for game score calculator with hardcoded pitcher and team data
 
-23. Implement JSON output formatter that structures game scores according to specified format
+23. Update CLI app to in addition show game score for each game, and order the displayed games not by game time but by game score in descending order
 
-24. Write unit tests for JSON output formatter with expected output structure
+24. Implement JSON output formatter that structures game scores according to specified format
 
-25. Implement console output formatter for human-readable terminal display
+25. Write unit tests for JSON output formatter with expected output structure
 
-26. Write unit tests for console output formatter with expected display format
+26. Implement console output formatter for human-readable terminal display
+
+27. Write unit tests for console output formatter with expected display format
 
 Integration & Enhancement
 

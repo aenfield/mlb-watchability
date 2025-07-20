@@ -6,13 +6,12 @@ from typing import Any
 import typer
 
 from mlb_watchability.data_retrieval import get_game_schedule
+from mlb_watchability.game_scores import GameScore, calculate_game_scores
 from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
-    calculate_pitcher_nerd_scores,
 )
 from mlb_watchability.team_stats import (
     calculate_detailed_team_nerd_scores,
-    calculate_team_nerd_scores,
 )
 
 app = typer.Typer()
@@ -240,6 +239,54 @@ def format_games_output(
     return "\n".join(lines)
 
 
+def format_games_with_gnerd_scores(game_scores: list[GameScore], date: str) -> str:
+    """Format games list with gNERD scores for display, ordered by score."""
+    if not game_scores:
+        return f"No games found for {date}"
+
+    lines = [f"Games for {date} (ordered by gNERD score):"]
+    lines.append("=" * 100)
+
+    for i, game_score in enumerate(game_scores, 1):
+        away_starter = game_score.away_starter or "TBD"
+        home_starter = game_score.home_starter or "TBD"
+        game_time = game_score.game_time or "TBD"
+
+        # Format team names with individual tNERD scores
+        away_team_display = (
+            f"{game_score.away_team} (tNERD: {game_score.away_team_nerd:.1f})"
+        )
+        home_team_display = (
+            f"{game_score.home_team} (tNERD: {game_score.home_team_nerd:.1f})"
+        )
+
+        # Format pitcher names with individual pNERD scores
+        if game_score.away_pitcher_nerd is not None:
+            away_pitcher_display = (
+                f"{away_starter} (pNERD: {game_score.away_pitcher_nerd:.1f})"
+            )
+        else:
+            away_pitcher_display = away_starter
+
+        if game_score.home_pitcher_nerd is not None:
+            home_pitcher_display = (
+                f"{home_starter} (pNERD: {game_score.home_pitcher_nerd:.1f})"
+            )
+        else:
+            home_pitcher_display = home_starter
+
+        # Game info with gNERD score prominently displayed
+        game_info = (
+            f"{i:2d}. gNERD: {game_score.gnerd_score:.1f} - {game_time} - "
+            f"{away_team_display} @ {home_team_display}\n"
+            f"     {away_pitcher_display} vs {home_pitcher_display}"
+        )
+        lines.append(game_info)
+        lines.append("")  # Empty line between games
+
+    return "\n".join(lines)
+
+
 @app.command()
 def main(
     date: str | None = typer.Argument(
@@ -249,15 +296,12 @@ def main(
 ) -> None:
     """Calculate Game NERD scores for MLB games on a given date."""
     if date is not None:
-        # Show games for specific date
+        # Show games for specific date with gNERD scores
         try:
             games = get_game_schedule(date)
             season = extract_year_from_date(date)
-            team_nerd_scores = calculate_team_nerd_scores(season)
-            pitcher_nerd_scores = calculate_pitcher_nerd_scores(season)
-            typer.echo(
-                format_games_output(games, date, team_nerd_scores, pitcher_nerd_scores)
-            )
+            game_scores = calculate_game_scores(games, season)
+            typer.echo(format_games_with_gnerd_scores(game_scores, date))
         except Exception as e:
             typer.echo(f"Error retrieving games for {date}: {e}", err=True)
     else:
@@ -268,27 +312,19 @@ def main(
         typer.echo("MLB Watchability - Game Schedule")
         typer.echo("=" * 40)
 
-        # Calculate team and pitcher NERD scores using today's year
+        # Calculate season for today
         today_season = extract_year_from_date(today)
-        team_nerd_scores = calculate_team_nerd_scores(today_season)
-        pitcher_nerd_scores = calculate_pitcher_nerd_scores(today_season)
 
         # Calculate detailed breakdowns
         team_nerd_details = calculate_detailed_team_nerd_scores(today_season)
         pitcher_nerd_details = calculate_detailed_pitcher_nerd_scores(today_season)
 
-        # Today's games (with team and pitcher NERD scores)
+        # Today's games with gNERD scores
         today_games = []
         try:
             today_games = get_game_schedule(today)
-            typer.echo(
-                format_games_output(
-                    today_games,
-                    f"Today ({today})",
-                    team_nerd_scores,
-                    pitcher_nerd_scores,
-                )
-            )
+            game_scores = calculate_game_scores(today_games, today_season)
+            typer.echo(format_games_with_gnerd_scores(game_scores, f"Today ({today})"))
         except Exception as e:
             typer.echo(f"Error retrieving games for today: {e}", err=True)
 
@@ -307,7 +343,7 @@ def main(
         typer.echo("")
         typer.echo("")
 
-        # Tomorrow's games (without NERD scores)
+        # Tomorrow's games (without NERD scores since we can't predict pitchers)
         try:
             tomorrow_games = get_game_schedule(tomorrow)
             typer.echo(format_games_output(tomorrow_games, f"Tomorrow ({tomorrow})"))
