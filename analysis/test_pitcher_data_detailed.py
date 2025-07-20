@@ -5,8 +5,76 @@
 # type: ignore
 """Detailed test script to explore pitcher statistics data mapping for pNERD calculation."""
 
+from pathlib import Path
+
 import pandas as pd
 import pybaseball as pb
+
+
+def generate_pitcher_csv_export(starters_df):
+    """Generate CSV export with all pitcher data including calculated fields."""
+    # Create a copy to avoid modifying the original
+    export_df = starters_df.copy()
+
+    # Add calculated fields
+    print("Adding calculated fields to export data...")
+
+    # Strike Rate calculation
+    if "Strikes" in export_df.columns and "Pitches" in export_df.columns:
+        export_df["Strike_Rate"] = export_df["Strikes"] / export_df["Pitches"]
+        print("  ✓ Added Strike_Rate (Strikes/Pitches)")
+    else:
+        print("  ✗ Cannot add Strike_Rate (missing Strikes or Pitches)")
+
+    # Luck calculation
+    if "ERA-" in export_df.columns and "xFIP-" in export_df.columns:
+        export_df["Luck"] = export_df["ERA-"] - export_df["xFIP-"]
+        print("  ✓ Added Luck (ERA- minus xFIP-)")
+    else:
+        print("  ✗ Cannot add Luck (missing ERA- or xFIP-)")
+
+    # KN% cleaned (NaN to 0)
+    if "KN%" in export_df.columns:
+        export_df["KN%_cleaned"] = export_df["KN%"].fillna(0)
+        print("  ✓ Added KN%_cleaned (NaN values converted to 0)")
+    else:
+        print("  ✗ Cannot add KN%_cleaned (missing KN%)")
+
+    # Create analysis directory if it doesn't exist
+    analysis_dir = Path("analysis")
+    analysis_dir.mkdir(exist_ok=True)
+
+    # Export to CSV
+    csv_filename = analysis_dir / "pitcher_data_detailed_export.csv"
+
+    try:
+        export_df.to_csv(csv_filename, index=False)
+        print(f"\n✓ CSV exported successfully: {csv_filename}")
+        print(f"  Exported {len(export_df)} starting pitchers")
+        print(f"  Exported {len(export_df.columns)} total columns")
+
+        # Show summary of exported data
+        print("\nExported data summary:")
+        print(f"  Total pitchers: {len(export_df)}")
+        print(f"  Total columns: {len(export_df.columns)}")
+
+        # Show key calculated fields availability
+        calc_fields = ["Strike_Rate", "Luck", "KN%_cleaned"]
+        for field in calc_fields:
+            if field in export_df.columns:
+                non_null = export_df[field].notna().sum()
+                print(f"  {field}: {non_null}/{len(export_df)} pitchers have data")
+
+        # Show sample of column names
+        print(f"\nSample columns (first 10): {list(export_df.columns[:10])}")
+        if len(export_df.columns) > 10:
+            print(f"... and {len(export_df.columns) - 10} more columns")
+
+        return export_df
+
+    except Exception as e:
+        print(f"\n✗ Error exporting CSV: {e}")
+        return None
 
 
 def test_detailed_pitcher_stats():
@@ -16,7 +84,7 @@ def test_detailed_pitcher_stats():
     print("=" * 70)
 
     try:
-        pitcher_stats = pb.pitching_stats(2024, qual=20)
+        pitcher_stats = pb.pitching_stats(2025, qual=20)
         print(f"Retrieved {len(pitcher_stats)} pitcher records")
 
         # Focus on starting pitchers
@@ -409,6 +477,13 @@ def test_detailed_pitcher_stats():
                 if len(similar) > 0:
                     print(f"  Similar names found: {similar['Name'].tolist()}")
                 print()
+
+        print("\n" + "=" * 70)
+        print("CSV EXPORT")
+        print("=" * 70)
+
+        # Generate CSV with all pitcher data including calculated fields
+        export_data = generate_pitcher_csv_export(starters)
 
         print("\n" + "=" * 70)
         print("SUMMARY")

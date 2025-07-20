@@ -36,6 +36,84 @@ class GameScore:
     gnerd_score: float
 
 
+# Claude went to town and to help w/ the issue where the game schedule and pitcher stat data have
+# different names (for example, 'Jacob Latz' in the former vs 'Jake Latz' in the latter, 'Michael Soroka'
+# vs 'Mike Soroka', 'Jesús Luzardo' vs 'Jesus Luzardo'). I want to think this through a bit more, because
+# for example, it shouldn't likely be in game_scores, and I want to keep the original names from the
+# data sources (for ex, we need the Fangraph's pitcher data name to form the URL, so wouldn't want to
+# replace it), so for now I'll comment this out.
+# def normalize_pitcher_name(name: str) -> str:
+#     """
+#     Normalize pitcher name for better matching between data sources.
+
+#     Handles common variations like:
+#     - Accented characters (Jesús -> Jesus)
+#     - Formal vs nickname variations (Jacob -> Jake, Michael -> Mike)
+#     """
+#     if not name:
+#         return name
+
+#     # Remove accents and normalize unicode
+#     normalized = unicodedata.normalize('NFD', name)
+#     normalized = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
+
+#     # Convert to lowercase for comparison
+#     normalized = normalized.lower()
+
+#     # Handle common name variations
+#     name_variations = {
+#         'jacob': 'jake',
+#         'michael': 'mike',
+#         'matthew': 'matt',
+#         'christopher': 'chris',
+#         'benjamin': 'ben',
+#         'nicholas': 'nick',
+#         'joseph': 'joe',
+#         'anthony': 'tony',
+#         'jonathan': 'jon',
+#         'daniel': 'dan',
+#         'david': 'dave',
+#         'robert': 'rob',
+#         'william': 'will',
+#         'alexander': 'alex',
+#         'zachary': 'zach',
+#     }
+
+#     # Split name into parts
+#     parts = normalized.split()
+#     if len(parts) >= 2:
+#         first_name = parts[0]
+#         # Replace formal names with common nicknames
+#         if first_name in name_variations:
+#             parts[0] = name_variations[first_name]
+
+#     return ' '.join(parts)
+
+
+# def find_pitcher_score(pitcher_name: str, pitcher_nerd_scores: dict[str, float]) -> float | None:
+#     """
+#     Find pitcher NERD score with fuzzy name matching.
+
+#     First tries exact match, then tries normalized matching.
+#     """
+#     if not pitcher_name or pitcher_name == "TBD":
+#         return None
+
+#     # Try exact match first
+#     if pitcher_name in pitcher_nerd_scores:
+#         return pitcher_nerd_scores[pitcher_name]
+
+#     # Try normalized matching
+#     normalized_target = normalize_pitcher_name(pitcher_name)
+
+#     for pnerd_pitcher, score in pitcher_nerd_scores.items():
+#         normalized_pnerd = normalize_pitcher_name(pnerd_pitcher)
+#         if normalized_target == normalized_pnerd:
+#             return score
+
+#     return None
+
+
 # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
 # pitcher code figure out and make their own game score contributions (while the spec says average of
 # each of team and game and then added together, that really just boils down to 1/4 of each value)

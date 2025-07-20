@@ -75,6 +75,7 @@ addopts = [
 
 [tool.ruff]
 src = ["src", "tests"]
+exclude = ["analysis"]
 line-length = 88
 target-version = "py311"
 
