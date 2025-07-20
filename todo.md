@@ -46,11 +46,11 @@ Core Implementation
 
 20. ~~Write comprehensive unit tests for tNERD calculator with known inputs and expected outputs~~
 
-21. Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores
+21. ~~Create game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores~~
 
-22. Write unit tests for game score calculator with hardcoded pitcher and team data
+22. ~~Write unit tests for game score calculator with hardcoded pitcher and team data~~
 
-23. Update CLI app to in addition show game score for each game, and order the displayed games not by game time but by game score in descending order
+23. ~~Update CLI app to in addition show game score for each game, and order the displayed games not by game time but by game score in descending order~~
 
 24. Implement JSON output formatter that structures game scores according to specified format
 
@@ -81,6 +81,7 @@ Integration & Enhancement
 ## Additional TODO possibilities, depending on need
 
 - In diagnostics output, show the components of the pNERD and tNERD calcs, not just the raw stats and the z-scores - this'd make it easier to see/visually know where the overall scores come from because it'd show where things (like pitcher luck) are divided and where signs are changed (pitcher pace).
+- Think about adding logging in a bunch of places perhaps ultimately as part of generating LLM-readable/understandable text that says from top to bottom what the code's doing and where it has problems (when it has problems).
 - Add rate limiting for pybaseball calls.
 - Optimize data retrieval to minimize API calls and improve performance
 
