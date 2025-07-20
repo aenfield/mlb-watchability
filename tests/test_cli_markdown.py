@@ -108,7 +108,7 @@ class TestCliMarkdownFormatting:
         # Check that TBD pitcher shows without score
         assert (
             result_lines[2]
-            == "| 11.9 | 9:40p | [San Francisco Giants](https://www.fangraphs.com/teams/giants/stats) | 5.2 | [Seattle Mariners](https://www.fangraphs.com/teams/mariners/stats) | 7.1 | TBD | TBD | [Logan Gilbert](https://www.fangraphs.com/search?q=Gilbert) | 5.8 |"
+            == "| 11.9 | 9:40p | [San Francisco Giants](https://www.fangraphs.com/teams/giants/stats) | 5.2 | [Seattle Mariners](https://www.fangraphs.com/teams/mariners/stats) | 7.1 | TBD | No data | [Logan Gilbert](https://www.fangraphs.com/search?q=Gilbert) | 5.8 |"
         )
 
     def test_format_games_as_markdown_table_with_no_pitcher_data(self) -> None:
@@ -137,7 +137,7 @@ class TestCliMarkdownFormatting:
         # Check that missing pitchers show as TBD
         assert (
             result_lines[2]
-            == "| 4.0 | 8:00p | [Miami Marlins](https://www.fangraphs.com/teams/marlins/stats) | 4.1 | [Colorado Rockies](https://www.fangraphs.com/teams/rockies/stats) | 3.8 | TBD | TBD | TBD | TBD |"
+            == "| 4.0 | 8:00p | [Miami Marlins](https://www.fangraphs.com/teams/marlins/stats) | 4.1 | [Colorado Rockies](https://www.fangraphs.com/teams/rockies/stats) | 3.8 | TBD | No data | TBD | No data |"
         )
 
     def test_format_games_as_markdown_table_empty_list(self) -> None:

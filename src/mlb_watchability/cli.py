@@ -310,12 +310,12 @@ def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
         away_pitcher_score = (
             f"{game_score.away_pitcher_nerd:.1f}"
             if game_score.away_pitcher_nerd is not None
-            else "TBD"
+            else "No data"
         )
         home_pitcher_score = (
             f"{game_score.home_pitcher_nerd:.1f}"
             if game_score.home_pitcher_nerd is not None
-            else "TBD"
+            else "No data"
         )
 
         # Add table row
