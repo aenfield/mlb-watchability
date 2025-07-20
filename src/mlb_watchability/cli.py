@@ -10,48 +10,12 @@ from mlb_watchability.game_scores import GameScore, calculate_game_scores
 from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
 )
+from mlb_watchability.team_mappings import get_team_abbreviation
 from mlb_watchability.team_stats import (
     calculate_detailed_team_nerd_scores,
 )
 
 app = typer.Typer()
-
-
-def get_team_abbreviation(full_name: str) -> str:
-    """Map full team names to abbreviations used in stats APIs."""
-    team_mapping = {
-        "Arizona Diamondbacks": "ARI",
-        "Atlanta Braves": "ATL",
-        "Baltimore Orioles": "BAL",
-        "Boston Red Sox": "BOS",
-        "Chicago Cubs": "CHC",
-        "Chicago White Sox": "CWS",
-        "Cincinnati Reds": "CIN",
-        "Cleveland Guardians": "CLE",
-        "Colorado Rockies": "COL",
-        "Detroit Tigers": "DET",
-        "Houston Astros": "HOU",
-        "Kansas City Royals": "KCR",
-        "Los Angeles Angels": "LAA",
-        "Los Angeles Dodgers": "LAD",
-        "Miami Marlins": "MIA",
-        "Milwaukee Brewers": "MIL",
-        "Minnesota Twins": "MIN",
-        "New York Mets": "NYM",
-        "New York Yankees": "NYY",
-        "Oakland Athletics": "OAK",
-        "Philadelphia Phillies": "PHI",
-        "Pittsburgh Pirates": "PIT",
-        "San Diego Padres": "SDP",
-        "San Francisco Giants": "SFG",
-        "Seattle Mariners": "SEA",
-        "St. Louis Cardinals": "STL",
-        "Tampa Bay Rays": "TBR",
-        "Texas Rangers": "TEX",
-        "Toronto Blue Jays": "TOR",
-        "Washington Nationals": "WSN",
-    }
-    return team_mapping.get(full_name, full_name)
 
 
 def get_today() -> str:

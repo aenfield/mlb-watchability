@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .pitcher_stats import calculate_detailed_pitcher_nerd_scores
+from .team_mappings import get_team_abbreviation
 from .team_stats import calculate_detailed_team_nerd_scores
 
 
@@ -36,8 +37,9 @@ class GameScore:
 
 
 # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
-# pitcher code figure out and make their own game score contributions (while the spec says average of 
-# each of team and game and then added together, that really just boils down to 1/4 of each value) 
+# pitcher code figure out and make their own game score contributions (while the spec says average of
+# each of team and game and then added together, that really just boils down to 1/4 of each value)
+
 
 def calculate_game_scores(
     games: list[dict[str, Any]], season: int = 2025
@@ -75,8 +77,8 @@ def calculate_game_scores(
         game_time = game.get("time")
 
         # Map team names to abbreviations for NERD score lookup
-        away_team_abbr = _get_team_abbreviation(away_team)
-        home_team_abbr = _get_team_abbreviation(home_team)
+        away_team_abbr = get_team_abbreviation(away_team)
+        home_team_abbr = get_team_abbreviation(home_team)
 
         # Get team NERD scores
         away_team_nerd = team_nerd_scores.get(away_team_abbr, 0.0)
@@ -131,40 +133,3 @@ def calculate_game_scores(
     game_scores.sort(key=lambda x: x.gnerd_score, reverse=True)
 
     return game_scores
-
-
-def _get_team_abbreviation(full_name: str) -> str:
-    """Map full team names to abbreviations used in stats APIs."""
-    team_mapping = {
-        "Arizona Diamondbacks": "ARI",
-        "Atlanta Braves": "ATL",
-        "Baltimore Orioles": "BAL",
-        "Boston Red Sox": "BOS",
-        "Chicago Cubs": "CHC",
-        "Chicago White Sox": "CWS",
-        "Cincinnati Reds": "CIN",
-        "Cleveland Guardians": "CLE",
-        "Colorado Rockies": "COL",
-        "Detroit Tigers": "DET",
-        "Houston Astros": "HOU",
-        "Kansas City Royals": "KCR",
-        "Los Angeles Angels": "LAA",
-        "Los Angeles Dodgers": "LAD",
-        "Miami Marlins": "MIA",
-        "Milwaukee Brewers": "MIL",
-        "Minnesota Twins": "MIN",
-        "New York Mets": "NYM",
-        "New York Yankees": "NYY",
-        "Oakland Athletics": "OAK",
-        "Philadelphia Phillies": "PHI",
-        "Pittsburgh Pirates": "PIT",
-        "San Diego Padres": "SDP",
-        "San Francisco Giants": "SFG",
-        "Seattle Mariners": "SEA",
-        "St. Louis Cardinals": "STL",
-        "Tampa Bay Rays": "TBR",
-        "Texas Rangers": "TEX",
-        "Toronto Blue Jays": "TOR",
-        "Washington Nationals": "WSN",
-    }
-    return team_mapping.get(full_name, full_name)

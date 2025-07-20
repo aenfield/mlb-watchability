@@ -8,6 +8,8 @@ import pandas as pd
 import pybaseball as pb
 import statsapi  # type: ignore
 
+from .team_mappings import normalize_payroll_team_abbreviation
+
 
 def _raise_missing_columns_error(missing_columns: list[str]) -> None:
     """Raise a RuntimeError for missing columns."""
@@ -174,17 +176,10 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         # Load payroll data from CSV file
         payroll_df = pd.read_csv("data/payroll-spotrac.2025.csv")
 
-        # Create team abbreviation mapping for payroll data to match batting stats
-        payroll_to_batting_mapping = {
-            "TB": "TBR",
-            "WSH": "WSN",
-            "SD": "SDP",
-            "SF": "SFG",
-            "KC": "KCR",
-        }
-
-        # Apply team name mapping to payroll data
-        payroll_df["Team"] = payroll_df["Team"].replace(payroll_to_batting_mapping)
+        # Apply team name mapping to payroll data to match batting stats
+        payroll_df["Team"] = payroll_df["Team"].apply(
+            normalize_payroll_team_abbreviation
+        )
 
         # Rename Age column in payroll data to avoid conflict
         payroll_df = payroll_df.rename(columns={"Age": "Payroll_Age"})
