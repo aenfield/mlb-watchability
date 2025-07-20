@@ -10,7 +10,10 @@ from mlb_watchability.game_scores import GameScore, calculate_game_scores
 from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
 )
-from mlb_watchability.team_mappings import get_team_abbreviation
+from mlb_watchability.team_mappings import (
+    get_fangraphs_team_slug,
+    get_team_abbreviation,
+)
 from mlb_watchability.team_stats import (
     calculate_detailed_team_nerd_scores,
 )
@@ -37,6 +40,22 @@ def extract_year_from_date(date_str: str) -> int:
     except (ValueError, IndexError):
         # Default to current year if parsing fails
         return datetime.now().year
+
+
+def format_time_12_hour(time_str: str | None) -> str:
+    """Convert 24-hour time format to 12-hour format with 'a' or 'p' suffix."""
+    if not time_str or time_str == "TBD":
+        return "TBD"
+
+    try:
+        dt = datetime.strptime(time_str, "%H:%M")
+        hour_12 = dt.hour % 12 or 12  # Handle midnight correctly
+        minute = dt.minute
+        suffix = "a" if dt.hour < 12 else "p"
+        return f"{hour_12}:{minute:02d}{suffix}"
+    except ValueError:
+        # Return original if parsing fails
+        return time_str
 
 
 def format_team_nerd_breakdown(team_nerd_details: dict[str, Any]) -> str:
@@ -162,7 +181,7 @@ def format_games_output(
     for game in games:
         away_starter = game["away_starter"] or "TBD"
         home_starter = game["home_starter"] or "TBD"
-        game_time = game["time"] or "TBD"
+        game_time = format_time_12_hour(game.get("time"))
 
         # Format team names with NERD scores if available
         if team_nerd_scores:
@@ -214,7 +233,7 @@ def format_games_with_gnerd_scores(game_scores: list[GameScore], date: str) -> s
     for i, game_score in enumerate(game_scores, 1):
         away_starter = game_score.away_starter or "TBD"
         home_starter = game_score.home_starter or "TBD"
-        game_time = game_score.game_time or "TBD"
+        game_time = format_time_12_hour(game_score.game_time)
 
         # Format team names with individual tNERD scores
         away_team_display = (
@@ -251,6 +270,69 @@ def format_games_with_gnerd_scores(game_scores: list[GameScore], date: str) -> s
     return "\n".join(lines)
 
 
+def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
+    """Format games as a markdown table with gNERD scores."""
+    if not game_scores:
+        return "No games available for table."
+
+    lines = []
+    lines.append("| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |")
+    lines.append("|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|")
+
+    for game_score in game_scores:
+        # Format time
+        time_str = format_time_12_hour(game_score.game_time)
+
+        # Format team names with Fangraphs links
+        visitors_team = _format_team_with_fangraphs_link(game_score.away_team)
+        home_team = _format_team_with_fangraphs_link(game_score.home_team)
+
+        # Format pitcher names with Fangraphs links
+        away_pitcher = _format_pitcher_with_fangraphs_link(game_score.away_starter) if game_score.away_starter else "TBD"
+        home_pitcher = _format_pitcher_with_fangraphs_link(game_score.home_starter) if game_score.home_starter else "TBD"
+
+        # Format scores
+        away_team_score = f"{game_score.away_team_nerd:.1f}"
+        home_team_score = f"{game_score.home_team_nerd:.1f}"
+        away_pitcher_score = f"{game_score.away_pitcher_nerd:.1f}" if game_score.away_pitcher_nerd is not None else "TBD"
+        home_pitcher_score = f"{game_score.home_pitcher_nerd:.1f}" if game_score.home_pitcher_nerd is not None else "TBD"
+
+        # Add table row
+        row = f"| {game_score.gnerd_score:.1f} | {time_str} | {visitors_team} | {away_team_score} | {home_team} | {home_team_score} | {away_pitcher} | {away_pitcher_score} | {home_pitcher} | {home_pitcher_score} |"
+        lines.append(row)
+
+    return "\n".join(lines)
+
+
+def _format_team_with_fangraphs_link(team_name: str) -> str:
+    """Format team name as a markdown link to Fangraphs team page."""
+    if not team_name:
+        return "TBD"
+
+    # Get Fangraphs team slug for URL
+    team_slug = get_fangraphs_team_slug(team_name)
+
+    # Fangraphs team URL format: https://www.fangraphs.com/teams/{team_slug}/stats
+    fangraphs_url = f"https://www.fangraphs.com/teams/{team_slug}/stats"
+
+    return f"[{team_name}]({fangraphs_url})"
+
+
+def _format_pitcher_with_fangraphs_link(pitcher_name: str) -> str:
+    """Format pitcher name as a markdown link to Fangraphs player search page."""
+    if not pitcher_name or pitcher_name == "TBD":
+        return "TBD"
+
+    # Extract last name for search
+    name_parts = pitcher_name.split()
+    last_name = name_parts[-1] if name_parts else pitcher_name
+
+    # Fangraphs search URL format: https://www.fangraphs.com/search?q={last_name}
+    fangraphs_url = f"https://www.fangraphs.com/search?q={last_name}"
+
+    return f"[{pitcher_name}]({fangraphs_url})"
+
+
 @app.command()
 def main(
     date: str | None = typer.Argument(
@@ -285,6 +367,7 @@ def main(
 
         # Today's games with gNERD scores
         today_games = []
+        game_scores = []
         try:
             today_games = get_game_schedule(today)
             game_scores = calculate_game_scores(today_games, today_season)
@@ -294,6 +377,25 @@ def main(
 
         typer.echo("")
         typer.echo("")
+
+        # Today's games as markdown table
+        if game_scores:
+            markdown_table = format_games_as_markdown_table(game_scores)
+            typer.echo("Today's games (markdown table):")
+            typer.echo(markdown_table)
+            typer.echo("")
+
+            # Write markdown table to file
+            try:
+                with open("todays-games.md", "w", encoding="utf-8") as f:
+                    f.write(f"# Today's MLB Games ({today})\n\n")
+                    f.write(markdown_table)
+                    f.write("\n")
+                typer.echo("Markdown table saved to: todays-games.md")
+            except Exception as e:
+                typer.echo(f"Warning: Could not write to todays-games.md: {e}", err=True)
+
+            typer.echo("")
 
         # Team NERD breakdown
         typer.echo(format_team_nerd_breakdown(team_nerd_details))

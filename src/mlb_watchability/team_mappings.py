@@ -45,6 +45,41 @@ PAYROLL_TO_STANDARD_ABBREVIATION = {
     "KC": "KCR",
 }
 
+# Fangraphs team URL mappings
+# Maps standard team abbreviations to Fangraphs URL slugs
+TEAM_ABBREVIATION_TO_FANGRAPHS = {
+    "ARI": "diamondbacks",
+    "ATL": "braves",
+    "BAL": "orioles",
+    "BOS": "red-sox",
+    "CHC": "cubs",
+    "CWS": "white-sox",
+    "CIN": "reds",
+    "CLE": "guardians",
+    "COL": "rockies",
+    "DET": "tigers",
+    "HOU": "astros",
+    "KCR": "royals",
+    "LAA": "angels",
+    "LAD": "dodgers",
+    "MIA": "marlins",
+    "MIL": "brewers",
+    "MIN": "twins",
+    "NYM": "mets",
+    "NYY": "yankees",
+    "OAK": "athletics",
+    "PHI": "phillies",
+    "PIT": "pirates",
+    "SDP": "padres",
+    "SFG": "giants",
+    "SEA": "mariners",
+    "STL": "cardinals",
+    "TBR": "rays",
+    "TEX": "rangers",
+    "TOR": "blue-jays",
+    "WSN": "nationals",
+}
+
 
 def get_team_abbreviation(full_name: str) -> str:
     """
@@ -70,3 +105,17 @@ def normalize_payroll_team_abbreviation(payroll_abbr: str) -> str:
         Standard team abbreviation (e.g., "TBR"), or the input if not found
     """
     return PAYROLL_TO_STANDARD_ABBREVIATION.get(payroll_abbr, payroll_abbr)
+
+
+def get_fangraphs_team_slug(team_name: str) -> str:
+    """
+    Get Fangraphs URL slug for a team.
+
+    Args:
+        team_name: Full team name (e.g., "Boston Red Sox")
+
+    Returns:
+        Fangraphs team slug (e.g., "red-sox"), or team abbreviation if not found
+    """
+    team_abbr = get_team_abbreviation(team_name)
+    return TEAM_ABBREVIATION_TO_FANGRAPHS.get(team_abbr, team_abbr.lower())
