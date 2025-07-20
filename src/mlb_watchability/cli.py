@@ -49,13 +49,14 @@ def format_time_12_hour(time_str: str | None) -> str:
 
     try:
         dt = datetime.strptime(time_str, "%H:%M")
-        hour_12 = dt.hour % 12 or 12  # Handle midnight correctly
-        minute = dt.minute
-        suffix = "a" if dt.hour < 12 else "p"
-        return f"{hour_12}:{minute:02d}{suffix}"
     except ValueError:
         # Return original if parsing fails
         return time_str
+    else:
+        hour_12 = dt.hour % 12 or 12  # Handle midnight correctly
+        minute = dt.minute
+        suffix = "a" if dt.hour < 12 else "p"  # noqa: PLR2004
+        return f"{hour_12}:{minute:02d}{suffix}"
 
 
 def format_team_nerd_breakdown(team_nerd_details: dict[str, Any]) -> str:
@@ -276,8 +277,12 @@ def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
         return "No games available for table."
 
     lines = []
-    lines.append("| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |")
-    lines.append("|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|")
+    lines.append(
+        "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
+    )
+    lines.append(
+        "|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|"
+    )
 
     for game_score in game_scores:
         # Format time
@@ -288,14 +293,30 @@ def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
         home_team = _format_team_with_fangraphs_link(game_score.home_team)
 
         # Format pitcher names with Fangraphs links
-        away_pitcher = _format_pitcher_with_fangraphs_link(game_score.away_starter) if game_score.away_starter else "TBD"
-        home_pitcher = _format_pitcher_with_fangraphs_link(game_score.home_starter) if game_score.home_starter else "TBD"
+        away_pitcher = (
+            _format_pitcher_with_fangraphs_link(game_score.away_starter)
+            if game_score.away_starter
+            else "TBD"
+        )
+        home_pitcher = (
+            _format_pitcher_with_fangraphs_link(game_score.home_starter)
+            if game_score.home_starter
+            else "TBD"
+        )
 
         # Format scores
         away_team_score = f"{game_score.away_team_nerd:.1f}"
         home_team_score = f"{game_score.home_team_nerd:.1f}"
-        away_pitcher_score = f"{game_score.away_pitcher_nerd:.1f}" if game_score.away_pitcher_nerd is not None else "TBD"
-        home_pitcher_score = f"{game_score.home_pitcher_nerd:.1f}" if game_score.home_pitcher_nerd is not None else "TBD"
+        away_pitcher_score = (
+            f"{game_score.away_pitcher_nerd:.1f}"
+            if game_score.away_pitcher_nerd is not None
+            else "TBD"
+        )
+        home_pitcher_score = (
+            f"{game_score.home_pitcher_nerd:.1f}"
+            if game_score.home_pitcher_nerd is not None
+            else "TBD"
+        )
 
         # Add table row
         row = f"| {game_score.gnerd_score:.1f} | {time_str} | {visitors_team} | {away_team_score} | {home_team} | {home_team_score} | {away_pitcher} | {away_pitcher_score} | {home_pitcher} | {home_pitcher_score} |"
@@ -393,7 +414,9 @@ def main(
                     f.write("\n")
                 typer.echo("Markdown table saved to: todays-games.md")
             except Exception as e:
-                typer.echo(f"Warning: Could not write to todays-games.md: {e}", err=True)
+                typer.echo(
+                    f"Warning: Could not write to todays-games.md: {e}", err=True
+                )
 
             typer.echo("")
 

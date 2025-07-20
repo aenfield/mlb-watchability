@@ -26,7 +26,7 @@ class TestCliMarkdownFormatting:
                 away_pitcher_nerd=7.8,
                 home_pitcher_nerd=6.2,
                 average_pitcher_nerd=7.0,
-                gnerd_score=15.05
+                gnerd_score=15.05,
             ),
             GameScore(
                 away_team="Boston Red Sox",
@@ -40,17 +40,23 @@ class TestCliMarkdownFormatting:
                 away_pitcher_nerd=3.9,
                 home_pitcher_nerd=6.7,
                 average_pitcher_nerd=5.3,
-                gnerd_score=13.5
-            )
+                gnerd_score=13.5,
+            ),
         ]
 
         result = format_games_as_markdown_table(game_scores)
 
-        result_lines = result.split('\n')
+        result_lines = result.split("\n")
 
         # Check header
-        assert result_lines[0] == "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
-        assert result_lines[1] == "|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|"
+        assert (
+            result_lines[0]
+            == "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
+        )
+        assert (
+            result_lines[1]
+            == "|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|"
+        )
 
         # Check that games are in the order provided (should be pre-sorted by gNERD)
         assert "15.1" in result_lines[2]  # Higher gNERD should be first
@@ -81,20 +87,29 @@ class TestCliMarkdownFormatting:
                 away_pitcher_nerd=None,
                 home_pitcher_nerd=5.8,
                 average_pitcher_nerd=5.8,
-                gnerd_score=11.95
+                gnerd_score=11.95,
             )
         ]
 
         result = format_games_as_markdown_table(game_scores)
 
-        result_lines = result.split('\n')
+        result_lines = result.split("\n")
 
         # Check header
-        assert result_lines[0] == "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
-        assert result_lines[1] == "|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|"
+        assert (
+            result_lines[0]
+            == "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
+        )
+        assert (
+            result_lines[1]
+            == "|-------|------|----------|-------|------|-------|-------------|-------|-------------|-------|"
+        )
 
         # Check that TBD pitcher shows without score
-        assert result_lines[2] == "| 11.9 | 9:40p | [San Francisco Giants](https://www.fangraphs.com/teams/giants/stats) | 5.2 | [Seattle Mariners](https://www.fangraphs.com/teams/mariners/stats) | 7.1 | TBD | TBD | [Logan Gilbert](https://www.fangraphs.com/search?q=Gilbert) | 5.8 |"
+        assert (
+            result_lines[2]
+            == "| 11.9 | 9:40p | [San Francisco Giants](https://www.fangraphs.com/teams/giants/stats) | 5.2 | [Seattle Mariners](https://www.fangraphs.com/teams/mariners/stats) | 7.1 | TBD | TBD | [Logan Gilbert](https://www.fangraphs.com/search?q=Gilbert) | 5.8 |"
+        )
 
     def test_format_games_as_markdown_table_with_no_pitcher_data(self) -> None:
         """Test markdown table formatting with no pitcher data."""
@@ -111,16 +126,19 @@ class TestCliMarkdownFormatting:
                 away_pitcher_nerd=None,
                 home_pitcher_nerd=None,
                 average_pitcher_nerd=None,
-                gnerd_score=3.95
+                gnerd_score=3.95,
             )
         ]
 
         result = format_games_as_markdown_table(game_scores)
 
-        result_lines = result.split('\n')
+        result_lines = result.split("\n")
 
         # Check that missing pitchers show as TBD
-        assert result_lines[2] == "| 4.0 | 8:00p | [Miami Marlins](https://www.fangraphs.com/teams/marlins/stats) | 4.1 | [Colorado Rockies](https://www.fangraphs.com/teams/rockies/stats) | 3.8 | TBD | TBD | TBD | TBD |"
+        assert (
+            result_lines[2]
+            == "| 4.0 | 8:00p | [Miami Marlins](https://www.fangraphs.com/teams/marlins/stats) | 4.1 | [Colorado Rockies](https://www.fangraphs.com/teams/rockies/stats) | 3.8 | TBD | TBD | TBD | TBD |"
+        )
 
     def test_format_games_as_markdown_table_empty_list(self) -> None:
         """Test markdown table formatting with empty game list."""
@@ -132,23 +150,37 @@ class TestCliMarkdownFormatting:
         """Test that markdown table preserves the input order (should be pre-sorted by gNERD)."""
         game_scores = [
             GameScore(
-                away_team="Team A", home_team="Team B",
-                away_starter="Pitcher A", home_starter="Pitcher B",
-                game_time="19:00", away_team_nerd=5.0, home_team_nerd=6.0,
-                average_team_nerd=5.5, away_pitcher_nerd=4.0, home_pitcher_nerd=5.0,
-                average_pitcher_nerd=4.5, gnerd_score=10.0
+                away_team="Team A",
+                home_team="Team B",
+                away_starter="Pitcher A",
+                home_starter="Pitcher B",
+                game_time="19:00",
+                away_team_nerd=5.0,
+                home_team_nerd=6.0,
+                average_team_nerd=5.5,
+                away_pitcher_nerd=4.0,
+                home_pitcher_nerd=5.0,
+                average_pitcher_nerd=4.5,
+                gnerd_score=10.0,
             ),
             GameScore(
-                away_team="Team C", home_team="Team D",
-                away_starter="Pitcher C", home_starter="Pitcher D",
-                game_time="20:00", away_team_nerd=3.0, home_team_nerd=4.0,
-                average_team_nerd=3.5, away_pitcher_nerd=2.0, home_pitcher_nerd=3.0,
-                average_pitcher_nerd=2.5, gnerd_score=6.0
-            )
+                away_team="Team C",
+                home_team="Team D",
+                away_starter="Pitcher C",
+                home_starter="Pitcher D",
+                game_time="20:00",
+                away_team_nerd=3.0,
+                home_team_nerd=4.0,
+                average_team_nerd=3.5,
+                away_pitcher_nerd=2.0,
+                home_pitcher_nerd=3.0,
+                average_pitcher_nerd=2.5,
+                gnerd_score=6.0,
+            ),
         ]
 
         result = format_games_as_markdown_table(game_scores)
-        result_lines = result.split('\n')
+        result_lines = result.split("\n")
 
         # First game (higher gNERD) should appear first in table
         assert "| 10.0 |" in result_lines[2]
@@ -183,7 +215,10 @@ class TestCliMarkdownFormatting:
                     content = f.read()
 
                 assert "# Today's MLB Games (2025-07-20)" in content
-                assert "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |" in content
+                assert (
+                    "| Score | Time | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
+                    in content
+                )
                 assert "Test Team A" in content
                 assert "Pitcher A" in content
 
