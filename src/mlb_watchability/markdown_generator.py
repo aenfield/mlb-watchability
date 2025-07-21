@@ -16,7 +16,7 @@ tags: mlbw
 
 INTRO_TEXT = """Here are today's MLB games, ordered by watchability, based on how interesting the teams and starting pitchers look. Higher is better.
 
-This is inspired by [Carson Cistulli's NERD scores](https://blogs.fangraphs.com/introducing-team-nerd/) at FanGraphs. (I'll write a bit about the details of my implementation soon, and then link to that from this intro.)
+This is inspired by [Carson Cistulli's NERD scores](https://blogs.fangraphs.com/introducing-team-nerd/) at FanGraphs. (I'll write a bit about the details of [my implementation on GitHub](https://github.com/aenfield/mlb-watchability) soon, and then link to that from this intro.)
 """
 
 FOOTER_TEXT = """Notes:
