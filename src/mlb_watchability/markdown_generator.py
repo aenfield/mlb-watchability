@@ -14,8 +14,15 @@ date: {iso_date}
 tags: mlbw
 ---"""
 
-INTRO_TEXT = "Watch these games today:"
-FOOTER_TEXT = "And here's a footer, which someone can modify later."
+INTRO_TEXT = """Here are today's MLB games, ordered by watchability, based on how interesting the teams and starting pitchers look. Higher is better.
+
+This is inspired by [Carson Cistulli's NERD scores](https://blogs.fangraphs.com/introducing-team-nerd/) at FanGraphs. (I'll write a bit about the details of my implementation soon, and then link to that from this intro.)
+"""
+
+FOOTER_TEXT = """Notes:
+
+- **Pitcher 'no data'**: Pitchers only have a pNERD score once they've started at least one game and have at least 20 innings pitched. I might also show 'no data' when I'm not correctly linking the schedule information with a pitcher's stats, like if the names don't match (I have an open issue to improve this).
+"""
 
 TABLE_HEADER = "| Score | Time (EDT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
 TABLE_SEPARATOR = "|-------|------------|----------|-------|------|-------|-------------|-------|-------------|-------|"
