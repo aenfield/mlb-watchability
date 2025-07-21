@@ -2,92 +2,91 @@ name: Daily MLB Watchability Markdown
 
 on:
   schedule:
-    # Run every day at 8:00 AM Pacific Time (3:00 PM UTC during PST, 4:00 PM UTC during PDT)
-    # Using 4:00 PM UTC to account for PDT (most of the year)
-    - cron: '0 16 * * *'
-  
+    # Run every day at 8:00 AM Pacific Time (1500 PM UTC during PDT)
+    - cron: "0 15 * * *"
+
   # Allow manual triggering
   workflow_dispatch:
     inputs:
       date:
-        description: 'Date for markdown generation (YYYY-MM-DD format, optional)'
+        description: "Date for markdown generation (YYYY-MM-DD format, optional)"
         required: false
         type: string
 
 jobs:
   generate-markdown:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v3
-      with:
-        version: "latest"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
 
-    - name: Set up Python
-      run: uv python install 3.11
+      - name: Set up Python
+        run: uv python install 3.11
 
-    - name: Install dependencies
-      run: uv sync
+      - name: Install dependencies
+        run: uv sync
 
-    - name: Generate markdown file
-      run: |
-        if [ -n "${{ github.event.inputs.date }}" ]; then
-          echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
-          uv run mlbw-markdown "${{ github.event.inputs.date }}"
-        else
-          echo "Running mlbw-markdown with today's date"
-          uv run mlbw-markdown
-        fi
+      - name: Generate markdown file
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
+            uv run mlbw-markdown "${{ github.event.inputs.date }}"
+          else
+            echo "Running mlbw-markdown with today's date"
+            uv run mlbw-markdown
+          fi
 
-    - name: Upload markdown artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: mlb-watchability-markdown
-        path: mlb_what_to_watch_*.md
-        retention-days: 30
+      - name: Upload markdown artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlb-watchability-markdown
+          path: mlb_what_to_watch_*.md
+          retention-days: 30
 
-    - name: Checkout blog repository
-      uses: actions/checkout@v4
-      with:
-        repository: aenfield/blog-eleventy
-        token: ${{ secrets.BLOG_REPO_TOKEN }}
-        path: blog-repo
+      - name: Checkout blog repository
+        uses: actions/checkout@v4
+        with:
+          repository: aenfield/blog-eleventy
+          token: ${{ secrets.BLOG_REPO_TOKEN }}
+          path: blog-repo
 
-    - name: Create mlbw directory if needed
-      run: mkdir -p blog-repo/content/blog/mlbw
+      - name: Create mlbw directory if needed
+        run: mkdir -p blog-repo/content/blog/mlbw
 
-    - name: Copy markdown file to blog repository
-      run: |
-        # Find the generated markdown file and copy it
-        MARKDOWN_FILE=$(ls mlb_what_to_watch_*.md 2>/dev/null | head -n 1)
-        if [ -n "$MARKDOWN_FILE" ]; then
-          echo "Copying $MARKDOWN_FILE to blog repository"
-          cp "$MARKDOWN_FILE" blog-repo/content/blog/mlbw/
-        else
-          echo "No markdown file found to copy"
-          exit 1
-        fi
+      - name: Copy markdown file to blog repository
+        run: |
+          # Find the generated markdown file and copy it
+          MARKDOWN_FILE=$(ls mlb_what_to_watch_*.md 2>/dev/null | head -n 1)
+          if [ -n "$MARKDOWN_FILE" ]; then
+            echo "Copying $MARKDOWN_FILE to blog repository"
+            cp "$MARKDOWN_FILE" blog-repo/content/blog/mlbw/
+          else
+            echo "No markdown file found to copy"
+            exit 1
+          fi
 
-    - name: Commit and push to blog repository
-      run: |
-        cd blog-repo
-        git config user.name "MLB Watchability Bot"
-        git config user.email "action@github.com"
-        
-        # Check if there are changes to commit
-        if [ -n "$(git status --porcelain)" ]; then
-          git add content/blog/mlbw/
-          git commit -m "Add daily MLB watchability report $(date +%Y-%m-%d)
+      - name: Commit and push to blog repository
+        run: |
+          cd blog-repo
+          git config user.name "MLB Watchability Bot"
+          git config user.email "action@github.com"
 
-          Generated automatically from mlb-watchability repository
+          # Check if there are changes to commit
+          if [ -n "$(git status --porcelain)" ]; then
+            git add content/blog/mlbw/
+            git commit -m "Add daily MLB watchability report $(date +%Y-%m-%d)
 
-          🤖 Generated with [Claude Code](https://claude.ai/code)"
-          git push
-          echo "Successfully committed and pushed markdown file to blog repository"
-        else
-          echo "No changes to commit in blog repository"
-        fi
+            Generated automatically from mlb-watchability repository
+
+            🤖 Generated with [Claude Code](https://claude.ai/code)"
+            git push
+            echo "Successfully committed and pushed markdown file to blog repository"
+          else
+            echo "No changes to commit in blog repository"
+          fi
