@@ -1,0 +1,51 @@
+name: Daily MLB Watchability Markdown
+
+on:
+  schedule:
+    # Run every day at 8:00 AM Pacific Time (3:00 PM UTC during PST, 4:00 PM UTC during PDT)
+    # Using 4:00 PM UTC to account for PDT (most of the year)
+    - cron: '0 16 * * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date for markdown generation (YYYY-MM-DD format, optional)'
+        required: false
+        type: string
+
+jobs:
+  generate-markdown:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Generate markdown file
+      run: |
+        if [ -n "${{ github.event.inputs.date }}" ]; then
+          echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
+          uv run mlbw-markdown "${{ github.event.inputs.date }}"
+        else
+          echo "Running mlbw-markdown with today's date"
+          uv run mlbw-markdown
+        fi
+
+    - name: Upload markdown artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mlb-watchability-markdown
+        path: mlb_what_to_watch_*.md
+        retention-days: 30
