@@ -70,9 +70,9 @@ Core Implementation
 - ~~For the table, use this header row: | Score | Time (EDT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |.~~
 - ~~And for the table, here's an exemplary data row: | 13.9 | 2:20p | [Boston Red Sox](https://www.fangraphs.com/teams/red-sox/stats) | 6.7 | [Chicago Cubs](https://www.fangraphs.com/teams/cubs/stats) | 9.6 | [Garrett Crochet](https://www.fangraphs.com/search?q=Crochet) | 3.3 | [Cade Horton](https://www.fangraphs.com/search?q=Horton) | 8.2 |.~~
 
-25. Set up GH action that runs the mlbw-markdown script on a schedule, every morning at 8a Pacific time, and generates a markdown file for the given day. I should also be able to run this action manually for testing.
+25. ~~Set up GH action that runs the mlbw-markdown script on a schedule, every morning at 8a Pacific time, and generates a markdown file for the given day. I should also be able to run this action manually for testing.~~
 
-26. Extend the GH action from just above so that when the newly-created markdown file is created successfully the action checks it in to the main branch of the https://github.com/aenfield/blog-eleventy/ repo, copying the file to the directory <repo root>/content/blog/mlbw directory.
+26. ~~Extend the GH action from just above so that when the newly-created markdown file is created successfully the action checks it in to the main branch of the https://github.com/aenfield/blog-eleventy/ repo, copying the file to the directory <repo root>/content/blog/mlbw directory.~~
 
 ## Notes for possible integration and enhancement
 
