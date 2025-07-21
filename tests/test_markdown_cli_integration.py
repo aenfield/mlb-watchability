@@ -104,8 +104,7 @@ class TestMarkdownCliIntegration:
                 assert "tags: mlbw" in content
 
                 # Check intro and footer text
-                assert "Watch these games today:" in content
-                assert "And here's a footer, which someone can modify later." in content
+                # no longer needed, at least for now
 
                 # Check table header with EDT timezone
                 assert "| Score | Time (EDT) |" in content

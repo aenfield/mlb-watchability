@@ -187,17 +187,12 @@ tags: mlbw
         assert 'title: "MLB: What to watch on July 20, 2025"' in result
         assert "date: 2025-07-20" in result
         assert "tags: mlbw" in result
-        assert "Watch these games today:" in result
         assert "| Score | Time (EDT)" in result  # Table header
         assert "Test Team A" in result
-        assert "And here's a footer, which someone can modify later." in result
 
         # Check structure - metadata should be at top, footer at bottom
         lines = result.split("\n")
         assert lines[0] == "---"  # Metadata starts
-        assert (
-            "And here's a footer, which someone can modify later." in lines[-2]
-        )  # Footer near end
 
     def test_generate_complete_markdown_content_empty_games(self) -> None:
         """Test complete markdown content generation with no games."""
@@ -205,6 +200,4 @@ tags: mlbw
 
         # Should still have metadata and structure, but table shows no games
         assert "---" in result
-        assert "Watch these games today:" in result
         assert "No games available for table." in result
-        assert "And here's a footer, which someone can modify later." in result

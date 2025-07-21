@@ -1,24 +1,24 @@
 # MLB Watchability
 
-MLB Watchability is a Python command-line application that calculates "Game NERD scores" (gNERD) for MLB games to help users identify the most watchable games on any given day.
+This project has two goals:
 
-## Installation
+- To help me understand at a glance which MLB game(s) are most interesting on a given day, based on the 'watchability' appeal of the teams and starting pitchers. I'm inspired by [Carson Cistulli's NERD scores](https://blogs.fangraphs.com/introducing-team-nerd/) work at FanGraphs.
+- Be a test bed for me to actually use and learn from detailed experience about agentic coding AI tools - I'm using Claude Code - by building and maintaining a non-trivial project. Based on an initial few weeks of on-and-off experimentation, I'm amazed and impressed by how easy and different it is to build and ship software using a tool like Claude Code.
 
-```bash
-uv sync --extra dev
-```
+As of mid-July 2025, every day, code automatically:
 
-## Usage
-
-```bash
-uv run mlb-watchability-cmd [DATE]
-```
-
-Where `DATE` is optional and should be in YYYY-MM-DD format. If not provided, defaults to today.
+- pulls the day's schedule and team and pitcher stats from external sources;
+- generates team, pitcher, and game NERD scores;
+- authors a blog post by creating a Markdown file; and
+- publishes the post to my blog at [andrewenfield.com](https://andrewenfield.com).
 
 ## Development
 
 - **Run tests**: `uv run pytest`
 - **Lint code**: `uv run ruff check`
 - **Format code**: `uv run black .`
-- **Type checking**: `uv run mypy .`
+- **Check types**: `uv run mypy .`
+
+`./run_all_checks.sh` runs each of the above.
+
+For more information, see the stuff in the specs/ directory, in CLAUDE.md, and in todo.md.
