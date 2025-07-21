@@ -73,7 +73,7 @@ def main() -> None:
     # Test 1: Basic schedule query
     print("\n=== Test 1: Schedule for a specific date ===")
     # date = "2025-07-13"
-    date = "2025-07-18"
+    date = "2025-07-21"
 
     try:
         sched = statsapi.schedule(start_date=date, end_date=date)
