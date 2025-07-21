@@ -119,3 +119,17 @@ def get_fangraphs_team_slug(team_name: str) -> str:
     """
     team_abbr = get_team_abbreviation(team_name)
     return TEAM_ABBREVIATION_TO_FANGRAPHS.get(team_abbr, team_abbr.lower())
+
+
+def format_team_with_fangraphs_link(team_name: str) -> str:
+    """Format team name as a markdown link to Fangraphs team page."""
+    if not team_name:
+        return "TBD"
+
+    # Get Fangraphs team slug for URL
+    team_slug = get_fangraphs_team_slug(team_name)
+
+    # Fangraphs team URL format: https://www.fangraphs.com/teams/{team_slug}/stats
+    fangraphs_url = f"https://www.fangraphs.com/teams/{team_slug}/stats"
+
+    return f"[{team_name}]({fangraphs_url})"

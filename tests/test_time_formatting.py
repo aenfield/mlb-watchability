@@ -1,6 +1,6 @@
 """Tests for time formatting functionality."""
 
-from mlb_watchability.cli import format_time_12_hour
+from mlb_watchability.utils import format_time_12_hour
 
 
 class TestTimeFormatting:

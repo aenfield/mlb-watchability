@@ -3,6 +3,7 @@
 from mlb_watchability.team_mappings import (
     PAYROLL_TO_STANDARD_ABBREVIATION,
     TEAM_NAME_TO_ABBREVIATION,
+    format_team_with_fangraphs_link,
     get_team_abbreviation,
     normalize_payroll_team_abbreviation,
 )
@@ -116,3 +117,30 @@ class TestTeamMappings:
         for conflict in conflicts:
             if conflict in PAYROLL_TO_STANDARD_ABBREVIATION:
                 assert PAYROLL_TO_STANDARD_ABBREVIATION[conflict] == conflict
+
+    def test_format_team_with_fangraphs_link_known_teams(self) -> None:
+        """Test format_team_with_fangraphs_link with known team names."""
+        result = format_team_with_fangraphs_link("Boston Red Sox")
+        expected = "[Boston Red Sox](https://www.fangraphs.com/teams/red-sox/stats)"
+        assert result == expected
+
+        result = format_team_with_fangraphs_link("New York Yankees")
+        expected = "[New York Yankees](https://www.fangraphs.com/teams/yankees/stats)"
+        assert result == expected
+
+        result = format_team_with_fangraphs_link("Los Angeles Dodgers")
+        expected = (
+            "[Los Angeles Dodgers](https://www.fangraphs.com/teams/dodgers/stats)"
+        )
+        assert result == expected
+
+    def test_format_team_with_fangraphs_link_edge_cases(self) -> None:
+        """Test format_team_with_fangraphs_link with edge cases."""
+        # Empty or None team name should return TBD
+        assert format_team_with_fangraphs_link("") == "TBD"
+        assert format_team_with_fangraphs_link(None) == "TBD"  # type: ignore
+
+        # Unknown team should still create a link with lowercase abbreviation
+        result = format_team_with_fangraphs_link("Unknown Team")
+        expected = "[Unknown Team](https://www.fangraphs.com/teams/unknown team/stats)"
+        assert result == expected

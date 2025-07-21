@@ -6,6 +6,7 @@ from mlb_watchability.pitcher_stats import (
     PitcherNerdStats,
     PitcherStats,
     calculate_pnerd_score,
+    format_pitcher_with_fangraphs_link,
 )
 
 
@@ -371,3 +372,45 @@ class TestCalculatePnerdScore:
         assert nerd_stats.adjusted_velocity == 0.0  # z_velocity is negative
         assert nerd_stats.adjusted_age == 0.0  # -z_age = -(2.25) = -2.25, set to 0.0
         assert nerd_stats.adjusted_luck == 0.0  # luck is negative
+
+
+class TestPitcherFormatting:
+    """Test cases for pitcher formatting functions."""
+
+    def test_format_pitcher_with_fangraphs_link_normal_names(self) -> None:
+        """Test format_pitcher_with_fangraphs_link with normal pitcher names."""
+        result = format_pitcher_with_fangraphs_link("Gerrit Cole")
+        expected = "[Gerrit Cole](https://www.fangraphs.com/search?q=Cole)"
+        assert result == expected
+
+        result = format_pitcher_with_fangraphs_link("Jacob deGrom")
+        expected = "[Jacob deGrom](https://www.fangraphs.com/search?q=deGrom)"
+        assert result == expected
+
+        result = format_pitcher_with_fangraphs_link("Shohei Ohtani")
+        expected = "[Shohei Ohtani](https://www.fangraphs.com/search?q=Ohtani)"
+        assert result == expected
+
+    def test_format_pitcher_with_fangraphs_link_single_name(self) -> None:
+        """Test format_pitcher_with_fangraphs_link with single name."""
+        result = format_pitcher_with_fangraphs_link("Ohtani")
+        expected = "[Ohtani](https://www.fangraphs.com/search?q=Ohtani)"
+        assert result == expected
+
+    def test_format_pitcher_with_fangraphs_link_multiple_names(self) -> None:
+        """Test format_pitcher_with_fangraphs_link with multiple names."""
+        result = format_pitcher_with_fangraphs_link("Luis Robert Jr.")
+        expected = "[Luis Robert Jr.](https://www.fangraphs.com/search?q=Jr.)"
+        assert result == expected
+
+    def test_format_pitcher_with_fangraphs_link_edge_cases(self) -> None:
+        """Test format_pitcher_with_fangraphs_link with edge cases."""
+        # Empty or None pitcher name should return TBD
+        assert format_pitcher_with_fangraphs_link("") == "TBD"
+        assert format_pitcher_with_fangraphs_link(None) == "TBD"  # type: ignore
+        assert format_pitcher_with_fangraphs_link("TBD") == "TBD"
+
+        # Single space should use the space as last name
+        result = format_pitcher_with_fangraphs_link(" ")
+        expected = "[ ](https://www.fangraphs.com/search?q= )"
+        assert result == expected

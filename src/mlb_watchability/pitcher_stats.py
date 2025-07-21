@@ -280,3 +280,18 @@ def calculate_detailed_pitcher_nerd_scores(
         return {}
     else:
         return pitcher_nerd_details
+
+
+def format_pitcher_with_fangraphs_link(pitcher_name: str) -> str:
+    """Format pitcher name as a markdown link to Fangraphs player search page."""
+    if not pitcher_name or pitcher_name == "TBD":
+        return "TBD"
+
+    # Extract last name for search
+    name_parts = pitcher_name.split()
+    last_name = name_parts[-1] if name_parts else pitcher_name
+
+    # Fangraphs search URL format: https://www.fangraphs.com/search?q={last_name}
+    fangraphs_url = f"https://www.fangraphs.com/search?q={last_name}"
+
+    return f"[{pitcher_name}]({fangraphs_url})"

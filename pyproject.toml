@@ -41,6 +41,7 @@ dev = [
 
 [project.scripts]
 mlbw = "mlb_watchability.cli:app"
+mlbw-markdown = "mlb_watchability.markdown_cli:app"
 
 [project.urls]
 Homepage = "https://github.com/andrewenfield/mlb-watchability"

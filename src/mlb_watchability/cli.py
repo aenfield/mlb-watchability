@@ -1,6 +1,5 @@
 """Command-line interface for MLB Watchability."""
 
-from datetime import datetime, timedelta
 from typing import Any
 
 import typer
@@ -9,54 +8,23 @@ from mlb_watchability.data_retrieval import get_game_schedule
 from mlb_watchability.game_scores import GameScore, calculate_game_scores
 from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
+    format_pitcher_with_fangraphs_link,
 )
 from mlb_watchability.team_mappings import (
-    get_fangraphs_team_slug,
+    format_team_with_fangraphs_link,
     get_team_abbreviation,
 )
 from mlb_watchability.team_stats import (
     calculate_detailed_team_nerd_scores,
 )
+from mlb_watchability.utils import (
+    extract_year_from_date,
+    format_time_12_hour,
+    get_today,
+    get_tomorrow,
+)
 
 app = typer.Typer()
-
-
-def get_today() -> str:
-    """Get today's date."""
-    today = datetime.now()
-    return today.strftime("%Y-%m-%d")
-
-
-def get_tomorrow() -> str:
-    """Get tomorrow's date."""
-    tomorrow = datetime.now() + timedelta(days=1)
-    return tomorrow.strftime("%Y-%m-%d")
-
-
-def extract_year_from_date(date_str: str) -> int:
-    """Extract year from a date string in YYYY-MM-DD format."""
-    try:
-        return int(date_str.split("-")[0])
-    except (ValueError, IndexError):
-        # Default to current year if parsing fails
-        return datetime.now().year
-
-
-def format_time_12_hour(time_str: str | None) -> str:
-    """Convert 24-hour time format to 12-hour format with 'a' or 'p' suffix."""
-    if not time_str or time_str == "TBD":
-        return "TBD"
-
-    try:
-        dt = datetime.strptime(time_str, "%H:%M")
-    except ValueError:
-        # Return original if parsing fails
-        return time_str
-    else:
-        hour_12 = dt.hour % 12 or 12  # Handle midnight correctly
-        minute = dt.minute
-        suffix = "a" if dt.hour < 12 else "p"  # noqa: PLR2004
-        return f"{hour_12}:{minute:02d}{suffix}"
 
 
 def format_team_nerd_breakdown(team_nerd_details: dict[str, Any]) -> str:
@@ -289,17 +257,17 @@ def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
         time_str = format_time_12_hour(game_score.game_time)
 
         # Format team names with Fangraphs links
-        visitors_team = _format_team_with_fangraphs_link(game_score.away_team)
-        home_team = _format_team_with_fangraphs_link(game_score.home_team)
+        visitors_team = format_team_with_fangraphs_link(game_score.away_team)
+        home_team = format_team_with_fangraphs_link(game_score.home_team)
 
         # Format pitcher names with Fangraphs links
         away_pitcher = (
-            _format_pitcher_with_fangraphs_link(game_score.away_starter)
+            format_pitcher_with_fangraphs_link(game_score.away_starter)
             if game_score.away_starter
             else "TBD"
         )
         home_pitcher = (
-            _format_pitcher_with_fangraphs_link(game_score.home_starter)
+            format_pitcher_with_fangraphs_link(game_score.home_starter)
             if game_score.home_starter
             else "TBD"
         )
@@ -323,35 +291,6 @@ def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
         lines.append(row)
 
     return "\n".join(lines)
-
-
-def _format_team_with_fangraphs_link(team_name: str) -> str:
-    """Format team name as a markdown link to Fangraphs team page."""
-    if not team_name:
-        return "TBD"
-
-    # Get Fangraphs team slug for URL
-    team_slug = get_fangraphs_team_slug(team_name)
-
-    # Fangraphs team URL format: https://www.fangraphs.com/teams/{team_slug}/stats
-    fangraphs_url = f"https://www.fangraphs.com/teams/{team_slug}/stats"
-
-    return f"[{team_name}]({fangraphs_url})"
-
-
-def _format_pitcher_with_fangraphs_link(pitcher_name: str) -> str:
-    """Format pitcher name as a markdown link to Fangraphs player search page."""
-    if not pitcher_name or pitcher_name == "TBD":
-        return "TBD"
-
-    # Extract last name for search
-    name_parts = pitcher_name.split()
-    last_name = name_parts[-1] if name_parts else pitcher_name
-
-    # Fangraphs search URL format: https://www.fangraphs.com/search?q={last_name}
-    fangraphs_url = f"https://www.fangraphs.com/search?q={last_name}"
-
-    return f"[{pitcher_name}]({fangraphs_url})"
 
 
 @app.command()
