@@ -3,7 +3,6 @@
 import csv
 import unicodedata
 from dataclasses import dataclass
-from pathlib import Path
 
 from scipy import stats  # type: ignore
 
@@ -323,21 +322,19 @@ def map_mlbam_name_to_fangraphs_name(mlbam_name: str) -> str:
         return mlbam_name
 
     # Get path to name mapping CSV file
-    # This assumes we're in src/mlb_watchability/ and need to go up to project root
-    current_dir = Path(__file__).parent
-    csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
+    csv_path = "data/name-mapping.csv"
 
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Name mapping file not found: {csv_path}")
-
-    with open(csv_path, encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            if row["mlbam_name"] == mlbam_name:
-                return row["fangraphs_name"]
-
-    # If no mapping found, return original name
-    return mlbam_name
+    try:
+        with open(csv_path, encoding="utf-8") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row["mlbam_name"] == mlbam_name:
+                    return row["fangraphs_name"]
+    except FileNotFoundError as err:
+        raise FileNotFoundError(f"Name mapping file not found: {csv_path}") from err
+    else:
+        # If no mapping found, return original name
+        return mlbam_name
 
 
 def find_pitcher_nerd_stats_fuzzy(
