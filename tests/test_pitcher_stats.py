@@ -714,3 +714,169 @@ class TestFindPitcherNerdStatsFuzzy:
         assert result is not None
         assert result.pitcher_stats.name == "Jake Latz"  # Direct match
         assert result.pnerd_score == 5.0  # Not the mapped Jacob Latz score
+
+
+class TestPitcherNerdStatsComponents:
+    """Test the component properties of PitcherNerdStats."""
+
+    def test_pitcher_nerd_stats_components(self) -> None:
+        """Test that component properties return correct values."""
+        pitcher_stats = PitcherStats(
+            name="Test Pitcher",
+            team="TEST",
+            xfip_minus=95.0,
+            swinging_strike_rate=0.12,
+            strike_rate=0.67,
+            velocity=95.5,
+            age=28,
+            pace=22.5,
+            luck=2.5,
+            knuckleball_rate=0.0,
+        )
+
+        league_means = {
+            "xfip_minus": 100.0,
+            "swinging_strike_rate": 0.11,
+            "strike_rate": 0.65,
+            "velocity": 93.0,
+            "age": 29.0,
+            "pace": 23.0,
+        }
+
+        league_std_devs = {
+            "xfip_minus": 10.0,
+            "swinging_strike_rate": 0.02,
+            "strike_rate": 0.03,
+            "velocity": 2.5,
+            "age": 3.0,
+            "pace": 2.0,
+        }
+
+        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+
+        # Test individual component properties
+        # z_xfip_minus = (95.0 - 100.0) / 10.0 = -0.5
+        # xfip_component = -(-0.5) * 2 = 1.0
+        assert nerd_stats.xfip_component == pytest.approx(1.0)
+
+        # z_swinging_strike_rate = (0.12 - 0.11) / 0.02 = 0.5
+        # swinging_strike_component = 0.5 / 2 = 0.25
+        assert nerd_stats.swinging_strike_component == pytest.approx(0.25)
+
+        # z_strike_rate = (0.67 - 0.65) / 0.03 = 0.667
+        # strike_component = 0.667 / 2 = 0.333
+        assert nerd_stats.strike_component == pytest.approx(0.333, abs=1e-3)
+
+        # z_velocity = (95.5 - 93.0) / 2.5 = 1.0
+        # adjusted_velocity = max(0.0, min(2.0, 1.0)) = 1.0
+        assert nerd_stats.velocity_component == pytest.approx(1.0)
+
+        # z_age = (28 - 29.0) / 3.0 = -0.333
+        # adjusted_age = max(0.0, min(2.0, -(-0.333))) = 0.333
+        assert nerd_stats.age_component == pytest.approx(0.333, abs=1e-3)
+
+        # z_pace = (22.5 - 23.0) / 2.0 = -0.25
+        # pace_component = -(-0.25) / 2 = 0.125
+        assert nerd_stats.pace_component == pytest.approx(0.125)
+
+        # luck = 2.5, adjusted_luck = max(0.0, min(1.0, 2.5)) = 1.0
+        # luck_component = 1.0 / 20 = 0.05
+        assert nerd_stats.luck_component == pytest.approx(0.05)
+
+        # knuckleball_rate = 0.0
+        # knuckleball_component = 0.0 * 5 = 0.0
+        assert nerd_stats.knuckleball_component == pytest.approx(0.0)
+
+        # constant = 3.8
+        assert nerd_stats.constant_component == pytest.approx(3.8)
+
+    def test_pitcher_nerd_stats_components_dict(self) -> None:
+        """Test that components dictionary contains all expected keys."""
+        pitcher_stats = PitcherStats(
+            name="Test Pitcher",
+            team="TEST",
+            xfip_minus=95.0,
+            swinging_strike_rate=0.12,
+            strike_rate=0.67,
+            velocity=95.5,
+            age=28,
+            pace=22.5,
+            luck=2.5,
+            knuckleball_rate=0.0,
+        )
+
+        league_means = {
+            "xfip_minus": 100.0,
+            "swinging_strike_rate": 0.11,
+            "strike_rate": 0.65,
+            "velocity": 93.0,
+            "age": 29.0,
+            "pace": 23.0,
+        }
+
+        league_std_devs = {
+            "xfip_minus": 10.0,
+            "swinging_strike_rate": 0.02,
+            "strike_rate": 0.03,
+            "velocity": 2.5,
+            "age": 3.0,
+            "pace": 2.0,
+        }
+
+        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        components = nerd_stats.components
+
+        expected_keys = {
+            "xfip",
+            "swinging_strike",
+            "strike",
+            "velocity",
+            "age",
+            "pace",
+            "luck",
+            "knuckleball",
+            "constant",
+        }
+        assert set(components.keys()) == expected_keys
+
+        # Verify sum of components equals pNERD score
+        assert sum(components.values()) == pytest.approx(nerd_stats.pnerd_score)
+
+    def test_verify_pnerd_calculation(self) -> None:
+        """Test that the sum of components equals the pNERD score."""
+        pitcher_stats = PitcherStats(
+            name="Test Pitcher",
+            team="TEST",
+            xfip_minus=95.0,
+            swinging_strike_rate=0.12,
+            strike_rate=0.67,
+            velocity=95.5,
+            age=28,
+            pace=22.5,
+            luck=2.5,
+            knuckleball_rate=0.0,
+        )
+
+        league_means = {
+            "xfip_minus": 100.0,
+            "swinging_strike_rate": 0.11,
+            "strike_rate": 0.65,
+            "velocity": 93.0,
+            "age": 29.0,
+            "pace": 23.0,
+        }
+
+        league_std_devs = {
+            "xfip_minus": 10.0,
+            "swinging_strike_rate": 0.02,
+            "strike_rate": 0.03,
+            "velocity": 2.5,
+            "age": 3.0,
+            "pace": 2.0,
+        }
+
+        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+
+        # Verify that sum of components equals pNERD score
+        calculated_total = sum(nerd_stats.components.values())
+        assert abs(calculated_total - nerd_stats.pnerd_score) < 0.001

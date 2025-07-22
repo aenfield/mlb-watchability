@@ -125,37 +125,21 @@ def analyze_team_nerd(team_name: str, season: int = 2025) -> None:
     print("tNERD FORMULA BREAKDOWN")
     print("-" * 30)
 
-    # Calculate each component (based on actual formula: zBat + zBarrel% + zBsR + zFld + zPay + zAge + zLuck + Constant)
-    batting_component = nerd_stats.z_batting_runs
-    barrel_component = nerd_stats.z_barrel_rate
-    baserunning_component = nerd_stats.z_baserunning_runs
-    fielding_component = nerd_stats.z_fielding_runs
-    payroll_component = nerd_stats.adjusted_payroll
-    age_component = nerd_stats.adjusted_age
-    luck_component = nerd_stats.adjusted_luck
-    constant = 4.0
+    # Use the component properties from TeamNerdStats
+    components = nerd_stats.components
 
-    print(f"z Batting Runs:     {batting_component:>8.2f}")
-    print(f"z Barrel Rate:      {barrel_component:>8.2f}")
-    print(f"z Baserunning Runs: {baserunning_component:>8.2f}")
-    print(f"z Fielding Runs:    {fielding_component:>8.2f}")
-    print(f"Adjusted Payroll:   {payroll_component:>8.2f}")
-    print(f"Adjusted Age:       {age_component:>8.2f}")
-    print(f"Adjusted Luck:      {luck_component:>8.2f}")
-    print(f"Constant:           {constant:>8.1f}")
+    print(f"z Batting Runs:     {components['batting']:>8.2f}")
+    print(f"z Barrel Rate:      {components['barrel']:>8.2f}")
+    print(f"z Baserunning Runs: {components['baserunning']:>8.2f}")
+    print(f"z Fielding Runs:    {components['fielding']:>8.2f}")
+    print(f"Adjusted Payroll:   {components['payroll']:>8.2f}")
+    print(f"Adjusted Age:       {components['age']:>8.2f}")
+    print(f"Adjusted Luck:      {components['luck']:>8.2f}")
+    print(f"Constant:           {components['constant']:>8.1f}")
     print(f"{'-' * 20}")
 
-    # Calculate total
-    calculated_total = (
-        batting_component
-        + barrel_component
-        + baserunning_component
-        + fielding_component
-        + payroll_component
-        + age_component
-        + luck_component
-        + constant
-    )
+    # Calculate total using components
+    calculated_total = sum(components.values())
 
     print(f"TOTAL tNERD:        {calculated_total:>8.2f}")
     print(f"Stored tNERD:       {nerd_stats.tnerd_score:>8.2f}")

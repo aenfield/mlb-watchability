@@ -67,9 +67,33 @@ class TeamNerdStats:
     # Final tNERD score
     tnerd_score: float
 
+    # Component values
+    batting_component: float = 0.0
+    barrel_component: float = 0.0
+    baserunning_component: float = 0.0
+    fielding_component: float = 0.0
+    payroll_component: float = 0.0
+    age_component: float = 0.0
+    luck_component: float = 0.0
+    constant_component: float = 0.0
+
     def __post_init__(self) -> None:
         """Validate NERD statistics after initialization."""
         self._validate_nerd_stats()
+
+    @property
+    def components(self) -> dict[str, float]:
+        """Dictionary of all tNERD component values."""
+        return {
+            "batting": self.batting_component,
+            "barrel": self.barrel_component,
+            "baserunning": self.baserunning_component,
+            "fielding": self.fielding_component,
+            "payroll": self.payroll_component,
+            "age": self.age_component,
+            "luck": self.luck_component,
+            "constant": self.constant_component,
+        }
 
     def _validate_nerd_stats(self) -> None:
         """Validate that all NERD statistics are reasonable."""
@@ -147,16 +171,26 @@ def calculate_tnerd_score(
     # For luck, apply positive-only rule and cap at 2.0
     adjusted_luck = max(0.0, min(2.0, z_luck))
 
-    # Calculate tNERD score using the formula
+    # Calculate individual components (stored to avoid duplication)
+    batting_component = z_batting_runs
+    barrel_component = z_barrel_rate
+    baserunning_component = z_baserunning_runs
+    fielding_component = z_fielding_runs
+    payroll_component = adjusted_payroll
+    age_component = adjusted_age
+    luck_component = adjusted_luck
+    constant_component = constant
+
+    # Calculate tNERD score using the components
     tnerd_score = (
-        z_batting_runs
-        + z_barrel_rate
-        + z_baserunning_runs
-        + z_fielding_runs
-        + adjusted_payroll
-        + adjusted_age
-        + adjusted_luck
-        + constant
+        batting_component
+        + barrel_component
+        + baserunning_component
+        + fielding_component
+        + payroll_component
+        + age_component
+        + luck_component
+        + constant_component
     )
 
     return TeamNerdStats(
@@ -171,6 +205,14 @@ def calculate_tnerd_score(
         adjusted_payroll=adjusted_payroll,
         adjusted_age=adjusted_age,
         adjusted_luck=adjusted_luck,
+        batting_component=batting_component,
+        barrel_component=barrel_component,
+        baserunning_component=baserunning_component,
+        fielding_component=fielding_component,
+        payroll_component=payroll_component,
+        age_component=age_component,
+        luck_component=luck_component,
+        constant_component=constant_component,
         tnerd_score=tnerd_score,
     )
 

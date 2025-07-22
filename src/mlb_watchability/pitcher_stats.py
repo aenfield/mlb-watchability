@@ -72,9 +72,35 @@ class PitcherNerdStats:
     # Final pNERD score
     pnerd_score: float
 
+    # Component values
+    xfip_component: float = 0.0
+    swinging_strike_component: float = 0.0
+    strike_component: float = 0.0
+    velocity_component: float = 0.0
+    age_component: float = 0.0
+    pace_component: float = 0.0
+    luck_component: float = 0.0
+    knuckleball_component: float = 0.0
+    constant_component: float = 0.0
+
     def __post_init__(self) -> None:
         """Validate NERD statistics after initialization."""
         self._validate_nerd_stats()
+
+    @property
+    def components(self) -> dict[str, float]:
+        """Dictionary of all pNERD component values."""
+        return {
+            "xfip": self.xfip_component,
+            "swinging_strike": self.swinging_strike_component,
+            "strike": self.strike_component,
+            "velocity": self.velocity_component,
+            "age": self.age_component,
+            "pace": self.pace_component,
+            "luck": self.luck_component,
+            "knuckleball": self.knuckleball_component,
+            "constant": self.constant_component,
+        }
 
     def _validate_nerd_stats(self) -> None:
         """Validate that all NERD statistics are reasonable."""
@@ -146,17 +172,28 @@ def calculate_pnerd_score(
     adjusted_age = max(0.0, min(2.0, -z_age))
     adjusted_luck = max(0.0, min(1.0, pitcher_stats.luck))
 
-    # Calculate pNERD score using the formula
+    # Calculate individual components (stored to avoid duplication)
+    xfip_component = -z_xfip_minus * 2
+    swinging_strike_component = z_swinging_strike_rate / 2
+    strike_component = z_strike_rate / 2
+    velocity_component = adjusted_velocity
+    age_component = adjusted_age
+    pace_component = -z_pace / 2
+    luck_component = adjusted_luck / 20
+    knuckleball_component = pitcher_stats.knuckleball_rate * 5
+    constant_component = constant
+
+    # Calculate pNERD score using the components
     pnerd_score = (
-        (-z_xfip_minus * 2)
-        + (z_swinging_strike_rate / 2)
-        + (z_strike_rate / 2)
-        + adjusted_velocity
-        + adjusted_age
-        + (-z_pace / 2)
-        + (adjusted_luck / 20)
-        + (pitcher_stats.knuckleball_rate * 5)
-        + constant
+        xfip_component
+        + swinging_strike_component
+        + strike_component
+        + velocity_component
+        + age_component
+        + pace_component
+        + luck_component
+        + knuckleball_component
+        + constant_component
     )
 
     return PitcherNerdStats(
@@ -170,6 +207,15 @@ def calculate_pnerd_score(
         adjusted_velocity=adjusted_velocity,
         adjusted_age=adjusted_age,
         adjusted_luck=adjusted_luck,
+        xfip_component=xfip_component,
+        swinging_strike_component=swinging_strike_component,
+        strike_component=strike_component,
+        velocity_component=velocity_component,
+        age_component=age_component,
+        pace_component=pace_component,
+        luck_component=luck_component,
+        knuckleball_component=knuckleball_component,
+        constant_component=constant_component,
         pnerd_score=pnerd_score,
     )
 

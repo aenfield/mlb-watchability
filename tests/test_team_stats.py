@@ -356,3 +356,160 @@ class TestCalculateTnerdScore:
         # tNERD score should be the constant only (all other values are 0.0)
         expected_tnerd = 4.0  # constant + all zeros
         assert abs(nerd_stats.tnerd_score - expected_tnerd) < 0.01
+
+
+class TestTeamNerdStatsComponents:
+    """Test the component properties of TeamNerdStats."""
+
+    def test_team_nerd_stats_components(self) -> None:
+        """Test that component properties return correct values."""
+        team_stats = TeamStats(
+            name="Test Team",
+            batting_runs=10.0,
+            barrel_rate=0.08,
+            baserunning_runs=5.0,
+            fielding_runs=8.0,
+            payroll=150.0,
+            age=27.0,
+            luck=3.0,
+        )
+
+        league_means = {
+            "batting_runs": 0.0,
+            "barrel_rate": 0.06,
+            "baserunning_runs": 0.0,
+            "fielding_runs": 0.0,
+            "payroll": 200.0,
+            "age": 29.0,
+            "luck": 0.0,
+        }
+
+        league_std_devs = {
+            "batting_runs": 20.0,
+            "barrel_rate": 0.02,
+            "baserunning_runs": 10.0,
+            "fielding_runs": 15.0,
+            "payroll": 100.0,
+            "age": 2.0,
+            "luck": 5.0,
+        }
+
+        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+
+        # Test individual component properties
+        # z_batting_runs = (10.0 - 0.0) / 20.0 = 0.5
+        assert nerd_stats.batting_component == pytest.approx(0.5)
+
+        # z_barrel_rate = (0.08 - 0.06) / 0.02 = 1.0
+        assert nerd_stats.barrel_component == pytest.approx(1.0)
+
+        # z_baserunning_runs = (5.0 - 0.0) / 10.0 = 0.5
+        assert nerd_stats.baserunning_component == pytest.approx(0.5)
+
+        # z_fielding_runs = (8.0 - 0.0) / 15.0 = 0.533
+        assert nerd_stats.fielding_component == pytest.approx(0.533, abs=1e-3)
+
+        # z_payroll = (150.0 - 200.0) / 100.0 = -0.5
+        # adjusted_payroll = max(0.0, -(-0.5)) = 0.5
+        assert nerd_stats.payroll_component == pytest.approx(0.5)
+
+        # z_age = (27.0 - 29.0) / 2.0 = -1.0
+        # adjusted_age = max(0.0, -(-1.0)) = 1.0
+        assert nerd_stats.age_component == pytest.approx(1.0)
+
+        # z_luck = (3.0 - 0.0) / 5.0 = 0.6
+        # adjusted_luck = max(0.0, min(2.0, 0.6)) = 0.6
+        assert nerd_stats.luck_component == pytest.approx(0.6)
+
+        # constant = 4.0
+        assert nerd_stats.constant_component == pytest.approx(4.0)
+
+    def test_team_nerd_stats_components_dict(self) -> None:
+        """Test that components dictionary contains all expected keys."""
+        team_stats = TeamStats(
+            name="Test Team",
+            batting_runs=10.0,
+            barrel_rate=0.08,
+            baserunning_runs=5.0,
+            fielding_runs=8.0,
+            payroll=150.0,
+            age=27.0,
+            luck=3.0,
+        )
+
+        league_means = {
+            "batting_runs": 0.0,
+            "barrel_rate": 0.06,
+            "baserunning_runs": 0.0,
+            "fielding_runs": 0.0,
+            "payroll": 200.0,
+            "age": 29.0,
+            "luck": 0.0,
+        }
+
+        league_std_devs = {
+            "batting_runs": 20.0,
+            "barrel_rate": 0.02,
+            "baserunning_runs": 10.0,
+            "fielding_runs": 15.0,
+            "payroll": 100.0,
+            "age": 2.0,
+            "luck": 5.0,
+        }
+
+        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        components = nerd_stats.components
+
+        expected_keys = {
+            "batting",
+            "barrel",
+            "baserunning",
+            "fielding",
+            "payroll",
+            "age",
+            "luck",
+            "constant",
+        }
+        assert set(components.keys()) == expected_keys
+
+        # Verify sum of components equals tNERD score
+        assert sum(components.values()) == pytest.approx(nerd_stats.tnerd_score)
+
+    def test_verify_tnerd_calculation(self) -> None:
+        """Test that the sum of components equals the tNERD score."""
+        team_stats = TeamStats(
+            name="Test Team",
+            batting_runs=10.0,
+            barrel_rate=0.08,
+            baserunning_runs=5.0,
+            fielding_runs=8.0,
+            payroll=150.0,
+            age=27.0,
+            luck=3.0,
+        )
+
+        league_means = {
+            "batting_runs": 0.0,
+            "barrel_rate": 0.06,
+            "baserunning_runs": 0.0,
+            "fielding_runs": 0.0,
+            "payroll": 200.0,
+            "age": 29.0,
+            "luck": 0.0,
+        }
+
+        league_std_devs = {
+            "batting_runs": 20.0,
+            "barrel_rate": 0.02,
+            "baserunning_runs": 10.0,
+            "fielding_runs": 15.0,
+            "payroll": 100.0,
+            "age": 2.0,
+            "luck": 5.0,
+        }
+
+        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+
+        # Verify that sum of components equals tNERD score
+        calculated_total = sum(nerd_stats.components.values())
+        assert abs(calculated_total - nerd_stats.tnerd_score) < 0.001

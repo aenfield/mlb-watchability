@@ -103,40 +103,22 @@ def analyze_pitcher_nerd(pitcher_name: str, season: int = 2025) -> None:
     print("pNERD FORMULA BREAKDOWN")
     print("-" * 30)
 
-    # Calculate each component
-    xfip_component = -nerd_stats.z_xfip_minus * 2
-    swstr_component = nerd_stats.z_swinging_strike_rate / 2
-    strike_component = nerd_stats.z_strike_rate / 2
-    velocity_component = nerd_stats.adjusted_velocity
-    age_component = nerd_stats.adjusted_age
-    pace_component = -nerd_stats.z_pace / 2
-    luck_component = nerd_stats.adjusted_luck / 20
-    knuckleball_component = raw_stats.knuckleball_rate * 5
-    constant = 3.8
+    # Use the component properties from PitcherNerdStats
+    components = nerd_stats.components
 
-    print(f"(-z xFIP- × 2):     {xfip_component:>8.2f}")
-    print(f"(z SwStr ÷ 2):      {swstr_component:>8.2f}")
-    print(f"(z Strike ÷ 2):     {strike_component:>8.2f}")
-    print(f"Adjusted Velocity:  {velocity_component:>8.2f}")
-    print(f"Adjusted Age:       {age_component:>8.2f}")
-    print(f"(-z Pace ÷ 2):      {pace_component:>8.2f}")
-    print(f"(Luck ÷ 20):        {luck_component:>8.2f}")
-    print(f"(KN% × 5):          {knuckleball_component:>8.2f}")
-    print(f"Constant:           {constant:>8.1f}")
+    print(f"(-z xFIP- × 2):     {components['xfip']:>8.2f}")
+    print(f"(z SwStr ÷ 2):      {components['swinging_strike']:>8.2f}")
+    print(f"(z Strike ÷ 2):     {components['strike']:>8.2f}")
+    print(f"Adjusted Velocity:  {components['velocity']:>8.2f}")
+    print(f"Adjusted Age:       {components['age']:>8.2f}")
+    print(f"(-z Pace ÷ 2):      {components['pace']:>8.2f}")
+    print(f"(Luck ÷ 20):        {components['luck']:>8.2f}")
+    print(f"(KN% × 5):          {components['knuckleball']:>8.2f}")
+    print(f"Constant:           {components['constant']:>8.1f}")
     print(f"{'-' * 20}")
 
-    # Calculate total
-    calculated_total = (
-        xfip_component
-        + swstr_component
-        + strike_component
-        + velocity_component
-        + age_component
-        + pace_component
-        + luck_component
-        + knuckleball_component
-        + constant
-    )
+    # Calculate total using components
+    calculated_total = sum(components.values())
 
     print(f"TOTAL pNERD:        {calculated_total:>8.2f}")
     print(f"Stored pNERD:       {nerd_stats.pnerd_score:>8.2f}")
