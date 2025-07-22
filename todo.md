@@ -74,6 +74,10 @@ Core Implementation
 
 26. ~~Extend the GH action from just above so that when the newly-created markdown file is created successfully the action checks it in to the main branch of the https://github.com/aenfield/blog-eleventy/ repo, copying the file to the directory <repo root>/content/blog/mlbw directory.~~
 
+## Expand to generate and show details
+
+27. As part of https://github.com/aenfield/mlb-watchability/issues/6, I first want to expand the pitcher_stats.py and team_stats.py implementations to expose the components of the pNERD/tNERD score. We can probably do this by factoring the relevant code from the pitcher_nerd_breakdown.py and team_nerd_breakdown.py first cut implementations into the pitcher/team stats implementations - in the end, PitcherNerdStats/TeamNerdStats should have properties with the components, and the components should sum to pNERD/tNERD score. Then make pitcher_nerd_breakdown.py and team_nerd_breakdown.py use the new PitcherNerdStats/TeamNerdStats implementations, make sure existing tests pass, and add new tests for the new location of the functionality.
+
 ## Notes for possible integration and enhancement
 
 - Review and as needed add additional end-to-end integration tests for complete workflow from date input to score output
