@@ -96,10 +96,10 @@ class PitcherNerdStats:
                 f"Adjusted luck must be between 0.0 and 1.0, got {self.adjusted_luck}"
             )
 
-        # pNERD score should be positive (typically 0-20)
-        if not 0.0 <= self.pnerd_score <= 50.0:  # noqa: PLR2004
+        # pNERD score should typically be positive but can be negative for very poor pitchers
+        if not -10.0 <= self.pnerd_score <= 50.0:  # noqa: PLR2004
             raise ValueError(
-                f"pNERD score must be between 0.0 and 50.0, got {self.pnerd_score}"
+                f"pNERD score must be between -10.0 and 50.0, got {self.pnerd_score}"
             )
 
 
@@ -149,7 +149,7 @@ def calculate_pnerd_score(
 
     # Calculate pNERD score using the formula
     pnerd_score = (
-        (z_xfip_minus * 2)
+        (-z_xfip_minus * 2)
         + (z_swinging_strike_rate / 2)
         + (z_strike_rate / 2)
         + adjusted_velocity

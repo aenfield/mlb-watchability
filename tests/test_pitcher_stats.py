@@ -212,7 +212,7 @@ class TestPitcherNerdStats:
         pitcher_stats = self.create_sample_pitcher_stats()
 
         with pytest.raises(
-            ValueError, match="pNERD score must be between 0.0 and 50.0"
+            ValueError, match="pNERD score must be between -10.0 and 50.0"
         ):
             PitcherNerdStats(
                 pitcher_stats=pitcher_stats,
@@ -292,7 +292,9 @@ class TestCalculatePnerdScore:
 
         # Check pNERD score calculation
         expected_pnerd = (
-            (-1.0 * 2)  # z_xfip_minus * 2
+            (
+                1.0 * 2
+            )  # -z_xfip_minus * 2 = -(-1.0) * 2 = 1.0 * 2 (lower xFIP- is better)
             + (1.0 / 2)  # z_swinging_strike_rate / 2
             + (1.0 / 2)  # z_strike_rate / 2
             + 1.0  # adjusted_velocity
@@ -504,10 +506,14 @@ class TestMapMlbamNameToFangraphs:
         """Test that mapping is case-sensitive."""
         # Different case should not match
         result = map_mlbam_name_to_fangraphs_name("jacob latz")  # lowercase
-        assert result == "jacob latz"  # Should return original since CSV has "Jacob Latz"
+        assert (
+            result == "jacob latz"
+        )  # Should return original since CSV has "Jacob Latz"
 
         result = map_mlbam_name_to_fangraphs_name("JACOB LATZ")  # uppercase
-        assert result == "JACOB LATZ"  # Should return original since CSV has "Jacob Latz"
+        assert (
+            result == "JACOB LATZ"
+        )  # Should return original since CSV has "Jacob Latz"
 
     def test_map_mlbam_name_to_fangraphs_name_missing_file(self) -> None:
         """Test that FileNotFoundError is raised when CSV file doesn't exist."""
