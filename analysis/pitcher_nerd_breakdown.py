@@ -103,22 +103,30 @@ def analyze_pitcher_nerd(pitcher_name: str, season: int = 2025) -> None:
     print("pNERD FORMULA BREAKDOWN")
     print("-" * 30)
 
-    # Use the component properties from PitcherNerdStats
-    components = nerd_stats.components
-
-    print(f"(-z xFIP- × 2):     {components['xfip']:>8.2f}")
-    print(f"(z SwStr ÷ 2):      {components['swinging_strike']:>8.2f}")
-    print(f"(z Strike ÷ 2):     {components['strike']:>8.2f}")
-    print(f"Adjusted Velocity:  {components['velocity']:>8.2f}")
-    print(f"Adjusted Age:       {components['age']:>8.2f}")
-    print(f"(-z Pace ÷ 2):      {components['pace']:>8.2f}")
-    print(f"(Luck ÷ 20):        {components['luck']:>8.2f}")
-    print(f"(KN% × 5):          {components['knuckleball']:>8.2f}")
-    print(f"Constant:           {components['constant']:>8.1f}")
+    # Use the individual component fields directly
+    print(f"(-z xFIP- × 2):     {nerd_stats.xfip_component:>8.2f}")
+    print(f"(z SwStr ÷ 2):      {nerd_stats.swinging_strike_component:>8.2f}")
+    print(f"(z Strike ÷ 2):     {nerd_stats.strike_component:>8.2f}")
+    print(f"Adjusted Velocity:  {nerd_stats.velocity_component:>8.2f}")
+    print(f"Adjusted Age:       {nerd_stats.age_component:>8.2f}")
+    print(f"(-z Pace ÷ 2):      {nerd_stats.pace_component:>8.2f}")
+    print(f"(Luck ÷ 20):        {nerd_stats.luck_component:>8.2f}")
+    print(f"(KN% × 5):          {nerd_stats.knuckleball_component:>8.2f}")
+    print(f"Constant:           {nerd_stats.constant_component:>8.1f}")
     print(f"{'-' * 20}")
 
-    # Calculate total using components
-    calculated_total = sum(components.values())
+    # Calculate total using individual component fields
+    calculated_total = (
+        nerd_stats.xfip_component
+        + nerd_stats.swinging_strike_component
+        + nerd_stats.strike_component
+        + nerd_stats.velocity_component
+        + nerd_stats.age_component
+        + nerd_stats.pace_component
+        + nerd_stats.luck_component
+        + nerd_stats.knuckleball_component
+        + nerd_stats.constant_component
+    )
 
     print(f"TOTAL pNERD:        {calculated_total:>8.2f}")
     print(f"Stored pNERD:       {nerd_stats.pnerd_score:>8.2f}")

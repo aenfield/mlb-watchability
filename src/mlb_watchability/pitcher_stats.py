@@ -83,21 +83,6 @@ class PitcherNerdStats:
     knuckleball_component: float = 0.0
     constant_component: float = 0.0
 
-    @property
-    def components(self) -> dict[str, float]:
-        """Dictionary of all pNERD component values."""
-        return {
-            "xfip": self.xfip_component,
-            "swinging_strike": self.swinging_strike_component,
-            "strike": self.strike_component,
-            "velocity": self.velocity_component,
-            "age": self.age_component,
-            "pace": self.pace_component,
-            "luck": self.luck_component,
-            "knuckleball": self.knuckleball_component,
-            "constant": self.constant_component,
-        }
-
     @classmethod
     def from_stats_and_means(
         cls,

@@ -77,20 +77,6 @@ class TeamNerdStats:
     luck_component: float = 0.0
     constant_component: float = 0.0
 
-    @property
-    def components(self) -> dict[str, float]:
-        """Dictionary of all tNERD component values."""
-        return {
-            "batting": self.batting_component,
-            "barrel": self.barrel_component,
-            "baserunning": self.baserunning_component,
-            "fielding": self.fielding_component,
-            "payroll": self.payroll_component,
-            "age": self.age_component,
-            "luck": self.luck_component,
-            "constant": self.constant_component,
-        }
-
     @classmethod
     def from_stats_and_means(
         cls,

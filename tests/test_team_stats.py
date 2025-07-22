@@ -346,59 +346,6 @@ class TestTeamNerdStatsComponents:
         # constant = 4.0
         assert nerd_stats.constant_component == pytest.approx(4.0)
 
-    def test_team_nerd_stats_components_dict(self) -> None:
-        """Test that components dictionary contains all expected keys."""
-        team_stats = TeamStats(
-            name="Test Team",
-            batting_runs=10.0,
-            barrel_rate=0.08,
-            baserunning_runs=5.0,
-            fielding_runs=8.0,
-            payroll=150.0,
-            age=27.0,
-            luck=3.0,
-        )
-
-        league_means = {
-            "batting_runs": 0.0,
-            "barrel_rate": 0.06,
-            "baserunning_runs": 0.0,
-            "fielding_runs": 0.0,
-            "payroll": 200.0,
-            "age": 29.0,
-            "luck": 0.0,
-        }
-
-        league_std_devs = {
-            "batting_runs": 20.0,
-            "barrel_rate": 0.02,
-            "baserunning_runs": 10.0,
-            "fielding_runs": 15.0,
-            "payroll": 100.0,
-            "age": 2.0,
-            "luck": 5.0,
-        }
-
-        nerd_stats = TeamNerdStats.from_stats_and_means(
-            team_stats, league_means, league_std_devs
-        )
-        components = nerd_stats.components
-
-        expected_keys = {
-            "batting",
-            "barrel",
-            "baserunning",
-            "fielding",
-            "payroll",
-            "age",
-            "luck",
-            "constant",
-        }
-        assert set(components.keys()) == expected_keys
-
-        # Verify sum of components equals tNERD score
-        assert sum(components.values()) == pytest.approx(nerd_stats.tnerd_score)
-
     def test_verify_tnerd_calculation(self) -> None:
         """Test that the sum of components equals the tNERD score."""
         team_stats = TeamStats(
@@ -437,5 +384,14 @@ class TestTeamNerdStatsComponents:
         )
 
         # Verify that sum of components equals tNERD score
-        calculated_total = sum(nerd_stats.components.values())
+        calculated_total = (
+            nerd_stats.batting_component
+            + nerd_stats.barrel_component
+            + nerd_stats.baserunning_component
+            + nerd_stats.fielding_component
+            + nerd_stats.payroll_component
+            + nerd_stats.age_component
+            + nerd_stats.luck_component
+            + nerd_stats.constant_component
+        )
         assert abs(calculated_total - nerd_stats.tnerd_score) < 0.001

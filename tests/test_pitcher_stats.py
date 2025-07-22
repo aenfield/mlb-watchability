@@ -715,60 +715,6 @@ class TestPitcherNerdStatsComponents:
         # constant = 3.8
         assert nerd_stats.constant_component == pytest.approx(3.8)
 
-    def test_pitcher_nerd_stats_components_dict(self) -> None:
-        """Test that components dictionary contains all expected keys."""
-        pitcher_stats = PitcherStats(
-            name="Test Pitcher",
-            team="TEST",
-            xfip_minus=95.0,
-            swinging_strike_rate=0.12,
-            strike_rate=0.67,
-            velocity=95.5,
-            age=28,
-            pace=22.5,
-            luck=2.5,
-            knuckleball_rate=0.0,
-        )
-
-        league_means = {
-            "xfip_minus": 100.0,
-            "swinging_strike_rate": 0.11,
-            "strike_rate": 0.65,
-            "velocity": 93.0,
-            "age": 29.0,
-            "pace": 23.0,
-        }
-
-        league_std_devs = {
-            "xfip_minus": 10.0,
-            "swinging_strike_rate": 0.02,
-            "strike_rate": 0.03,
-            "velocity": 2.5,
-            "age": 3.0,
-            "pace": 2.0,
-        }
-
-        nerd_stats = PitcherNerdStats.from_stats_and_means(
-            pitcher_stats, league_means, league_std_devs
-        )
-        components = nerd_stats.components
-
-        expected_keys = {
-            "xfip",
-            "swinging_strike",
-            "strike",
-            "velocity",
-            "age",
-            "pace",
-            "luck",
-            "knuckleball",
-            "constant",
-        }
-        assert set(components.keys()) == expected_keys
-
-        # Verify sum of components equals pNERD score
-        assert sum(components.values()) == pytest.approx(nerd_stats.pnerd_score)
-
     def test_verify_pnerd_calculation(self) -> None:
         """Test that the sum of components equals the pNERD score."""
         pitcher_stats = PitcherStats(
@@ -807,5 +753,15 @@ class TestPitcherNerdStatsComponents:
         )
 
         # Verify that sum of components equals pNERD score
-        calculated_total = sum(nerd_stats.components.values())
+        calculated_total = (
+            nerd_stats.xfip_component
+            + nerd_stats.swinging_strike_component
+            + nerd_stats.strike_component
+            + nerd_stats.velocity_component
+            + nerd_stats.age_component
+            + nerd_stats.pace_component
+            + nerd_stats.luck_component
+            + nerd_stats.knuckleball_component
+            + nerd_stats.constant_component
+        )
         assert abs(calculated_total - nerd_stats.pnerd_score) < 0.001

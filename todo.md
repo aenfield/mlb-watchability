@@ -76,7 +76,9 @@ Core Implementation
 
 ## Expand to generate and show details
 
-27. As part of https://github.com/aenfield/mlb-watchability/issues/6, I first want to expand the pitcher_stats.py and team_stats.py implementations to expose the components of the pNERD/tNERD score. We can probably do this by factoring the relevant code from the pitcher_nerd_breakdown.py and team_nerd_breakdown.py first cut implementations into the pitcher/team stats implementations - in the end, PitcherNerdStats/TeamNerdStats should have properties with the components, and the components should sum to pNERD/tNERD score. Then make pitcher_nerd_breakdown.py and team_nerd_breakdown.py use the new PitcherNerdStats/TeamNerdStats implementations, make sure existing tests pass, and add new tests for the new location of the functionality.
+27. ~~As part of https://github.com/aenfield/mlb-watchability/issues/6, I first want to expand the pitcher_stats.py and team_stats.py implementations to expose the components of the pNERD/tNERD score. We can probably do this by factoring the relevant code from the pitcher_nerd_breakdown.py and team_nerd_breakdown.py first cut implementations into the pitcher/team stats implementations - in the end, PitcherNerdStats/TeamNerdStats should have properties with the components, and the components should sum to pNERD/tNERD score. Then make pitcher_nerd_breakdown.py and team_nerd_breakdown.py use the new PitcherNerdStats/TeamNerdStats implementations, make sure existing tests pass, and add new tests for the new location of the functionality.~~
+
+28. Now, continuing with implementing https://github.com/aenfield/mlb-watchability/issues/6, I want to do a first cut at the expanded UI. For this one, I want to add a new details table to the Markdown file created by mlbw-markdown. The new table should go after the existing table. It should have a row for each game, following this exammple. TODO
 
 ## Notes for possible integration and enhancement
 
