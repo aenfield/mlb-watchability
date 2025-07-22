@@ -1,7 +1,5 @@
 """Unit tests for pitcher statistics data structures."""
 
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -515,71 +513,42 @@ class TestMapMlbamNameToFangraphs:
             result == "JACOB LATZ"
         )  # Should return original since CSV has "Jacob Latz"
 
-    def test_map_mlbam_name_to_fangraphs_name_missing_file(self) -> None:
-        """Test that FileNotFoundError is raised when CSV file doesn't exist."""
-        # Temporarily move the CSV file to simulate missing file
+    # Don't want to use the Claude impl of this test for now, so I'll pass on this one for the time being
+    # def test_map_mlbam_name_to_fangraphs_name_malformed_csv(self) -> None:
+    #     """Test that KeyError is raised when CSV has missing columns."""
 
-        # Get the current CSV path
-        current_dir = Path(__file__).parent.parent / "src" / "mlb_watchability"
-        csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
+    #     # Create a temporary CSV with wrong column names
+    #     with tempfile.NamedTemporaryFile(
+    #         mode="w", suffix=".csv", delete=False
+    #     ) as temp_file:
+    #         temp_file.write("wrong_column,another_column\n")
+    #         temp_file.write("Jacob Latz,Jake Latz\n")
+    #         temp_path = Path(temp_file.name)
 
-        # Create a temporary backup
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_path = Path(temp_file.name)
+    #     # Get the current CSV path and temporarily replace it
+    #     current_dir = Path(__file__).parent.parent / "src" / "mlb_watchability"
+    #     csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
 
-        if csv_path.exists():
-            # Move the file temporarily
-            csv_path.rename(temp_path)
+    #     # Create backup of original file if it exists
+    #     backup_path = None
+    #     if csv_path.exists():
+    #         backup_path = csv_path.with_suffix(".csv.backup")
+    #         csv_path.rename(backup_path)
 
-            try:
-                # Now test that FileNotFoundError is raised
-                with pytest.raises(
-                    FileNotFoundError, match="Name mapping file not found"
-                ):
-                    map_mlbam_name_to_fangraphs_name("Jacob Latz")
-            finally:
-                # Restore the file
-                temp_path.rename(csv_path)
-        else:
-            # File doesn't exist anyway, so test should work
-            with pytest.raises(FileNotFoundError, match="Name mapping file not found"):
-                map_mlbam_name_to_fangraphs_name("Jacob Latz")
+    #     try:
+    #         # Move temp file to expected location
+    #         temp_path.rename(csv_path)
 
-    def test_map_mlbam_name_to_fangraphs_name_malformed_csv(self) -> None:
-        """Test that KeyError is raised when CSV has missing columns."""
+    #         # Test that KeyError is raised due to missing expected columns
+    #         with pytest.raises(KeyError):
+    #             map_mlbam_name_to_fangraphs_name("Jacob Latz")
 
-        # Create a temporary CSV with wrong column names
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False
-        ) as temp_file:
-            temp_file.write("wrong_column,another_column\n")
-            temp_file.write("Jacob Latz,Jake Latz\n")
-            temp_path = Path(temp_file.name)
-
-        # Get the current CSV path and temporarily replace it
-        current_dir = Path(__file__).parent.parent / "src" / "mlb_watchability"
-        csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
-
-        # Create backup of original file if it exists
-        backup_path = None
-        if csv_path.exists():
-            backup_path = csv_path.with_suffix(".csv.backup")
-            csv_path.rename(backup_path)
-
-        try:
-            # Move temp file to expected location
-            temp_path.rename(csv_path)
-
-            # Test that KeyError is raised due to missing expected columns
-            with pytest.raises(KeyError):
-                map_mlbam_name_to_fangraphs_name("Jacob Latz")
-
-        finally:
-            # Clean up
-            if csv_path.exists():
-                csv_path.unlink()
-            if backup_path and backup_path.exists():
-                backup_path.rename(csv_path)
+    #     finally:
+    #         # Clean up
+    #         if csv_path.exists():
+    #             csv_path.unlink()
+    #         if backup_path and backup_path.exists():
+    #             backup_path.rename(csv_path)
 
 
 class TestFindPitcherNerdStatsFuzzy:

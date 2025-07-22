@@ -324,14 +324,14 @@ def map_mlbam_name_to_fangraphs_name(mlbam_name: str) -> str:
     # Get path to name mapping CSV file - use pandas like other CSV files in the codebase
     csv_path = "data/name-mapping.csv"
 
-    try:
-        mapping_df = pd.read_csv(csv_path)
-        # Look for matching mlbam_name
-        matches = mapping_df[mapping_df["mlbam_name"] == mlbam_name]
-        if not matches.empty:
-            return str(matches.iloc[0]["fangraphs_name"])
-    except FileNotFoundError as err:
-        raise FileNotFoundError(f"Name mapping file not found: {csv_path}") from err
+    # try:
+    mapping_df = pd.read_csv(csv_path)
+    # Look for matching mlbam_name
+    matches = mapping_df[mapping_df["mlbam_name"] == mlbam_name]
+    if not matches.empty:
+        return str(matches.iloc[0]["fangraphs_name"])
+    # except FileNotFoundError as err:
+    #     raise FileNotFoundError(f"Name mapping file not found: {csv_path}") from err
     else:
         # If no mapping found, return original name
         return mlbam_name
