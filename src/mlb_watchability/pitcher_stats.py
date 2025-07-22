@@ -1,9 +1,9 @@
 """Pitcher statistics data structures for pNERD calculation."""
 
-import csv
 import unicodedata
 from dataclasses import dataclass
 
+import pandas as pd
 from scipy import stats  # type: ignore
 
 from .data_retrieval import get_all_pitcher_stats
@@ -321,15 +321,15 @@ def map_mlbam_name_to_fangraphs_name(mlbam_name: str) -> str:
     if not mlbam_name:
         return mlbam_name
 
-    # Get path to name mapping CSV file
+    # Get path to name mapping CSV file - use pandas like other CSV files in the codebase
     csv_path = "data/name-mapping.csv"
 
     try:
-        with open(csv_path, encoding="utf-8") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                if row["mlbam_name"] == mlbam_name:
-                    return row["fangraphs_name"]
+        mapping_df = pd.read_csv(csv_path)
+        # Look for matching mlbam_name
+        matches = mapping_df[mapping_df["mlbam_name"] == mlbam_name]
+        if not matches.empty:
+            return str(matches.iloc[0]["fangraphs_name"])
     except FileNotFoundError as err:
         raise FileNotFoundError(f"Name mapping file not found: {csv_path}") from err
     else:
