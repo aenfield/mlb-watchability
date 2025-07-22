@@ -1,12 +1,18 @@
 """Unit tests for pitcher statistics data structures."""
 
+import tempfile
+from pathlib import Path
+
 import pytest
 
 from mlb_watchability.pitcher_stats import (
     PitcherNerdStats,
     PitcherStats,
     calculate_pnerd_score,
+    find_pitcher_nerd_stats_fuzzy,
     format_pitcher_with_fangraphs_link,
+    map_mlbam_name_to_fangraphs_name,
+    remove_accented_characters,
 )
 
 
@@ -414,3 +420,323 @@ class TestPitcherFormatting:
         result = format_pitcher_with_fangraphs_link(" ")
         expected = "[ ](https://www.fangraphs.com/search?q= )"
         assert result == expected
+
+
+class TestRemoveAccentedCharacters:
+    """Test cases for remove_accented_characters function."""
+
+    def test_remove_accented_characters_common_cases(self) -> None:
+        """Test removal of common accented characters."""
+        # Spanish names with tildes and accents
+        assert remove_accented_characters("Jesús Luzardo") == "Jesus Luzardo"
+        assert remove_accented_characters("José Altuve") == "Jose Altuve"
+        assert remove_accented_characters("Teoscar Hernández") == "Teoscar Hernandez"
+        assert remove_accented_characters("Andrés Muñoz") == "Andres Munoz"
+
+        # French names
+        assert remove_accented_characters("René González") == "Rene Gonzalez"
+
+        # Portuguese names
+        assert remove_accented_characters("João Silva") == "Joao Silva"
+
+        # Names with multiple accents
+        assert remove_accented_characters("François José") == "Francois Jose"
+
+    def test_remove_accented_characters_no_accents(self) -> None:
+        """Test function with names that have no accented characters."""
+        assert remove_accented_characters("Jacob Latz") == "Jacob Latz"
+        assert remove_accented_characters("Mike Soroka") == "Mike Soroka"
+        assert remove_accented_characters("Chris Sale") == "Chris Sale"
+        assert remove_accented_characters("Paul Skenes") == "Paul Skenes"
+
+    def test_remove_accented_characters_edge_cases(self) -> None:
+        """Test function with edge cases."""
+        # Empty string
+        assert remove_accented_characters("") == ""
+
+        # None input
+        assert remove_accented_characters(None) is None  # type: ignore
+
+        # Single character with accent
+        assert remove_accented_characters("é") == "e"
+        assert remove_accented_characters("ñ") == "n"
+
+        # Only accented characters
+        assert remove_accented_characters("José") == "Jose"
+
+    def test_remove_accented_characters_preserves_other_chars(self) -> None:
+        """Test that function preserves non-accent special characters."""
+        # Apostrophes and hyphens should be preserved
+        assert remove_accented_characters("O'Neill") == "O'Neill"
+        assert remove_accented_characters("Jean-Claude") == "Jean-Claude"
+        assert remove_accented_characters("José O'Brien") == "Jose O'Brien"
+
+
+class TestMapMlbamNameToFangraphs:
+    """Test cases for map_mlbam_name_to_fangraphs_name function."""
+
+    def test_map_mlbam_name_to_fangraphs_name_existing_mapping(self) -> None:
+        """Test mapping with existing entry in CSV."""
+        # This assumes the CSV has Jacob Latz -> Jake Latz mapping
+        result = map_mlbam_name_to_fangraphs_name("Jacob Latz")
+        assert result == "Jake Latz"
+
+    def test_map_mlbam_name_to_fangraphs_name_no_mapping(self) -> None:
+        """Test mapping with name not in CSV."""
+        result = map_mlbam_name_to_fangraphs_name("Paul Skenes")
+        assert result == "Paul Skenes"  # Should return original name
+
+        result = map_mlbam_name_to_fangraphs_name("Shohei Ohtani")
+        assert result == "Shohei Ohtani"  # Should return original name
+
+    def test_map_mlbam_name_to_fangraphs_name_edge_cases(self) -> None:
+        """Test mapping with edge cases."""
+        # Empty string
+        assert map_mlbam_name_to_fangraphs_name("") == ""
+
+        # None input
+        assert map_mlbam_name_to_fangraphs_name(None) is None  # type: ignore
+
+        # Whitespace
+        assert map_mlbam_name_to_fangraphs_name("  ") == "  "
+
+    def test_map_mlbam_name_to_fangraphs_name_case_sensitive(self) -> None:
+        """Test that mapping is case-sensitive."""
+        # Different case should not match
+        result = map_mlbam_name_to_fangraphs_name("jacob latz")  # lowercase
+        assert result == "jacob latz"  # Should return original since CSV has "Jacob Latz"
+
+        result = map_mlbam_name_to_fangraphs_name("JACOB LATZ")  # uppercase
+        assert result == "JACOB LATZ"  # Should return original since CSV has "Jacob Latz"
+
+    def test_map_mlbam_name_to_fangraphs_name_missing_file(self) -> None:
+        """Test that FileNotFoundError is raised when CSV file doesn't exist."""
+        # Temporarily move the CSV file to simulate missing file
+
+        # Get the current CSV path
+        current_dir = Path(__file__).parent.parent / "src" / "mlb_watchability"
+        csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
+
+        # Create a temporary backup
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_path = Path(temp_file.name)
+
+        if csv_path.exists():
+            # Move the file temporarily
+            csv_path.rename(temp_path)
+
+            try:
+                # Now test that FileNotFoundError is raised
+                with pytest.raises(
+                    FileNotFoundError, match="Name mapping file not found"
+                ):
+                    map_mlbam_name_to_fangraphs_name("Jacob Latz")
+            finally:
+                # Restore the file
+                temp_path.rename(csv_path)
+        else:
+            # File doesn't exist anyway, so test should work
+            with pytest.raises(FileNotFoundError, match="Name mapping file not found"):
+                map_mlbam_name_to_fangraphs_name("Jacob Latz")
+
+    def test_map_mlbam_name_to_fangraphs_name_malformed_csv(self) -> None:
+        """Test that KeyError is raised when CSV has missing columns."""
+
+        # Create a temporary CSV with wrong column names
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".csv", delete=False
+        ) as temp_file:
+            temp_file.write("wrong_column,another_column\n")
+            temp_file.write("Jacob Latz,Jake Latz\n")
+            temp_path = Path(temp_file.name)
+
+        # Get the current CSV path and temporarily replace it
+        current_dir = Path(__file__).parent.parent / "src" / "mlb_watchability"
+        csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
+
+        # Create backup of original file if it exists
+        backup_path = None
+        if csv_path.exists():
+            backup_path = csv_path.with_suffix(".csv.backup")
+            csv_path.rename(backup_path)
+
+        try:
+            # Move temp file to expected location
+            temp_path.rename(csv_path)
+
+            # Test that KeyError is raised due to missing expected columns
+            with pytest.raises(KeyError):
+                map_mlbam_name_to_fangraphs_name("Jacob Latz")
+
+        finally:
+            # Clean up
+            if csv_path.exists():
+                csv_path.unlink()
+            if backup_path and backup_path.exists():
+                backup_path.rename(csv_path)
+
+
+class TestFindPitcherNerdStatsFuzzy:
+    """Test cases for find_pitcher_nerd_stats_fuzzy function."""
+
+    def create_sample_pitcher_nerd_stats(self) -> dict[str, PitcherNerdStats]:
+        """Create sample pitcher NERD stats dictionary for testing."""
+        # Create some sample PitcherStats objects
+        pitcher1 = PitcherStats(
+            name="Jake Latz",
+            team="TST",
+            xfip_minus=85,
+            swinging_strike_rate=0.15,
+            strike_rate=0.65,
+            velocity=95.5,
+            age=28,
+            pace=18.2,
+            luck=-5.0,
+            knuckleball_rate=0.0,
+        )
+
+        pitcher2 = PitcherStats(
+            name="Jesus Luzardo",
+            team="TST",
+            xfip_minus=90,
+            swinging_strike_rate=0.12,
+            strike_rate=0.62,
+            velocity=94.0,
+            age=26,
+            pace=19.0,
+            luck=2.0,
+            knuckleball_rate=0.0,
+        )
+
+        # Create corresponding PitcherNerdStats objects
+        nerd_stats1 = PitcherNerdStats(
+            pitcher_stats=pitcher1,
+            z_xfip_minus=-1.0,
+            z_swinging_strike_rate=1.2,
+            z_strike_rate=0.8,
+            z_velocity=1.5,
+            z_age=-0.3,
+            z_pace=0.2,
+            adjusted_velocity=1.5,
+            adjusted_age=0.3,
+            adjusted_luck=0.0,
+            pnerd_score=8.5,
+        )
+
+        nerd_stats2 = PitcherNerdStats(
+            pitcher_stats=pitcher2,
+            z_xfip_minus=-0.5,
+            z_swinging_strike_rate=0.8,
+            z_strike_rate=0.5,
+            z_velocity=1.0,
+            z_age=-0.8,
+            z_pace=0.5,
+            adjusted_velocity=1.0,
+            adjusted_age=0.8,
+            adjusted_luck=0.1,
+            pnerd_score=7.2,
+        )
+
+        return {
+            "Jake Latz": nerd_stats1,
+            "Jesus Luzardo": nerd_stats2,
+        }
+
+    def test_find_pitcher_nerd_stats_fuzzy_direct_match(self) -> None:
+        """Test fuzzy lookup with direct name match."""
+        pitcher_stats = self.create_sample_pitcher_nerd_stats()
+
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "Jake Latz")
+        assert result is not None
+        assert result.pitcher_stats.name == "Jake Latz"
+        assert result.pnerd_score == 8.5
+
+    def test_find_pitcher_nerd_stats_fuzzy_accented_characters(self) -> None:
+        """Test fuzzy lookup with accented characters removed."""
+        pitcher_stats = self.create_sample_pitcher_nerd_stats()
+
+        # Should find "Jesus Luzardo" when searching for "Jesús Luzardo"
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "Jesús Luzardo")
+        assert result is not None
+        assert result.pitcher_stats.name == "Jesus Luzardo"
+        assert result.pnerd_score == 7.2
+
+    def test_find_pitcher_nerd_stats_fuzzy_mlbam_mapping(self) -> None:
+        """Test fuzzy lookup using MLBAM to Fangraphs mapping."""
+        pitcher_stats = self.create_sample_pitcher_nerd_stats()
+
+        # Should find "Jake Latz" when searching for "Jacob Latz" (via CSV mapping)
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "Jacob Latz")
+        assert result is not None
+        assert result.pitcher_stats.name == "Jake Latz"
+        assert result.pnerd_score == 8.5
+
+    def test_find_pitcher_nerd_stats_fuzzy_not_found(self) -> None:
+        """Test fuzzy lookup when pitcher is not found."""
+        pitcher_stats = self.create_sample_pitcher_nerd_stats()
+
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "Paul Skenes")
+        assert result is None
+
+    def test_find_pitcher_nerd_stats_fuzzy_edge_cases(self) -> None:
+        """Test fuzzy lookup with edge cases."""
+        pitcher_stats = self.create_sample_pitcher_nerd_stats()
+
+        # Empty string
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "")
+        assert result is None
+
+        # TBD
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "TBD")
+        assert result is None
+
+        # None input
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, None)  # type: ignore
+        assert result is None
+
+    def test_find_pitcher_nerd_stats_fuzzy_empty_dict(self) -> None:
+        """Test fuzzy lookup with empty pitcher stats dictionary."""
+        result = find_pitcher_nerd_stats_fuzzy({}, "Jacob Latz")
+        assert result is None
+
+    def test_find_pitcher_nerd_stats_fuzzy_strategy_order(self) -> None:
+        """Test that fuzzy lookup tries strategies in correct order."""
+        # Create a dict where we have both "Jacob Latz" and "Jake Latz"
+        # to ensure direct match takes precedence
+        pitcher_stats = self.create_sample_pitcher_nerd_stats()
+
+        # Add a second pitcher with the "Jake" name
+        jake_stats = PitcherStats(
+            name="Jake Latz",
+            team="TST2",
+            xfip_minus=100,
+            swinging_strike_rate=0.10,
+            strike_rate=0.60,
+            velocity=92.0,
+            age=30,
+            pace=20.0,
+            luck=0.0,
+            knuckleball_rate=0.0,
+        )
+
+        jake_nerd_stats = PitcherNerdStats(
+            pitcher_stats=jake_stats,
+            z_xfip_minus=0.0,
+            z_swinging_strike_rate=0.0,
+            z_strike_rate=0.0,
+            z_velocity=0.0,
+            z_age=0.0,
+            z_pace=0.0,
+            adjusted_velocity=0.0,
+            adjusted_age=0.0,
+            adjusted_luck=0.0,
+            pnerd_score=5.0,
+        )
+
+        pitcher_stats["Jake Latz"] = jake_nerd_stats
+
+        # When searching for "Jake Latz", should get direct match, not mapped one
+        result = find_pitcher_nerd_stats_fuzzy(pitcher_stats, "Jake Latz")
+        assert result is not None
+        assert result.pitcher_stats.name == "Jake Latz"  # Direct match
+        assert result.pnerd_score == 5.0  # Not the mapped Jacob Latz score

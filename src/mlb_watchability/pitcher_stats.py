@@ -1,6 +1,9 @@
 """Pitcher statistics data structures for pNERD calculation."""
 
+import csv
+import unicodedata
 from dataclasses import dataclass
+from pathlib import Path
 
 from scipy import stats  # type: ignore
 
@@ -280,6 +283,108 @@ def calculate_detailed_pitcher_nerd_scores(
         return {}
     else:
         return pitcher_nerd_details
+
+
+def remove_accented_characters(name: str) -> str:
+    """
+    Remove all accented characters from a pitcher name.
+
+    Args:
+        name: Pitcher name with potential accented characters (e.g. "Jesús Luzardo")
+
+    Returns:
+        Name with accented characters removed (e.g. "Jesus Luzardo")
+    """
+    if not name:
+        return name
+
+    # Normalize unicode to decomposed form (NFD) then remove combining characters
+    normalized = unicodedata.normalize("NFD", name)
+    # Filter out combining characters (accents, diacritics)
+    return "".join(c for c in normalized if unicodedata.category(c) != "Mn")
+
+
+def map_mlbam_name_to_fangraphs_name(mlbam_name: str) -> str:
+    """
+    Map MLBAM pitcher name to Fangraphs name using data/name-mapping.csv.
+
+    Args:
+        mlbam_name: Pitcher name as it appears in MLBAM/schedule data
+
+    Returns:
+        Fangraphs name if mapping exists, otherwise returns the original mlbam_name
+
+    Raises:
+        FileNotFoundError: If name-mapping.csv file doesn't exist
+        OSError: If file can't be read
+        KeyError: If CSV doesn't have expected columns
+    """
+    if not mlbam_name:
+        return mlbam_name
+
+    # Get path to name mapping CSV file
+    # This assumes we're in src/mlb_watchability/ and need to go up to project root
+    current_dir = Path(__file__).parent
+    csv_path = current_dir.parent.parent / "data" / "name-mapping.csv"
+
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Name mapping file not found: {csv_path}")
+
+    with open(csv_path, encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if row["mlbam_name"] == mlbam_name:
+                return row["fangraphs_name"]
+
+    # If no mapping found, return original name
+    return mlbam_name
+
+
+def find_pitcher_nerd_stats_fuzzy(
+    pitcher_nerd_stats: dict[str, PitcherNerdStats], pitcher_name: str
+) -> PitcherNerdStats | None:
+    """
+    Find pitcher NERD stats using fuzzy matching techniques.
+
+    Attempts multiple lookup strategies in order:
+    1. Direct lookup with unmodified pitcher_name
+    2. Lookup with accented characters removed
+    3. Lookup using MLBAM to Fangraphs name mapping
+
+    Args:
+        pitcher_nerd_stats: Dictionary mapping pitcher names to PitcherNerdStats
+        pitcher_name: Pitcher name to search for
+
+    Returns:
+        PitcherNerdStats if found, otherwise None
+    """
+    if not pitcher_name or pitcher_name == "TBD":
+        return None
+
+    # Strategy 1: Try direct lookup
+    if pitcher_name in pitcher_nerd_stats:
+        return pitcher_nerd_stats[pitcher_name]
+
+    # Strategy 2: Try with accented characters removed
+    try:
+        name_no_accents = remove_accented_characters(pitcher_name)
+        if name_no_accents != pitcher_name and name_no_accents in pitcher_nerd_stats:
+            return pitcher_nerd_stats[name_no_accents]
+    except Exception:
+        # If accent removal fails, continue to next strategy
+        pass
+
+    # Strategy 3: Try MLBAM to Fangraphs mapping
+    try:
+        fangraphs_name = map_mlbam_name_to_fangraphs_name(pitcher_name)
+        if fangraphs_name != pitcher_name and fangraphs_name in pitcher_nerd_stats:
+            return pitcher_nerd_stats[fangraphs_name]
+    except Exception:
+        # If mapping fails (file not found, etc.), continue
+        pass
+
+    # All strategies failed
+    return None
 
 
 def format_pitcher_with_fangraphs_link(pitcher_name: str) -> str:
