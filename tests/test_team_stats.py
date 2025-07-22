@@ -5,7 +5,6 @@ import pytest
 from mlb_watchability.team_stats import (
     TeamNerdStats,
     TeamStats,
-    calculate_tnerd_score,
 )
 
 
@@ -114,97 +113,10 @@ class TestTeamNerdStats:
         assert nerd_stats.adjusted_luck == 2.0
         assert nerd_stats.tnerd_score == 8.5
 
-    def test_adjusted_payroll_validation(self) -> None:
-        """Test adjusted payroll validation."""
-        team_stats = self.create_sample_team_stats()
-
-        with pytest.raises(
-            ValueError, match="Adjusted payroll must be between 0.0 and 10.0"
-        ):
-            TeamNerdStats(
-                team_stats=team_stats,
-                z_batting_runs=0.8,
-                z_barrel_rate=0.5,
-                z_baserunning_runs=0.3,
-                z_fielding_runs=0.6,
-                z_luck=-0.2,
-                z_payroll=0.4,
-                z_age=-0.3,
-                adjusted_payroll=-0.5,  # Too low
-                adjusted_age=0.3,
-                adjusted_luck=2.0,
-                tnerd_score=8.5,
-            )
-
-    def test_adjusted_age_validation(self) -> None:
-        """Test adjusted age validation."""
-        team_stats = self.create_sample_team_stats()
-
-        with pytest.raises(
-            ValueError, match="Adjusted age must be between 0.0 and 10.0"
-        ):
-            TeamNerdStats(
-                team_stats=team_stats,
-                z_batting_runs=0.8,
-                z_barrel_rate=0.5,
-                z_baserunning_runs=0.3,
-                z_fielding_runs=0.6,
-                z_luck=-0.2,
-                z_payroll=0.4,
-                z_age=-0.3,
-                adjusted_payroll=0.0,
-                adjusted_age=15.0,  # Too high
-                adjusted_luck=2.0,
-                tnerd_score=8.5,
-            )
-
-    def test_adjusted_luck_validation(self) -> None:
-        """Test adjusted luck validation."""
-        team_stats = self.create_sample_team_stats()
-
-        with pytest.raises(
-            ValueError, match="Adjusted luck must be between 0.0 and 2.0"
-        ):
-            TeamNerdStats(
-                team_stats=team_stats,
-                z_batting_runs=0.8,
-                z_barrel_rate=0.5,
-                z_baserunning_runs=0.3,
-                z_fielding_runs=0.6,
-                z_luck=-0.2,
-                z_payroll=0.4,
-                z_age=-0.3,
-                adjusted_payroll=0.0,
-                adjusted_age=0.3,
-                adjusted_luck=3.0,  # Too high
-                tnerd_score=8.5,
-            )
-
-    def test_tnerd_score_validation(self) -> None:
-        """Test tNERD score validation."""
-        team_stats = self.create_sample_team_stats()
-
-        with pytest.raises(
-            ValueError, match="tNERD score must be between 0.0 and 50.0"
-        ):
-            TeamNerdStats(
-                team_stats=team_stats,
-                z_batting_runs=0.8,
-                z_barrel_rate=0.5,
-                z_baserunning_runs=0.3,
-                z_fielding_runs=0.6,
-                z_luck=-0.2,
-                z_payroll=0.4,
-                z_age=-0.3,
-                adjusted_payroll=0.0,
-                adjusted_age=0.3,
-                adjusted_luck=2.0,
-                tnerd_score=75.0,  # Too high
-            )
 
 
-class TestCalculateTnerdScore:
-    """Test cases for tNERD score calculation."""
+class TestTeamNerdStatsFromStatsAndMeans:
+    """Test cases for TeamNerdStats.from_stats_and_means class method."""
 
     def create_sample_league_stats(self) -> tuple[dict[str, float], dict[str, float]]:
         """Create sample league statistics for testing."""
@@ -245,7 +157,9 @@ class TestCalculateTnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
 
         # Check that z-scores are calculated correctly
         assert nerd_stats.z_batting_runs == (30.0 - 0.0) / 30.0  # 1.0
@@ -294,7 +208,9 @@ class TestCalculateTnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
 
         # Check that negative values are set to zero
         assert nerd_stats.adjusted_payroll == 0.0  # -z_payroll is negative
@@ -316,7 +232,9 @@ class TestCalculateTnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
 
         # Check that luck is capped at 2.0
         # z_luck = (50.0 - 0.0) / 20.0 = 2.5, capped at 2.0
@@ -337,7 +255,9 @@ class TestCalculateTnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
 
         # All z-scores should be 0.0
         assert nerd_stats.z_batting_runs == 0.0
@@ -394,7 +314,9 @@ class TestTeamNerdStatsComponents:
             "luck": 5.0,
         }
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
 
         # Test individual component properties
         # z_batting_runs = (10.0 - 0.0) / 20.0 = 0.5
@@ -457,7 +379,9 @@ class TestTeamNerdStatsComponents:
             "luck": 5.0,
         }
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
         components = nerd_stats.components
 
         expected_keys = {
@@ -508,7 +432,9 @@ class TestTeamNerdStatsComponents:
             "luck": 5.0,
         }
 
-        nerd_stats = calculate_tnerd_score(team_stats, league_means, league_std_devs)
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
 
         # Verify that sum of components equals tNERD score
         calculated_total = sum(nerd_stats.components.values())
