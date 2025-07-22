@@ -78,7 +78,47 @@ Core Implementation
 
 27. ~~As part of https://github.com/aenfield/mlb-watchability/issues/6, I first want to expand the pitcher_stats.py and team_stats.py implementations to expose the components of the pNERD/tNERD score. We can probably do this by factoring the relevant code from the pitcher_nerd_breakdown.py and team_nerd_breakdown.py first cut implementations into the pitcher/team stats implementations - in the end, PitcherNerdStats/TeamNerdStats should have properties with the components, and the components should sum to pNERD/tNERD score. Then make pitcher_nerd_breakdown.py and team_nerd_breakdown.py use the new PitcherNerdStats/TeamNerdStats implementations, make sure existing tests pass, and add new tests for the new location of the functionality.~~
 
-28. Now, continuing with implementing https://github.com/aenfield/mlb-watchability/issues/6, I want to do a first cut at the expanded UI. For this one, I want to add a new details table to the Markdown file created by mlbw-markdown. The new table should go after the existing table. It should have a row for each game, following this exammple. TODO
+28. Now, continuing with implementing https://github.com/aenfield/mlb-watchability/issues/6, I want to do a first cut at the expanded UI. For this one, I want to add a new set of tables to the Markdown file created by mlbw-markdown, after the existing table. The format should look like this, with one section like this for each game.
+
+# Detail
+
+## Milwaukee Brewers @ Seattle Mariners, 9:40p
+
+### Milwaukee Brewers
+
+|              | Batting Runs | Barrel % | Baserunning | Fielding | Payroll | Age   | Luck | Constant | TOTAL |
+| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |
+| **Raw Stat** | 59.8         | 10.0%    | -4.2        | -14.7    | $152.8M | 28.2  | 16.0 | —        | —     |
+| **Z-Score**  | 1.23         | 0.46     | -0.87       | -0.86    | -0.27   | -0.53 | 0.90 | —        | —     |
+| **tNERD**    | 1.23         | 0.46     | -0.87       | -0.86    | 0.27    | 0.53  | 0.90 | 4.00     | 5.67  |
+
+### Seattle Mariners
+
+|              | Batting Runs | Barrel % | Baserunning | Fielding | Payroll | Age   | Luck | Constant | TOTAL |
+| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |
+| **Raw Stat** | 59.8         | 10.0%    | -4.2        | -14.7    | $152.8M | 28.2  | 16.0 | —        | —     |
+| **Z-Score**  | 1.23         | 0.46     | -0.87       | -0.86    | -0.27   | -0.53 | 0.90 | —        | —     |
+| **tNERD**    | 1.23         | 0.46     | -0.87       | -0.86    | 0.27    | 0.53  | 0.90 | 4.00     | 5.67  |
+
+### Visiting starter: Jacob Misiorowski
+
+|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | TOTAL |
+| ------------ | ----- | ------ | -------- | -------- | ----- | ----- | ---- | ---- | -------- | ----- |
+| **Raw Stat** | 76.0  | 13.8%  | 64.7%    | 98.1 mph | 23    | 18.6s | -31  | 0.0% | —        | —     |
+| **Z-Score**  | -1.51 | 1.66   | 0.30     | 2.02     | -1.49 | 0.07  | —    | —    | —        | —     |
+| **pNERD**    | 3.01  | 0.83   | 0.15     | 2.00     | 1.49  | -0.04 | 0.00 | 0.00 | 3.80     | 11.25 |
+
+### Home starter: Logan Gilbert
+
+|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | TOTAL |
+| ------------ | ----- | ------ | -------- | -------- | ----- | ----- | ---- | ---- | -------- | ----- |
+| **Raw Stat** | 76.0  | 13.8%  | 64.7%    | 98.1 mph | 23    | 18.6s | -31  | 0.0% | —        | —     |
+| **Z-Score**  | -1.51 | 1.66   | 0.30     | 2.02     | -1.49 | 0.07  | —    | —    | —        | —     |
+| **pNERD**    | 3.01  | 0.83   | 0.15     | 2.00     | 1.49  | -0.04 | 0.00 | 0.00 | 3.80     | 11.25 |
+
+The example section ends here. There should be a section like the above for each game.
+
+29. Add within-page links in the table at the top that go to specific detail section for the game below, using anchors and fragments - i.e., with # in the link. If the user clicks on the overall game score it sholud go to the top of the section and if they click on one of the tNERD or pNERD scores it should go to that specific part of the section.
 
 ## Notes for possible integration and enhancement
 
