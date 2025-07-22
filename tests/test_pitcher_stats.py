@@ -1,6 +1,5 @@
 """Unit tests for pitcher statistics data structures."""
 
-
 import pytest
 
 from mlb_watchability.pitcher_stats import (

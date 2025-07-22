@@ -42,8 +42,8 @@ class TestTeamMappings:
 
     def test_team_name_to_abbreviation_completeness(self) -> None:
         """Test that all 30 MLB teams are in the mapping."""
-        # Should have exactly 30 teams
-        assert len(TEAM_NAME_TO_ABBREVIATION) == 30
+        # Should have 30 main teams plus additional aliases (like "Athletics" for "Oakland Athletics")
+        assert len(TEAM_NAME_TO_ABBREVIATION) >= 30
 
         # Check a few key teams to ensure mapping is correct
         expected_teams = {
@@ -52,7 +52,7 @@ class TestTeamMappings:
             "Baltimore Orioles": "BAL",
             "Boston Red Sox": "BOS",
             "Chicago Cubs": "CHC",
-            "Chicago White Sox": "CWS",
+            "Chicago White Sox": "CHW",
             "Cincinnati Reds": "CIN",
             "Cleveland Guardians": "CLE",
             "Colorado Rockies": "COL",
@@ -66,7 +66,7 @@ class TestTeamMappings:
             "Minnesota Twins": "MIN",
             "New York Mets": "NYM",
             "New York Yankees": "NYY",
-            "Oakland Athletics": "OAK",
+            "Oakland Athletics": "ATH",
             "Philadelphia Phillies": "PHI",
             "Pittsburgh Pirates": "PIT",
             "San Diego Padres": "SDP",
