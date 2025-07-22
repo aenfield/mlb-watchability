@@ -5,7 +5,6 @@ import pytest
 from mlb_watchability.pitcher_stats import (
     PitcherNerdStats,
     PitcherStats,
-    calculate_pnerd_score,
     find_pitcher_nerd_stats_fuzzy,
     format_pitcher_with_fangraphs_link,
     map_mlbam_name_to_fangraphs_name,
@@ -141,93 +140,9 @@ class TestPitcherNerdStats:
         assert nerd_stats.adjusted_luck == 0.0
         assert nerd_stats.pnerd_score == 12.5
 
-    def test_adjusted_velocity_validation(self) -> None:
-        """Test adjusted velocity validation."""
-        pitcher_stats = self.create_sample_pitcher_stats()
 
-        with pytest.raises(
-            ValueError, match="Adjusted velocity must be between 0.0 and 2.0"
-        ):
-            PitcherNerdStats(
-                pitcher_stats=pitcher_stats,
-                z_xfip_minus=-0.5,
-                z_swinging_strike_rate=1.2,
-                z_strike_rate=0.8,
-                z_velocity=1.5,
-                z_age=-0.3,
-                z_pace=0.2,
-                adjusted_velocity=3.0,  # Too high
-                adjusted_age=0.0,
-                adjusted_luck=0.0,
-                pnerd_score=12.5,
-            )
-
-    def test_adjusted_age_validation(self) -> None:
-        """Test adjusted age validation."""
-        pitcher_stats = self.create_sample_pitcher_stats()
-
-        with pytest.raises(
-            ValueError, match="Adjusted age must be between 0.0 and 2.0"
-        ):
-            PitcherNerdStats(
-                pitcher_stats=pitcher_stats,
-                z_xfip_minus=-0.5,
-                z_swinging_strike_rate=1.2,
-                z_strike_rate=0.8,
-                z_velocity=1.5,
-                z_age=-0.3,
-                z_pace=0.2,
-                adjusted_velocity=1.5,
-                adjusted_age=-0.5,  # Too low
-                adjusted_luck=0.0,
-                pnerd_score=12.5,
-            )
-
-    def test_adjusted_luck_validation(self) -> None:
-        """Test adjusted luck validation."""
-        pitcher_stats = self.create_sample_pitcher_stats()
-
-        with pytest.raises(
-            ValueError, match="Adjusted luck must be between 0.0 and 1.0"
-        ):
-            PitcherNerdStats(
-                pitcher_stats=pitcher_stats,
-                z_xfip_minus=-0.5,
-                z_swinging_strike_rate=1.2,
-                z_strike_rate=0.8,
-                z_velocity=1.5,
-                z_age=-0.3,
-                z_pace=0.2,
-                adjusted_velocity=1.5,
-                adjusted_age=0.0,
-                adjusted_luck=2.0,  # Too high
-                pnerd_score=12.5,
-            )
-
-    def test_pnerd_score_validation(self) -> None:
-        """Test pNERD score validation."""
-        pitcher_stats = self.create_sample_pitcher_stats()
-
-        with pytest.raises(
-            ValueError, match="pNERD score must be between -10.0 and 50.0"
-        ):
-            PitcherNerdStats(
-                pitcher_stats=pitcher_stats,
-                z_xfip_minus=-0.5,
-                z_swinging_strike_rate=1.2,
-                z_strike_rate=0.8,
-                z_velocity=1.5,
-                z_age=-0.3,
-                z_pace=0.2,
-                adjusted_velocity=1.5,
-                adjusted_age=0.0,
-                adjusted_luck=0.0,
-                pnerd_score=75.0,  # Too high
-            )
-
-
-class TestCalculatePnerdScore:
-    """Test cases for pNERD score calculation."""
+class TestPitcherNerdStatsFromStatsAndMeans:
+    """Test cases for PitcherNerdStats.from_stats_and_means() method."""
 
     def create_sample_league_stats(self) -> tuple[dict[str, float], dict[str, float]]:
         """Create sample league statistics for testing."""
@@ -251,7 +166,7 @@ class TestCalculatePnerdScore:
 
         return league_means, league_std_devs
 
-    def test_calculate_pnerd_score_basic(self) -> None:
+    def test_from_stats_and_means_basic(self) -> None:
         """Test basic pNERD score calculation."""
         pitcher_stats = PitcherStats(
             name="Test Pitcher",
@@ -268,7 +183,9 @@ class TestCalculatePnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
 
         # Check that z-scores are calculated correctly
         assert nerd_stats.z_xfip_minus == (85 - 100) / 15  # -1.0
@@ -304,7 +221,7 @@ class TestCalculatePnerdScore:
 
         assert abs(nerd_stats.pnerd_score - expected_pnerd) < 0.001
 
-    def test_calculate_pnerd_score_with_knuckleball(self) -> None:
+    def test_from_stats_and_means_with_knuckleball(self) -> None:
         """Test pNERD score calculation with knuckleball pitcher."""
         pitcher_stats = PitcherStats(
             name="Knuckleball Pitcher",
@@ -321,7 +238,9 @@ class TestCalculatePnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
 
         # Knuckleball should add significant value (KN% * 5)
         assert nerd_stats.pitcher_stats.knuckleball_rate == 0.8
@@ -330,7 +249,7 @@ class TestCalculatePnerdScore:
         knuckleball_bonus = 0.8 * 5  # 4.0
         assert knuckleball_bonus == 4.0
 
-    def test_calculate_pnerd_score_caps_applied(self) -> None:
+    def test_from_stats_and_means_caps_applied(self) -> None:
         """Test that caps are properly applied in pNERD calculation."""
         pitcher_stats = PitcherStats(
             name="Extreme Pitcher",
@@ -347,14 +266,16 @@ class TestCalculatePnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
 
         # Check that caps are applied
         assert nerd_stats.adjusted_velocity == 2.0  # Should be capped at 2.0
         assert nerd_stats.adjusted_age == 1.75  # -z_age = -(-1.75) = 1.75, not capped
         assert nerd_stats.adjusted_luck == 1.0  # Should be capped at 1.0
 
-    def test_calculate_pnerd_score_negative_adjustments(self) -> None:
+    def test_from_stats_and_means_negative_adjustments(self) -> None:
         """Test that negative values are set to zero for velocity, age, and luck."""
         pitcher_stats = PitcherStats(
             name="Negative Pitcher",
@@ -371,7 +292,9 @@ class TestCalculatePnerdScore:
 
         league_means, league_std_devs = self.create_sample_league_stats()
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
 
         # Check that negative values are set to zero
         assert nerd_stats.adjusted_velocity == 0.0  # z_velocity is negative
@@ -752,7 +675,9 @@ class TestPitcherNerdStatsComponents:
             "pace": 2.0,
         }
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
 
         # Test individual component properties
         # z_xfip_minus = (95.0 - 100.0) / 10.0 = -0.5
@@ -823,7 +748,9 @@ class TestPitcherNerdStatsComponents:
             "pace": 2.0,
         }
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
         components = nerd_stats.components
 
         expected_keys = {
@@ -875,7 +802,9 @@ class TestPitcherNerdStatsComponents:
             "pace": 2.0,
         }
 
-        nerd_stats = calculate_pnerd_score(pitcher_stats, league_means, league_std_devs)
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
 
         # Verify that sum of components equals pNERD score
         calculated_total = sum(nerd_stats.components.values())

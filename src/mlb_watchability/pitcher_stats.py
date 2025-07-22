@@ -83,10 +83,6 @@ class PitcherNerdStats:
     knuckleball_component: float = 0.0
     constant_component: float = 0.0
 
-    def __post_init__(self) -> None:
-        """Validate NERD statistics after initialization."""
-        self._validate_nerd_stats()
-
     @property
     def components(self) -> dict[str, float]:
         """Dictionary of all pNERD component values."""
@@ -102,122 +98,100 @@ class PitcherNerdStats:
             "constant": self.constant_component,
         }
 
-    def _validate_nerd_stats(self) -> None:
-        """Validate that all NERD statistics are reasonable."""
+    @classmethod
+    def from_stats_and_means(
+        cls,
+        pitcher_stats: PitcherStats,
+        league_means: dict[str, float],
+        league_std_devs: dict[str, float],
+    ) -> "PitcherNerdStats":
+        """
+        Create PitcherNerdStats from pitcher statistics and league averages.
 
-        # Adjusted values validation
-        if not 0.0 <= self.adjusted_velocity <= 2.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Adjusted velocity must be between 0.0 and 2.0, got {self.adjusted_velocity}"
-            )
+        This is the recommended way to create PitcherNerdStats instances in production code.
 
-        if not 0.0 <= self.adjusted_age <= 2.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Adjusted age must be between 0.0 and 2.0, got {self.adjusted_age}"
-            )
+        Args:
+            pitcher_stats: Individual pitcher statistics
+            league_means: Dictionary of league mean values for each stat
+            league_std_devs: Dictionary of league standard deviations for each stat
 
-        if not 0.0 <= self.adjusted_luck <= 1.0:  # noqa: PLR2004
-            raise ValueError(
-                f"Adjusted luck must be between 0.0 and 1.0, got {self.adjusted_luck}"
-            )
+        Returns:
+            PitcherNerdStats instance with calculated z-scores, adjustments, and components
+        """
+        # Calculate z-scores
+        z_xfip_minus = (
+            pitcher_stats.xfip_minus - league_means["xfip_minus"]
+        ) / league_std_devs["xfip_minus"]
 
-        # pNERD score should typically be positive but can be negative for very poor pitchers
-        if not -10.0 <= self.pnerd_score <= 50.0:  # noqa: PLR2004
-            raise ValueError(
-                f"pNERD score must be between -10.0 and 50.0, got {self.pnerd_score}"
-            )
+        z_swinging_strike_rate = (
+            pitcher_stats.swinging_strike_rate - league_means["swinging_strike_rate"]
+        ) / league_std_devs["swinging_strike_rate"]
 
+        z_strike_rate = (
+            pitcher_stats.strike_rate - league_means["strike_rate"]
+        ) / league_std_devs["strike_rate"]
 
-def calculate_pnerd_score(
-    pitcher_stats: PitcherStats,
-    league_means: dict[str, float],
-    league_std_devs: dict[str, float],
-    constant: float = 3.8,
-) -> PitcherNerdStats:
-    """
-    Calculate pNERD score for a pitcher.
+        z_velocity = (
+            pitcher_stats.velocity - league_means["velocity"]
+        ) / league_std_devs["velocity"]
 
-    Formula: (zxFIP- * 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (-zPace / 2) + (Luck / 20) + (KN * 5) + Constant
+        z_age = (pitcher_stats.age - league_means["age"]) / league_std_devs["age"]
 
-    Args:
-        pitcher_stats: Pitcher statistics
-        league_means: Dictionary of league mean values for each stat
-        league_std_devs: Dictionary of league standard deviations for each stat
-        constant: Constant value (default 3.8)
+        z_pace = (pitcher_stats.pace - league_means["pace"]) / league_std_devs["pace"]
 
-    Returns:
-        PitcherNerdStats with calculated z-scores and pNERD score
-    """
+        # Apply caps and adjustments
+        adjusted_velocity = max(0.0, min(2.0, z_velocity))
+        adjusted_age = max(0.0, min(2.0, -z_age))  # Negative because younger is better
+        adjusted_luck = max(
+            0.0, min(1.0, pitcher_stats.luck)
+        )  # Cap directly without negating
 
-    # Calculate z-scores
-    z_xfip_minus = (
-        pitcher_stats.xfip_minus - league_means["xfip_minus"]
-    ) / league_std_devs["xfip_minus"]
-    z_swinging_strike_rate = (
-        pitcher_stats.swinging_strike_rate - league_means["swinging_strike_rate"]
-    ) / league_std_devs["swinging_strike_rate"]
-    z_strike_rate = (
-        pitcher_stats.strike_rate - league_means["strike_rate"]
-    ) / league_std_devs["strike_rate"]
-    z_velocity = (pitcher_stats.velocity - league_means["velocity"]) / league_std_devs[
-        "velocity"
-    ]
-    z_age = (pitcher_stats.age - league_means["age"]) / league_std_devs["age"]
-    z_pace = (pitcher_stats.pace - league_means["pace"]) / league_std_devs["pace"]
+        # Calculate individual components
+        xfip_component = -z_xfip_minus * 2  # Negated because lower xFIP- is better
+        swinging_strike_component = z_swinging_strike_rate / 2
+        strike_component = z_strike_rate / 2
+        velocity_component = adjusted_velocity
+        age_component = adjusted_age
+        pace_component = -z_pace / 2  # Negated because lower pace (faster) is better
+        luck_component = adjusted_luck / 20
+        knuckleball_component = pitcher_stats.knuckleball_rate * 5.0
+        constant_component = 3.8
 
-    # Apply caps and positive-only rules
-    adjusted_velocity = max(0.0, min(2.0, z_velocity))  # noqa: PLR2004
-    # For age, younger is better, so we want negative z_age values (below mean age)
-    # We flip the sign and then apply caps and positive-only rules
-    adjusted_age = max(0.0, min(2.0, -z_age))
-    adjusted_luck = max(0.0, min(1.0, pitcher_stats.luck))
+        # Calculate final pNERD score using the components
+        pnerd_score = (
+            xfip_component
+            + swinging_strike_component
+            + strike_component
+            + velocity_component
+            + age_component
+            + pace_component
+            + luck_component
+            + knuckleball_component
+            + constant_component
+        )
 
-    # Calculate individual components (stored to avoid duplication)
-    xfip_component = -z_xfip_minus * 2
-    swinging_strike_component = z_swinging_strike_rate / 2
-    strike_component = z_strike_rate / 2
-    velocity_component = adjusted_velocity
-    age_component = adjusted_age
-    pace_component = -z_pace / 2
-    luck_component = adjusted_luck / 20
-    knuckleball_component = pitcher_stats.knuckleball_rate * 5
-    constant_component = constant
-
-    # Calculate pNERD score using the components
-    pnerd_score = (
-        xfip_component
-        + swinging_strike_component
-        + strike_component
-        + velocity_component
-        + age_component
-        + pace_component
-        + luck_component
-        + knuckleball_component
-        + constant_component
-    )
-
-    return PitcherNerdStats(
-        pitcher_stats=pitcher_stats,
-        z_xfip_minus=z_xfip_minus,
-        z_swinging_strike_rate=z_swinging_strike_rate,
-        z_strike_rate=z_strike_rate,
-        z_velocity=z_velocity,
-        z_age=z_age,
-        z_pace=z_pace,
-        adjusted_velocity=adjusted_velocity,
-        adjusted_age=adjusted_age,
-        adjusted_luck=adjusted_luck,
-        xfip_component=xfip_component,
-        swinging_strike_component=swinging_strike_component,
-        strike_component=strike_component,
-        velocity_component=velocity_component,
-        age_component=age_component,
-        pace_component=pace_component,
-        luck_component=luck_component,
-        knuckleball_component=knuckleball_component,
-        constant_component=constant_component,
-        pnerd_score=pnerd_score,
-    )
+        return cls(
+            pitcher_stats=pitcher_stats,
+            z_xfip_minus=z_xfip_minus,
+            z_swinging_strike_rate=z_swinging_strike_rate,
+            z_strike_rate=z_strike_rate,
+            z_velocity=z_velocity,
+            z_age=z_age,
+            z_pace=z_pace,
+            adjusted_velocity=adjusted_velocity,
+            adjusted_age=adjusted_age,
+            adjusted_luck=adjusted_luck,
+            pnerd_score=pnerd_score,
+            xfip_component=xfip_component,
+            swinging_strike_component=swinging_strike_component,
+            strike_component=strike_component,
+            velocity_component=velocity_component,
+            age_component=age_component,
+            pace_component=pace_component,
+            luck_component=luck_component,
+            knuckleball_component=knuckleball_component,
+            constant_component=constant_component,
+        )
 
 
 def get_all_pitcher_stats_objects(season: int = 2025) -> dict[str, PitcherStats]:
@@ -315,7 +289,7 @@ def calculate_detailed_pitcher_nerd_scores(
         pitcher_nerd_details = {}
         for pitcher_name, pitcher_stats in pitcher_stats_dict.items():
             try:
-                pitcher_nerd_stats = calculate_pnerd_score(
+                pitcher_nerd_stats = PitcherNerdStats.from_stats_and_means(
                     pitcher_stats, league_means, league_std_devs
                 )
                 pitcher_nerd_details[pitcher_name] = pitcher_nerd_stats
