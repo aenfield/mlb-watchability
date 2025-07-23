@@ -250,6 +250,8 @@ tags: mlbw
 
         # Check structure
         assert "### Los Angeles Dodgers" in result
+        assert "{% wideTable %}" in result
+        assert "{% endwideTable %}" in result
         assert "| **Raw Stat** |" in result
         assert "| **Z-Score** |" in result
         assert "| **tNERD** |" in result
@@ -303,6 +305,8 @@ tags: mlbw
 
         # Check structure
         assert "### Home starter: Gerrit Cole" in result
+        assert "{% wideTable %}" in result
+        assert "{% endwideTable %}" in result
         assert "| **Raw Stat** |" in result
         assert "| **Z-Score** |" in result
         assert "| **pNERD** |" in result

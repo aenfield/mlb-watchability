@@ -211,11 +211,14 @@ def generate_team_breakdown_table(
     lines = [
         f"### {team_name}",
         "",
+        "{% wideTable %}",
+        "",
         "|              | Batting Runs | Barrel % | Baserunning | Fielding | Payroll | Age   | Luck | Constant | TOTAL |",
         "| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |",
         raw_row,
         z_row,
         tnerd_row,
+        "{% endwideTable %}",
         "",
     ]
 
@@ -292,11 +295,14 @@ def generate_pitcher_breakdown_table(
     lines = [
         f"### {starter_type}: {pitcher_name}",
         "",
+        "{% wideTable %}",
+        "",
         "|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | TOTAL |",
         "| ------------ | ----- | ------ | -------- | -------- | ----- | ----- | ---- | ---- | -------- | ----- |",
         raw_row,
         z_row,
         pnerd_row,
+        "{% endwideTable %}",
         "",
     ]
 
