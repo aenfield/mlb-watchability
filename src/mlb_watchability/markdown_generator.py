@@ -3,12 +3,13 @@
 import re
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from .game_scores import GameScore
 from .pitcher_stats import (
     PitcherNerdStats,
     calculate_detailed_pitcher_nerd_scores,
+    find_pitcher_nerd_stats_fuzzy,
     format_pitcher_with_fangraphs_link,
 )
 from .team_mappings import format_team_with_fangraphs_link, get_team_abbreviation
@@ -300,11 +301,14 @@ def generate_team_breakdown_table(
     lines = [
         f"### {team_name} {{#{anchor_id}}}",
         "",
+        "{% wideTable %}",
+        "",
         "|              | Batting Runs | Barrel % | Baserunning | Fielding | Payroll | Age   | Luck | Constant | TOTAL |",
         "| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |",
         raw_row,
         z_row,
         tnerd_row,
+        "{% endwideTable %}",
         "",
     ]
 
@@ -387,13 +391,16 @@ def generate_pitcher_breakdown_table(
         header += f" {{#{anchor_id}}}"
 
     lines = [
-        header,
+        f"### {starter_type}: {pitcher_name}",
+        "",
+        "{% wideTable %}",
         "",
         "|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | TOTAL |",
         "| ------------ | ----- | ------ | -------- | -------- | ----- | ----- | ---- | ---- | -------- | ----- |",
         raw_row,
         z_row,
         pnerd_row,
+        "{% endwideTable %}",
         "",
     ]
 
@@ -457,32 +464,34 @@ def generate_game_detail_section(
         )
 
     # Add visiting pitcher breakdown
-    if game_score.away_starter and game_score.away_starter in pitcher_nerd_details:
-        away_pitcher_anchor_id = generate_pitcher_anchor_id(
-            game_score.away_starter, game_anchor_id, is_home=False
+    if game_score.away_starter and game_score.away_starter != "TBD":
+        away_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
+            cast("dict[str, PitcherNerdStats]", pitcher_nerd_details),
+            game_score.away_starter,
         )
-        lines.append(
-            generate_pitcher_breakdown_table(
-                game_score.away_starter,
-                pitcher_nerd_details[game_score.away_starter],
-                is_home=False,
-                anchor_id=away_pitcher_anchor_id,
+        if away_pitcher_stats:
+            lines.append(
+                generate_pitcher_breakdown_table(
+                    game_score.away_starter,
+                    away_pitcher_stats,
+                    is_home=False,
+                )
             )
-        )
 
     # Add home pitcher breakdown
-    if game_score.home_starter and game_score.home_starter in pitcher_nerd_details:
-        home_pitcher_anchor_id = generate_pitcher_anchor_id(
-            game_score.home_starter, game_anchor_id, is_home=True
+    if game_score.home_starter and game_score.home_starter != "TBD":
+        home_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
+            cast("dict[str, PitcherNerdStats]", pitcher_nerd_details),
+            game_score.home_starter,
         )
-        lines.append(
-            generate_pitcher_breakdown_table(
-                game_score.home_starter,
-                pitcher_nerd_details[game_score.home_starter],
-                is_home=True,
-                anchor_id=home_pitcher_anchor_id,
+        if home_pitcher_stats:
+            lines.append(
+                generate_pitcher_breakdown_table(
+                    game_score.home_starter,
+                    home_pitcher_stats,
+                    is_home=True,
+                )
             )
-        )
 
     return "\n".join(lines)
 
