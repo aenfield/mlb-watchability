@@ -1,11 +1,18 @@
 """Markdown file generation for MLB Watchability."""
 
+from collections.abc import Mapping
 from datetime import datetime
+from typing import Any
 
 from .game_scores import GameScore
-from .pitcher_stats import format_pitcher_with_fangraphs_link
-from .team_mappings import format_team_with_fangraphs_link
-from .utils import format_time_12_hour
+from .pitcher_stats import (
+    PitcherNerdStats,
+    calculate_detailed_pitcher_nerd_scores,
+    format_pitcher_with_fangraphs_link,
+)
+from .team_mappings import format_team_with_fangraphs_link, get_team_abbreviation
+from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
+from .utils import extract_year_from_date, format_time_12_hour
 
 # Template configuration - easily modifiable
 METADATA_TEMPLATE = """---
@@ -121,6 +128,7 @@ def generate_complete_markdown_content(
     """
     metadata_block = generate_metadata_block(date_str)
     table_content = generate_markdown_table(game_scores)
+    detail_content = generate_all_game_details(game_scores, date_str)
 
     # Combine all parts with proper spacing
     content_parts = [
@@ -131,10 +139,268 @@ def generate_complete_markdown_content(
         table_content,
         "",  # Empty line after table
         FOOTER_TEXT,
+        "",  # Empty line after footer
+        detail_content,
         "",  # Final newline
     ]
 
     return "\n".join(content_parts)
+
+
+def generate_team_breakdown_table(
+    team_name: str,
+    team_nerd_stats: TeamNerdStats,
+    team_abbreviation: str,  # noqa: ARG001
+) -> str:
+    """
+    Generate detailed breakdown table for a team.
+
+    Args:
+        team_name: Full team name
+        team_nerd_stats: TeamNerdStats object
+        team_abbreviation: Team abbreviation
+
+    Returns:
+        Formatted markdown table showing raw stats, z-scores, and tNERD components
+    """
+    team_stats = team_nerd_stats.team_stats
+
+    # Format payroll as millions with M suffix
+    payroll_str = f"${team_stats.payroll:.1f}M"
+
+    # Create table rows
+    raw_row = (
+        f"| **Raw Stat** "
+        f"| {team_stats.batting_runs:.1f} "
+        f"| {team_stats.barrel_rate:.1%} "
+        f"| {team_stats.baserunning_runs:.1f} "
+        f"| {team_stats.fielding_runs:.1f} "
+        f"| {payroll_str} "
+        f"| {team_stats.age:.1f} "
+        f"| {team_stats.luck:.1f} "
+        f"| — "
+        f"| — |"
+    )
+
+    z_row = (
+        f"| **Z-Score** "
+        f"| {team_nerd_stats.z_batting_runs:.2f} "
+        f"| {team_nerd_stats.z_barrel_rate:.2f} "
+        f"| {team_nerd_stats.z_baserunning_runs:.2f} "
+        f"| {team_nerd_stats.z_fielding_runs:.2f} "
+        f"| {team_nerd_stats.z_payroll:.2f} "
+        f"| {team_nerd_stats.z_age:.2f} "
+        f"| {team_nerd_stats.z_luck:.2f} "
+        f"| — "
+        f"| — |"
+    )
+
+    tnerd_row = (
+        f"| **tNERD** "
+        f"| {team_nerd_stats.batting_component:.2f} "
+        f"| {team_nerd_stats.barrel_component:.2f} "
+        f"| {team_nerd_stats.baserunning_component:.2f} "
+        f"| {team_nerd_stats.fielding_component:.2f} "
+        f"| {team_nerd_stats.payroll_component:.2f} "
+        f"| {team_nerd_stats.age_component:.2f} "
+        f"| {team_nerd_stats.luck_component:.2f} "
+        f"| {team_nerd_stats.constant_component:.2f} "
+        f"| {team_nerd_stats.tnerd_score:.2f} |"
+    )
+
+    lines = [
+        f"### {team_name}",
+        "",
+        "|              | Batting Runs | Barrel % | Baserunning | Fielding | Payroll | Age   | Luck | Constant | TOTAL |",
+        "| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |",
+        raw_row,
+        z_row,
+        tnerd_row,
+        "",
+    ]
+
+    return "\n".join(lines)
+
+
+def generate_pitcher_breakdown_table(
+    pitcher_name: str, pitcher_nerd_stats: PitcherNerdStats, is_home: bool = False
+) -> str:
+    """
+    Generate detailed breakdown table for a pitcher.
+
+    Args:
+        pitcher_name: Pitcher name
+        pitcher_nerd_stats: PitcherNerdStats object
+        is_home: Whether this is the home team pitcher
+
+    Returns:
+        Formatted markdown table showing raw stats, z-scores, and pNERD components
+    """
+    pitcher_stats = pitcher_nerd_stats.pitcher_stats
+
+    starter_type = "Home starter" if is_home else "Visiting starter"
+
+    # Format velocity with mph suffix
+    velocity_str = f"{pitcher_stats.velocity:.1f} mph"
+
+    # Format pace with seconds suffix
+    pace_str = f"{pitcher_stats.pace:.1f}s"
+
+    # Create table rows
+    raw_row = (
+        f"| **Raw Stat** "
+        f"| {pitcher_stats.xfip_minus:.0f} "
+        f"| {pitcher_stats.swinging_strike_rate:.1%} "
+        f"| {pitcher_stats.strike_rate:.1%} "
+        f"| {velocity_str} "
+        f"| {pitcher_stats.age} "
+        f"| {pace_str} "
+        f"| {pitcher_stats.luck:.0f} "
+        f"| {pitcher_stats.knuckleball_rate:.1%} "
+        f"| — "
+        f"| — |"
+    )
+
+    z_row = (
+        f"| **Z-Score** "
+        f"| {pitcher_nerd_stats.z_xfip_minus:.2f} "
+        f"| {pitcher_nerd_stats.z_swinging_strike_rate:.2f} "
+        f"| {pitcher_nerd_stats.z_strike_rate:.2f} "
+        f"| {pitcher_nerd_stats.z_velocity:.2f} "
+        f"| {pitcher_nerd_stats.z_age:.2f} "
+        f"| {pitcher_nerd_stats.z_pace:.2f} "
+        f"| — "
+        f"| — "
+        f"| — "
+        f"| — |"
+    )
+
+    pnerd_row = (
+        f"| **pNERD** "
+        f"| {pitcher_nerd_stats.xfip_component:.2f} "
+        f"| {pitcher_nerd_stats.swinging_strike_component:.2f} "
+        f"| {pitcher_nerd_stats.strike_component:.2f} "
+        f"| {pitcher_nerd_stats.velocity_component:.2f} "
+        f"| {pitcher_nerd_stats.age_component:.2f} "
+        f"| {pitcher_nerd_stats.pace_component:.2f} "
+        f"| {pitcher_nerd_stats.luck_component:.2f} "
+        f"| {pitcher_nerd_stats.knuckleball_component:.2f} "
+        f"| {pitcher_nerd_stats.constant_component:.2f} "
+        f"| {pitcher_nerd_stats.pnerd_score:.2f} |"
+    )
+
+    lines = [
+        f"### {starter_type}: {pitcher_name}",
+        "",
+        "|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | TOTAL |",
+        "| ------------ | ----- | ------ | -------- | -------- | ----- | ----- | ---- | ---- | -------- | ----- |",
+        raw_row,
+        z_row,
+        pnerd_row,
+        "",
+    ]
+
+    return "\n".join(lines)
+
+
+def generate_game_detail_section(
+    game_score: GameScore,
+    team_nerd_details: Mapping[str, Any],
+    pitcher_nerd_details: Mapping[str, Any],
+) -> str:
+    """
+    Generate detailed breakdown section for a single game.
+
+    Args:
+        game_score: GameScore object containing game information
+        team_nerd_details: Dictionary of team NERD details
+        pitcher_nerd_details: Dictionary of pitcher NERD details
+
+    Returns:
+        Formatted markdown section with detailed breakdowns for teams and pitchers
+    """
+    # Format game time
+    time_str = format_time_12_hour(game_score.game_time)
+
+    # Get team abbreviations for lookup
+    away_abbr = get_team_abbreviation(game_score.away_team)
+    home_abbr = get_team_abbreviation(game_score.home_team)
+
+    # Start with section header
+    lines = [f"## {game_score.away_team} @ {game_score.home_team}, {time_str}", ""]
+
+    # Add away team breakdown
+    if away_abbr in team_nerd_details:
+        lines.append(
+            generate_team_breakdown_table(
+                game_score.away_team, team_nerd_details[away_abbr], away_abbr
+            )
+        )
+
+    # Add home team breakdown
+    if home_abbr in team_nerd_details:
+        lines.append(
+            generate_team_breakdown_table(
+                game_score.home_team, team_nerd_details[home_abbr], home_abbr
+            )
+        )
+
+    # Add visiting pitcher breakdown
+    if game_score.away_starter and game_score.away_starter in pitcher_nerd_details:
+        lines.append(
+            generate_pitcher_breakdown_table(
+                game_score.away_starter,
+                pitcher_nerd_details[game_score.away_starter],
+                is_home=False,
+            )
+        )
+
+    # Add home pitcher breakdown
+    if game_score.home_starter and game_score.home_starter in pitcher_nerd_details:
+        lines.append(
+            generate_pitcher_breakdown_table(
+                game_score.home_starter,
+                pitcher_nerd_details[game_score.home_starter],
+                is_home=True,
+            )
+        )
+
+    return "\n".join(lines)
+
+
+def generate_all_game_details(game_scores: list[GameScore], date_str: str) -> str:
+    """
+    Generate detailed breakdown sections for all games.
+
+    Args:
+        game_scores: List of GameScore objects
+        date_str: Date string in YYYY-MM-DD format
+
+    Returns:
+        Formatted markdown with detailed breakdowns for all games
+    """
+    if not game_scores:
+        return ""
+
+    # Get season year for stats lookup
+    season = extract_year_from_date(date_str)
+
+    # Get detailed NERD statistics
+    team_nerd_details = calculate_detailed_team_nerd_scores(season)
+    pitcher_nerd_details = calculate_detailed_pitcher_nerd_scores(season)
+
+    # Generate detail sections - sort by gNERD score descending (highest first)
+    sorted_games = sorted(game_scores, key=lambda x: x.gnerd_score, reverse=True)
+    lines = ["# Detail", ""]
+
+    for game_score in sorted_games:
+        lines.append(
+            generate_game_detail_section(
+                game_score, team_nerd_details, pitcher_nerd_details
+            )
+        )
+
+    return "\n".join(lines)
 
 
 def generate_markdown_filename(date_str: str) -> str:

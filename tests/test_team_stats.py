@@ -114,7 +114,6 @@ class TestTeamNerdStats:
         assert nerd_stats.tnerd_score == 8.5
 
 
-
 class TestTeamNerdStatsFromStatsAndMeans:
     """Test cases for TeamNerdStats.from_stats_and_means class method."""
 
