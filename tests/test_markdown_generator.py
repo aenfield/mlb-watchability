@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from mlb_watchability.game_scores import GameScore
 from mlb_watchability.markdown_generator import (
     generate_all_game_details,
+    generate_automatic_anchor_id,
     generate_complete_markdown_content,
     generate_game_detail_section,
     generate_markdown_filename,
@@ -47,6 +48,79 @@ tags: mlbw
 
         result = generate_markdown_filename("2024-12-31")
         assert result == "mlb_what_to_watch_2024_12_31.md"
+
+    def test_generate_automatic_anchor_id(self) -> None:
+        """Test automatic anchor ID generation from heading text."""
+        # Test basic team names
+        assert generate_automatic_anchor_id("Houston Astros") == "houston-astros"
+        assert generate_automatic_anchor_id("New York Yankees") == "new-york-yankees"
+        assert (
+            generate_automatic_anchor_id("Los Angeles Dodgers") == "los-angeles-dodgers"
+        )
+
+        # Test game headings with times
+        assert (
+            generate_automatic_anchor_id("Houston Astros @ Arizona Diamondbacks, 3:40p")
+            == "houston-astros-arizona-diamondbacks-3-40p"
+        )
+        assert (
+            generate_automatic_anchor_id("Milwaukee Brewers @ Seattle Mariners, 3:40p")
+            == "milwaukee-brewers-seattle-mariners-3-40p"
+        )
+
+        # Test pitcher headings
+        assert (
+            generate_automatic_anchor_id("Visiting starter: Brandon Walter")
+            == "visiting-starter-brandon-walter"
+        )
+        assert (
+            generate_automatic_anchor_id("Home starter: Brandon Pfaadt")
+            == "home-starter-brandon-pfaadt"
+        )
+        assert (
+            generate_automatic_anchor_id("Visiting starter: Jesús Luzardo")
+            == "visiting-starter-jesus-luzardo"
+        )
+
+        # Test special characters and multiple spaces
+        assert (
+            generate_automatic_anchor_id("Team with   multiple    spaces")
+            == "team-with-multiple-spaces"
+        )
+        assert generate_automatic_anchor_id("Team @ Home, 12:30p") == "team-home-12-30p"
+        assert (
+            generate_automatic_anchor_id("Team-Name & Other/Team")
+            == "team-name-other-team"
+        )
+
+        # Test edge cases
+        assert generate_automatic_anchor_id("") == ""
+        assert generate_automatic_anchor_id("   ") == ""
+        assert generate_automatic_anchor_id("---") == ""
+        assert generate_automatic_anchor_id("Team---Name") == "team-name"
+
+        # Test case conversion
+        assert generate_automatic_anchor_id("UPPERCASE TEAM") == "uppercase-team"
+        assert generate_automatic_anchor_id("MiXeD cAsE") == "mixed-case"
+
+        # Test accented character normalization
+        assert generate_automatic_anchor_id("José Altuve") == "jose-altuve"
+        assert generate_automatic_anchor_id("Jesús Luzardo") == "jesus-luzardo"
+        assert generate_automatic_anchor_id("Andrés Giménez") == "andres-gimenez"
+        assert generate_automatic_anchor_id("Gleyber Torres") == "gleyber-torres"
+        assert (
+            generate_automatic_anchor_id("Visiting starter: José Berríos")
+            == "visiting-starter-jose-berrios"
+        )
+        assert (
+            generate_automatic_anchor_id("Home starter: Cristian Javier")
+            == "home-starter-cristian-javier"
+        )
+
+        # Test various accented characters
+        assert generate_automatic_anchor_id("àáâãäåæçèéêë") == "aaaaaaaeceeee"
+        assert generate_automatic_anchor_id("ìíîïñòóôõöøùúûü") == "iiiinoooooouuuu"
+        assert generate_automatic_anchor_id("ýÿ") == "yy"
 
     def test_generate_markdown_table_with_complete_data(self) -> None:
         """Test markdown table generation with complete game data."""
@@ -124,6 +198,39 @@ tags: mlbw
         assert "6.2" in result  # Walker Buehler score
         assert "3.9" in result  # Brayan Bello score
         assert "6.7" in result  # Shota Imanaga score
+
+    def test_generate_markdown_table_anchor_links(self) -> None:
+        """Test that table anchor links match automatic anchor generation."""
+        game_scores = [
+            GameScore(
+                away_team="Houston Astros",
+                home_team="Arizona Diamondbacks",
+                away_starter="Brandon Walter",
+                home_starter="Brandon Pfaadt",
+                game_time="15:40",  # 3:40p
+                away_team_nerd=4.9,
+                home_team_nerd=7.9,
+                average_team_nerd=6.4,
+                away_pitcher_nerd=8.9,
+                home_pitcher_nerd=4.4,
+                average_pitcher_nerd=6.65,
+                gnerd_score=13.1,
+            )
+        ]
+
+        result = generate_markdown_table(game_scores)
+
+        # Check that table contains correct anchor links that match automatic generation
+        # Game link: "Houston Astros @ Arizona Diamondbacks, 3:40p" -> "houston-astros-arizona-diamondbacks-3-40p"
+        assert "[13.1](#houston-astros-arizona-diamondbacks-3-40p)" in result
+
+        # Team links: team names -> lowercase with hyphens
+        assert "[4.9](#houston-astros)" in result
+        assert "[7.9](#arizona-diamondbacks)" in result
+
+        # Pitcher links: "Visiting starter: Name" and "Home starter: Name"
+        assert "[8.9](#visiting-starter-brandon-walter)" in result
+        assert "[4.4](#home-starter-brandon-pfaadt)" in result
 
     def test_generate_markdown_table_with_missing_data(self) -> None:
         """Test markdown table generation with missing pitcher data."""
@@ -245,11 +352,11 @@ tags: mlbw
         team_nerd_stats.tnerd_score = 9.15
 
         result = generate_team_breakdown_table(
-            "Los Angeles Dodgers", team_nerd_stats, "LAD", "test-anchor-id"
+            "Los Angeles Dodgers", team_nerd_stats, "LAD"
         )
 
         # Check structure
-        assert "### Los Angeles Dodgers {#test-anchor-id}" in result
+        assert "### Los Angeles Dodgers" in result
         assert "{% wideTable %}" in result
         assert "{% endwideTable %}" in result
         assert "| **Raw Stat** |" in result
@@ -495,6 +602,8 @@ tags: mlbw
         assert "### Los Angeles Dodgers" in result
         assert "### Visiting starter: Gerrit Cole" in result
         assert "### Home starter: Walker Buehler" in result
+
+        assert "[Go back to top of page](#)" in result
 
     def test_generate_all_game_details_sorts_by_gnerd_score(self) -> None:
         """Test that games in Detail section are sorted by gNERD score descending."""

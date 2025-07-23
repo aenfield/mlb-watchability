@@ -1,6 +1,7 @@
 """Markdown file generation for MLB Watchability."""
 
 import re
+import unicodedata
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, cast
@@ -17,62 +18,61 @@ from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
 from .utils import extract_year_from_date, format_time_12_hour
 
 
-def generate_game_anchor_id(away_team: str, home_team: str) -> str:
+def generate_automatic_anchor_id(heading_text: str) -> str:
     """
-    Generate a URL-safe anchor ID for a game.
+    Generate an anchor ID that matches the automatic anchor generation from heading text.
+
+    This follows the pattern used by 11ty and other markdown processors:
+    - Normalize accented characters to ASCII equivalents (ú → u, é → e)
+    - Convert to lowercase
+    - Replace spaces and special characters with hyphens
+    - Remove multiple consecutive hyphens
+    - Remove leading/trailing hyphens
+
+    I had Claude research canned alternatives to this custom code and it came up with
+    @sindresorhus/slugify and github-slugger. For now, I'll keep this impl since it's
+    simple and works and avoids a dependency, but can revisit in the future.
 
     Args:
-        away_team: Away team name
-        home_team: Home team name
+        heading_text: The heading text (without ## or ### prefixes)
 
     Returns:
-        URL-safe anchor ID for the game
+        URL-safe anchor ID that matches automatic generation
     """
-    # Create a simple game identifier using team names
-    game_id = f"{away_team}-{home_team}"
-    # Replace spaces and special characters with hyphens
-    game_id = re.sub(r"[^a-zA-Z0-9]+", "-", game_id)
-    # Convert to lowercase and remove leading/trailing hyphens
-    game_id = game_id.lower().strip("-")
-    return game_id
+    # Handle special character mappings that NFD doesn't decompose
+    char_map = {
+        "æ": "ae",
+        "œ": "oe",
+        "ß": "ss",
+        "ð": "d",
+        "þ": "th",
+        "ø": "o",
+        "Æ": "AE",
+        "Œ": "OE",
+        "Ð": "D",
+        "Þ": "TH",
+        "Ø": "O",
+    }
 
+    # Apply character mappings
+    text = heading_text
+    for char, replacement in char_map.items():
+        text = text.replace(char, replacement)
 
-def generate_team_anchor_id(team_name: str, game_anchor_id: str) -> str:
-    """
-    Generate a URL-safe anchor ID for a team section within a game.
+    # Normalize accented characters to ASCII equivalents
+    # NFD normalization decomposes characters, then we filter out combining marks
+    normalized = unicodedata.normalize("NFD", text)
+    ascii_text = "".join(
+        char for char in normalized if unicodedata.category(char) != "Mn"
+    )
 
-    Args:
-        team_name: Team name
-        game_anchor_id: The game's anchor ID
-
-    Returns:
-        URL-safe anchor ID for the team section
-    """
-    # Create team identifier
-    team_id = re.sub(r"[^a-zA-Z0-9]+", "-", team_name)
-    team_id = team_id.lower().strip("-")
-    return f"{game_anchor_id}-{team_id}"
-
-
-def generate_pitcher_anchor_id(
-    pitcher_name: str, game_anchor_id: str, is_home: bool
-) -> str:
-    """
-    Generate a URL-safe anchor ID for a pitcher section within a game.
-
-    Args:
-        pitcher_name: Pitcher name
-        game_anchor_id: The game's anchor ID
-        is_home: Whether this is the home team pitcher
-
-    Returns:
-        URL-safe anchor ID for the pitcher section
-    """
-    # Create pitcher identifier
-    pitcher_id = re.sub(r"[^a-zA-Z0-9]+", "-", pitcher_name)
-    pitcher_id = pitcher_id.lower().strip("-")
-    starter_type = "home" if is_home else "visiting"
-    return f"{game_anchor_id}-{starter_type}-{pitcher_id}"
+    # Convert to lowercase and replace spaces and special characters with hyphens
+    anchor_id = re.sub(r"[^a-zA-Z0-9]+", "-", ascii_text)
+    # Remove multiple consecutive hyphens
+    anchor_id = re.sub(r"-+", "-", anchor_id)
+    # Remove leading/trailing hyphens
+    anchor_id = anchor_id.strip("-").lower()
+    return anchor_id
 
 
 # Template configuration - easily modifiable
@@ -133,17 +133,6 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
     lines = ["{% wideTable %}", "", TABLE_HEADER, TABLE_SEPARATOR]
 
     for game_score in game_scores:
-        # Generate anchor IDs for this game
-        game_anchor_id = generate_game_anchor_id(
-            game_score.away_team, game_score.home_team
-        )
-        away_team_anchor_id = generate_team_anchor_id(
-            game_score.away_team, game_anchor_id
-        )
-        home_team_anchor_id = generate_team_anchor_id(
-            game_score.home_team, game_anchor_id
-        )
-
         # Format time with EDT specification
         time_str = format_time_12_hour(game_score.game_time)
 
@@ -163,6 +152,15 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
             else "TBD"
         )
 
+        # Generate automatic anchor IDs based on heading text
+        # Game heading: "## Away Team @ Home Team, 3:40p"
+        game_heading = f"{game_score.away_team} @ {game_score.home_team}, {time_str}"
+        game_anchor_id = generate_automatic_anchor_id(game_heading)
+
+        # Team headings: "### Team Name"
+        away_team_anchor_id = generate_automatic_anchor_id(game_score.away_team)
+        home_team_anchor_id = generate_automatic_anchor_id(game_score.home_team)
+
         # Format scores with anchor links
         game_score_link = f"[{game_score.gnerd_score:.1f}](#{game_anchor_id})"
         away_team_score_link = (
@@ -174,9 +172,9 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
 
         # Format pitcher scores with anchor links
         if game_score.away_pitcher_nerd is not None and game_score.away_starter:
-            away_pitcher_anchor_id = generate_pitcher_anchor_id(
-                game_score.away_starter, game_anchor_id, is_home=False
-            )
+            # Pitcher heading: "### Visiting starter: Pitcher Name"
+            away_pitcher_heading = f"Visiting starter: {game_score.away_starter}"
+            away_pitcher_anchor_id = generate_automatic_anchor_id(away_pitcher_heading)
             away_pitcher_score = (
                 f"[{game_score.away_pitcher_nerd:.1f}](#{away_pitcher_anchor_id})"
             )
@@ -184,9 +182,9 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
             away_pitcher_score = "No data"
 
         if game_score.home_pitcher_nerd is not None and game_score.home_starter:
-            home_pitcher_anchor_id = generate_pitcher_anchor_id(
-                game_score.home_starter, game_anchor_id, is_home=True
-            )
+            # Pitcher heading: "### Home starter: Pitcher Name"
+            home_pitcher_heading = f"Home starter: {game_score.home_starter}"
+            home_pitcher_anchor_id = generate_automatic_anchor_id(home_pitcher_heading)
             home_pitcher_score = (
                 f"[{game_score.home_pitcher_nerd:.1f}](#{home_pitcher_anchor_id})"
             )
@@ -239,7 +237,6 @@ def generate_team_breakdown_table(
     team_name: str,
     team_nerd_stats: TeamNerdStats,
     team_abbreviation: str,  # noqa: ARG001
-    anchor_id: str,
 ) -> str:
     """
     Generate detailed breakdown table for a team.
@@ -248,7 +245,6 @@ def generate_team_breakdown_table(
         team_name: Full team name
         team_nerd_stats: TeamNerdStats object
         team_abbreviation: Team abbreviation
-        anchor_id: Anchor ID for this team section
 
     Returns:
         Formatted markdown table showing raw stats, z-scores, and tNERD components
@@ -299,7 +295,7 @@ def generate_team_breakdown_table(
     )
 
     lines = [
-        f"### {team_name} {{#{anchor_id}}}",
+        f"### {team_name}",
         "",
         "{% wideTable %}",
         "",
@@ -319,7 +315,6 @@ def generate_pitcher_breakdown_table(
     pitcher_name: str,
     pitcher_nerd_stats: PitcherNerdStats,
     is_home: bool = False,
-    anchor_id: str | None = None,
 ) -> str:
     """
     Generate detailed breakdown table for a pitcher.
@@ -328,7 +323,6 @@ def generate_pitcher_breakdown_table(
         pitcher_name: Pitcher name
         pitcher_nerd_stats: PitcherNerdStats object
         is_home: Whether this is the home team pitcher
-        anchor_id: Anchor ID for this pitcher section
 
     Returns:
         Formatted markdown table showing raw stats, z-scores, and pNERD components
@@ -386,10 +380,6 @@ def generate_pitcher_breakdown_table(
         f"| {pitcher_nerd_stats.pnerd_score:.2f} |"
     )
 
-    header = f"### {starter_type}: {pitcher_name}"
-    if anchor_id:
-        header += f" {{#{anchor_id}}}"
-
     lines = [
         f"### {starter_type}: {pitcher_name}",
         "",
@@ -426,18 +416,13 @@ def generate_game_detail_section(
     # Format game time
     time_str = format_time_12_hour(game_score.game_time)
 
-    # Generate anchor IDs
-    game_anchor_id = generate_game_anchor_id(game_score.away_team, game_score.home_team)
-    away_team_anchor_id = generate_team_anchor_id(game_score.away_team, game_anchor_id)
-    home_team_anchor_id = generate_team_anchor_id(game_score.home_team, game_anchor_id)
-
     # Get team abbreviations for lookup
     away_abbr = get_team_abbreviation(game_score.away_team)
     home_abbr = get_team_abbreviation(game_score.home_team)
 
-    # Start with section header with anchor ID
+    # Start with section header (automatic anchor will be generated)
     lines = [
-        f"## {game_score.away_team} @ {game_score.home_team}, {time_str} {{#{game_anchor_id}}}",
+        f"## {game_score.away_team} @ {game_score.home_team}, {time_str}",
         "",
     ]
 
@@ -448,7 +433,6 @@ def generate_game_detail_section(
                 game_score.away_team,
                 team_nerd_details[away_abbr],
                 away_abbr,
-                away_team_anchor_id,
             )
         )
 
@@ -459,7 +443,6 @@ def generate_game_detail_section(
                 game_score.home_team,
                 team_nerd_details[home_abbr],
                 home_abbr,
-                home_team_anchor_id,
             )
         )
 
@@ -492,6 +475,9 @@ def generate_game_detail_section(
                     is_home=True,
                 )
             )
+
+    # Add "Go back to top of page" link at the bottom of each game section
+    lines.extend(["", "[Go back to top of page](#)", ""])
 
     return "\n".join(lines)
 
