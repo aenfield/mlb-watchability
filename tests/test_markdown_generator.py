@@ -245,11 +245,11 @@ tags: mlbw
         team_nerd_stats.tnerd_score = 9.15
 
         result = generate_team_breakdown_table(
-            "Los Angeles Dodgers", team_nerd_stats, "LAD"
+            "Los Angeles Dodgers", team_nerd_stats, "LAD", "test-anchor-id"
         )
 
         # Check structure
-        assert "### Los Angeles Dodgers" in result
+        assert "### Los Angeles Dodgers {#test-anchor-id}" in result
         assert "| **Raw Stat** |" in result
         assert "| **Z-Score** |" in result
         assert "| **tNERD** |" in result
