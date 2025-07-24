@@ -29,7 +29,7 @@ The pNERD score comes from these pitcher-specific statistics and exists for each
 - ERA- minus xFIP- (Luck) - pitchers that have been unlucky in the sense that their ERA is higher than the corresponding defense-independent stat can be expected regress (positively, which is a good thing to watch), i.e. a pitcher with an ERA- of 110 (10% worse than average) with an xFIP- of 95 (5% better than average) would be expected to have a better ERA- (and ERA) in the future, so if this value is positive it's a good thing
 - Knuckleball Rate (KN) - for pitchers that don't throw knucklers, this will be NaN, so be sure that a lack of this number doesn't crash anything - instead, pitchers with a NaN should just get zero contribution for KN rate
 
-The formula for pNERD is (zxFIP- _ 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (zPace / 2) + (Luck / 20) + (KN _ 5) + Constant. Any variable preceded by a z represents the z-score — or standard deviations from the mean — of the relevant metric. The population used for determining the mean in this case includes all pitchers who’ve thrown 20 innings as a starter. Players are never assessed negative, but only positive, scores for Velo, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Velo and Age are capped at 2.0; Luck, at 1.0. The constant at the moment is about 3.8.
+The formula for pNERD is (zxFIP- _ 2) + (zSwStrk / 2) + (zStrk / 2) + zVelo + zAge + (zPace / 2) + (Luck / 20) + (KN _ 5) + Constant. Any variable preceded by a z represents the z-score — or standard deviations from the mean — of the relevant metric. The population used for determining the mean in this case includes all pitchers who’ve thrown 20 innings as a starter. Players are never assessed negative, but only positive, scores for Velo, Age, and Luck, so any number that would be below zero is simply rendered as zero. Note that Velo and Age are capped at 2.0; Luck, at 1.0. The constant at the moment is about 3.8 (and I did a quick analysis - see below - showing that it's fine to leave it as such for now).
 
 ### Team NERD - tNERD
 
@@ -45,7 +45,7 @@ The tNERD score comes from these team-specific statistics:
 - Batter age, where younger is better ('Age') - retrieve this data from the static file at data/payroll-spotrac.2025.csv (pybaseball does have age, but it seems a bit less precise, FWIW)
 - Luck - calculate as 'wRC' minus 'Runs', use pybaseball; this is expected runs minus actual runs, so teams that have been unlucky by scoring fewer runs than expected get a positive luck boost, as they can be expected to regress (positively); note that the order around the substraction is opposite than for pNERD luck because the stats used for pNERD luck are better when lower while the stats used here for tNERD luck are better when higher
 
-The formula for tNERD is zBat + zBarrel% + zBsR + zFld + zPay + zAge + zLuck + Constant. As with pitcher NERD, any variable preceded by a z represents the z-score of the relevant metric — in this case, relative to averages for the whole league. Teams are never assessed negative, but only positive, scores for Pay, Age, and Luck, so any number that would be below zero is simply rendered as zero. Luck is capped at 2.0. The constant for team NERD is currently at 4.0 (I may change this in the future)
+The formula for tNERD is zBat + zBarrel% + zBsR + zFld + zPay + zAge + zLuck + Constant. As with pitcher NERD, any variable preceded by a z represents the z-score of the relevant metric — in this case, relative to averages for the whole league. Teams are never assessed negative, but only positive, scores for Pay, Age, and Luck, so any number that would be below zero is simply rendered as zero. Luck is capped at 2.0. The constant for team NERD is currently at 4.0 (and I did a quick analysis - see below - showing that it's fine to leave it as such for now).
 
 In the future I could extend tNERD to include additional things, like the following, but won't do this to start - the basic idea is to try to capture as metrics different things that make a team fun to watch/listen to:
 
@@ -77,3 +77,20 @@ This section has a few historical notes and more data on NERD. Note again that t
 ## Risks and Unknowns
 
 - I don't yet know what's unclear or what assumptions I'm making. :-)
+
+## Quick analysis of tNERD and pNERD distributions
+
+As of 7/23/25 (with a summary drafted by Claude based on my input and it's knowledge of the output of the analysis scripts):
+
+The pNERD and tNERD distributions work well as designed, with both metrics centered around 5 but
+allowing for meaningful differentiation at the extremes. pNERD shows a wider range (-2 to 15) with
+elite pitchers like Tarik Skubal reaching the mid-teens, while tNERD operates in a tighter band (2
+to 10) reflecting the more compressed nature of team-level performance differences. The occasional
+pNERD scores below zero or above 10 are justified when exceptional talents like Paul Skenes take
+the mound, as individual pitcher dominance can have outsized impact on game watchability.
+Meanwhile, tNERD's narrower distribution makes sense given that team statistics represent
+aggregated performance over many players and games, naturally reducing variance. Both metrics
+successfully avoid extreme outliers while preserving the ability to identify truly special
+performances - pNERD captures ace-level dominance while tNERD distinguishes between
+well-constructed lineups and those struggling across multiple offensive categories. To regenerate
+this analysis with updated data, I can just re-run uv run python analysis/pnerd_analysis_seven_days.py and uv run python analysis/tnerd_analysis.py for team analysis.
