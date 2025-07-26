@@ -7,6 +7,7 @@ overall watchability score for each game.
 
 ## Game Details
 
+**Date:** {game_date}
 **Teams:** {away_team} @ {home_team}
 **Game Time:** {game_time}
 **Starting Pitchers:** {away_starter} vs {home_starter}
@@ -53,7 +54,7 @@ overall watchability score for each game.
 
 ## Instructions
 
-- Before writing your summary, search the web for the latest news, injury reports, recent performance, and storylines related to this specific game, both teams, and starting pitchers.
+- Before writing your summary, search the web for the latest news, injury reports, recent performance, and storylines related to this specific game, both teams, and starting pitchers. Be sure to query for the game with the date and time specified above, to avoid getting information about other games that have similar teams and/or pitchers.
 - Overall, explain why this game is more or less watchable based on the specific NERD components, supplemented by what you learned in your web searches.
 - Don't use bullets or emojis or different sections: just keep it to sentences.
 - Write in a witty and wry but still engaging tone that helps viewers understand why they should (or shouldn't) prioritize this game.

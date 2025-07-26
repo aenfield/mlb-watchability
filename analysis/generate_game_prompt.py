@@ -10,6 +10,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
+import pytz
 
 # Add the project root to the Python path so we can import from src
 script_dir = Path(__file__).parent
@@ -80,11 +81,32 @@ def get_game_data(
             pitcher_nerd_details, selected_game.home_starter
         )
 
+    # Format the game time in Eastern time
+    game_time_et = "TBD"
+    if selected_game.game_time and selected_game.game_time != "TBD":
+        try:
+            # Parse the time - assuming it comes in ISO format with timezone
+            game_dt = datetime.fromisoformat(selected_game.game_time.replace('Z', '+00:00'))
+            # Convert to Eastern time
+            eastern = pytz.timezone('US/Eastern')
+            game_dt_et = game_dt.astimezone(eastern)
+            game_time_et = game_dt_et.strftime("%I:%M %p ET").lstrip('0')
+        except Exception:
+            # If parsing fails, use the original time
+            game_time_et = selected_game.game_time
+
+    # Format the game date
+    try:
+        game_date = datetime.strptime(date, "%Y-%m-%d").strftime("%A, %B %d, %Y")
+    except Exception:
+        game_date = date
+
     # Build the complete data dictionary
     data = {
         "away_team": selected_game.away_team,
         "home_team": selected_game.home_team,
-        "game_time": selected_game.game_time or "TBD",
+        "game_date": game_date,
+        "game_time": game_time_et,
         "away_starter": selected_game.away_starter or "TBD",
         "home_starter": selected_game.home_starter or "TBD",
         "gnerd_score": selected_game.gnerd_score,
@@ -305,22 +327,17 @@ def main() -> None:
         description="Generate a game summary prompt with NERD scores and statistics"
     )
     parser.add_argument(
-        "--game-index",
-        type=int,
-        default=0,
-        help="Index of the game to use (0-based, default: 0 for first game)",
-    )
-    parser.add_argument(
-        "--date",
-        type=str,
+        "date",
+        nargs="?",
         default="2025-07-23",
         help="Date in YYYY-MM-DD format (default: 2025-07-23)",
     )
     parser.add_argument(
-        "--season",
+        "game_index",
+        nargs="?",
         type=int,
-        default=2025,
-        help="Season year for statistics (default: 2025)",
+        default=0,
+        help="Index of the game to use (0-based, default: 0 for first game)",
     )
 
     args = parser.parse_args()
@@ -336,13 +353,14 @@ def main() -> None:
     # Read template
     template = template_file.read_text()
 
-    # Get game data using actual MLB data
+    # Get game data using actual MLB data (use 2025 season by default)
+    season = 2025
     print(
         f"Starting game prompt generation for {args.date}, game index {args.game_index}..."
     )
     try:
         game_data = get_game_data(
-            date=args.date, season=args.season, game_index=args.game_index
+            date=args.date, season=season, game_index=args.game_index
         )
     except Exception as e:
         print(f"Error getting game data: {e}")
