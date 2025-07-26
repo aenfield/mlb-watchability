@@ -201,6 +201,16 @@ def get_game_data(
                 "away_z_pace": away_pitcher_details.z_pace,
             }
         )
+        # Add formatted pitcher stats section
+        data["away_pitcher_stats_section"] = f"""- xFIP-: {pitcher_stats.xfip_minus:.0f} (z-score: {away_pitcher_details.z_xfip_minus:.2f})
+- Swinging Strike Rate: {pitcher_stats.swinging_strike_rate:.3f} (z-score:
+  {away_pitcher_details.z_swinging_strike_rate:.2f})
+- Strike Rate: {pitcher_stats.strike_rate:.3f} (z-score: {away_pitcher_details.z_strike_rate:.2f})
+- Velocity: {pitcher_stats.velocity:.1f} mph (z-score: {away_pitcher_details.z_velocity:.2f})
+- Age: {pitcher_stats.age} (z-score: {away_pitcher_details.z_age:.2f})
+- Pace: {pitcher_stats.pace:.1f}s (z-score: {away_pitcher_details.z_pace:.2f})
+- Luck (ERA- minus xFIP-): {pitcher_stats.luck:.1f}
+- Knuckleball Rate: {pitcher_stats.knuckleball_rate:.3f}"""
     else:
         # Default values if no pitcher data
         data.update(
@@ -221,6 +231,8 @@ def get_game_data(
                 "away_z_pace": 0.0,
             }
         )
+        # Add no data message
+        data["away_pitcher_stats_section"] = "No pNERD data, likely because the pitcher hasn't met the minimum thresholds for inclusion."
 
     # Add home pitcher detailed stats
     if home_pitcher_details:
@@ -243,6 +255,16 @@ def get_game_data(
                 "home_z_pace": home_pitcher_details.z_pace,
             }
         )
+        # Add formatted pitcher stats section
+        data["home_pitcher_stats_section"] = f"""- xFIP-: {pitcher_stats.xfip_minus:.0f} (z-score: {home_pitcher_details.z_xfip_minus:.2f})
+- Swinging Strike Rate: {pitcher_stats.swinging_strike_rate:.3f} (z-score:
+  {home_pitcher_details.z_swinging_strike_rate:.2f})
+- Strike Rate: {pitcher_stats.strike_rate:.3f} (z-score: {home_pitcher_details.z_strike_rate:.2f})
+- Velocity: {pitcher_stats.velocity:.1f} mph (z-score: {home_pitcher_details.z_velocity:.2f})
+- Age: {pitcher_stats.age} (z-score: {home_pitcher_details.z_age:.2f})
+- Pace: {pitcher_stats.pace:.1f}s (z-score: {home_pitcher_details.z_pace:.2f})
+- Luck (ERA- minus xFIP-): {pitcher_stats.luck:.1f}
+- Knuckleball Rate: {pitcher_stats.knuckleball_rate:.3f}"""
     else:
         # Default values if no pitcher data
         data.update(
@@ -263,6 +285,8 @@ def get_game_data(
                 "home_z_pace": 0.0,
             }
         )
+        # Add no data message
+        data["home_pitcher_stats_section"] = "No pNERD data, likely because the pitcher hasn't met the minimum thresholds for inclusion."
 
     return data
 
@@ -294,7 +318,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Use the project_root that was already calculated during imports
-    template_file = project_root / "src" / "mlb_watchability" / "prompt-game-summary.md"
+    template_file = project_root / "src" / "mlb_watchability" / "prompt-game-summary-template.md"
     output_file = (
         Path.cwd() / f"game_prompt_{args.date}_game_{args.game_index}.md"
     )  # Include date and game index
