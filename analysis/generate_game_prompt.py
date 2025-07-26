@@ -86,11 +86,13 @@ def get_game_data(
     if selected_game.game_time and selected_game.game_time != "TBD":
         try:
             # Parse the time - assuming it comes in ISO format with timezone
-            game_dt = datetime.fromisoformat(selected_game.game_time.replace('Z', '+00:00'))
+            game_dt = datetime.fromisoformat(
+                selected_game.game_time.replace("Z", "+00:00")
+            )
             # Convert to Eastern time
-            eastern = pytz.timezone('US/Eastern')
+            eastern = pytz.timezone("US/Eastern")
             game_dt_et = game_dt.astimezone(eastern)
-            game_time_et = game_dt_et.strftime("%I:%M %p ET").lstrip('0')
+            game_time_et = game_dt_et.strftime("%I:%M %p ET").lstrip("0")
         except Exception:
             # If parsing fails, use the original time
             game_time_et = selected_game.game_time
