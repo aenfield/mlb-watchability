@@ -27,6 +27,7 @@ def _raise_empty_response_error() -> None:
 @dataclass
 class LLMResponse:
     """Response from an LLM request."""
+
     content: str
     model: str
     usage_tokens: int | None = None
@@ -46,7 +47,7 @@ class LLMClient(ABC):
         prompt: str,
         max_tokens: int | None = None,
         temperature: float = 0.7,
-        model: str | None = None
+        model: str | None = None,
     ) -> LLMResponse:
         """
         Generate text from a prompt.
@@ -73,7 +74,7 @@ class OpenAIClient(LLMClient):
         self,
         api_key: str | None = None,
         default_model: str = "gpt-4o",
-        base_url: str | None = None
+        base_url: str | None = None,
     ):
         """
         Initialize OpenAI client.
@@ -96,10 +97,7 @@ class OpenAIClient(LLMClient):
             )
 
         self.default_model = default_model
-        self.client = openai.OpenAI(
-            api_key=self.api_key,
-            base_url=base_url
-        )
+        self.client = openai.OpenAI(api_key=self.api_key, base_url=base_url)
 
         logger.info(f"Initialized OpenAI client with model: {default_model}")
 
@@ -108,7 +106,7 @@ class OpenAIClient(LLMClient):
         prompt: str,
         max_tokens: int | None = None,
         temperature: float = 0.7,
-        model: str | None = None
+        model: str | None = None,
     ) -> LLMResponse:
         """Generate text using OpenAI API."""
         model_to_use = model or self.default_model
@@ -143,9 +141,7 @@ class OpenAIClient(LLMClient):
             )
 
             return LLMResponse(
-                content=content,
-                model=model_to_use,
-                usage_tokens=usage_tokens
+                content=content, model=model_to_use, usage_tokens=usage_tokens
             )
 
         except Exception as e:
@@ -158,9 +154,7 @@ class OpenAIClient(LLMClient):
 
 
 def create_llm_client(
-    provider: str = "openai",
-    model: str | None = None,
-    **kwargs: Any
+    provider: str = "openai", model: str | None = None, **kwargs: Any
 ) -> LLMClient:
     """
     Factory function to create LLM clients.
@@ -190,7 +184,7 @@ def generate_summary(
     prompt: str,
     model: str = "gpt-4o",
     max_tokens: int | None = None,
-    temperature: float = 0.7
+    temperature: float = 0.7,
 ) -> str:
     """
     Convenience function to generate text with default settings.
@@ -209,8 +203,6 @@ def generate_summary(
     """
     client = create_llm_client(model=model)
     response = client.generate_text(
-        prompt=prompt,
-        max_tokens=max_tokens,
-        temperature=temperature
+        prompt=prompt, max_tokens=max_tokens, temperature=temperature
     )
     return response.content
