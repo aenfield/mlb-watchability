@@ -14,7 +14,15 @@ As of mid-July 2025, every day, code automatically:
 
 ## Development
 
-- **Run tests**: `uv run pytest`
+### Run tests
+
+- **Normal tests only**: `uv run pytest` (default - excludes costly tests)
+- **Costly tests only**: `uv run pytest -m costly`
+- **All tests**: `uv run pytest -m ""`
+- **Explicitly normal tests**: `uv run pytest -m "not costly"`
+
+### Other development commands
+
 - **Lint code**: `uv run ruff check`
 - **Format code**: `uv run black .`
 - **Check types**: `uv run mypy .`
