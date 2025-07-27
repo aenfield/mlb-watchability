@@ -605,6 +605,60 @@ class TestGameScores:
 
     def test_game_score_dataclass_validation(self) -> None:
         """Test that GameScore dataclass contains all required fields."""
+        # Create minimal test data for the new fields
+        team_nerd_details = {
+            "TST": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="TST",
+                    batting_runs=5.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=2.0,
+                    fielding_runs=5.0,
+                    payroll=180.0,
+                    age=28.0,
+                    luck=3.0,
+                ),
+                z_batting_runs=0.5,
+                z_barrel_rate=0.2,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.5,
+                z_payroll=-0.3,
+                z_age=-0.5,
+                z_luck=0.1,
+                adjusted_payroll=0.3,
+                adjusted_age=0.5,
+                adjusted_luck=0.1,
+                tnerd_score=5.0,
+            )
+        }
+
+        pitcher_nerd_details = {
+            "Test Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Test Pitcher",
+                    team="TST",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=94.0,
+                    age=28,
+                    pace=21.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.0,
+                z_strike_rate=0.5,
+                z_velocity=0.5,
+                z_age=-0.2,
+                z_pace=-0.3,
+                adjusted_velocity=0.5,
+                adjusted_age=0.2,
+                adjusted_luck=0.25,
+                pnerd_score=7.0,
+            )
+        }
+
         game_score = GameScore(
             away_team="Team A",
             home_team="Team B",
@@ -618,6 +672,8 @@ class TestGameScores:
             home_pitcher_nerd=8.0,
             average_pitcher_nerd=7.5,
             gnerd_score=13.0,
+            team_nerd_details=team_nerd_details,
+            pitcher_nerd_details=pitcher_nerd_details,
         )
 
         assert game_score.away_team == "Team A"
@@ -632,3 +688,152 @@ class TestGameScores:
         assert game_score.home_pitcher_nerd == 8.0
         assert game_score.average_pitcher_nerd == 7.5
         assert game_score.gnerd_score == 13.0
+        assert game_score.team_nerd_details == team_nerd_details
+        assert game_score.pitcher_nerd_details == pitcher_nerd_details
+
+    def test_from_games_stores_detailed_stats(self) -> None:
+        """Test that from_games() properly stores detailed TeamNerdStats and PitcherNerdStats objects."""
+        games = [
+            {
+                "away_team": "Boston Red Sox",
+                "home_team": "New York Yankees",
+                "away_starter": "Test Pitcher",
+                "home_starter": "Another Pitcher",
+                "time": "7:05 PM",
+            }
+        ]
+
+        # Mock team NERD data
+        mock_team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+            "NYY": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="NYY",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=250.0,
+                    age=29.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=0.9,
+                z_payroll=-1.2,
+                z_age=-0.3,
+                z_luck=0.2,
+                adjusted_payroll=1.2,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                tnerd_score=9.5,
+            ),
+        }
+
+        # Mock pitcher NERD data
+        mock_pitcher_nerd_details = {
+            "Test Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Test Pitcher",
+                    team="BOS",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=95.5,
+                    age=28,
+                    pace=22.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.2,
+                z_strike_rate=0.8,
+                z_velocity=1.0,
+                z_age=-0.3,
+                z_pace=-0.5,
+                adjusted_velocity=1.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.25,
+                pnerd_score=6.8,
+            ),
+            "Another Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Another Pitcher",
+                    team="NYY",
+                    xfip_minus=88.0,
+                    swinging_strike_rate=0.14,
+                    strike_rate=0.68,
+                    velocity=93.2,
+                    age=26,
+                    pace=20.5,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.2,
+                z_swinging_strike_rate=1.8,
+                z_strike_rate=1.2,
+                z_velocity=0.5,
+                z_age=-0.8,
+                z_pace=-1.0,
+                adjusted_velocity=0.5,
+                adjusted_age=0.8,
+                adjusted_luck=0.4,
+                pnerd_score=7.5,
+            ),
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # Verify that detailed stats are stored correctly
+            assert game_score.team_nerd_details == mock_team_nerd_details
+            assert game_score.pitcher_nerd_details == mock_pitcher_nerd_details
+
+            # Verify we can access specific team stats
+            assert "BOS" in game_score.team_nerd_details
+            assert "NYY" in game_score.team_nerd_details
+            assert game_score.team_nerd_details["BOS"].tnerd_score == 8.2
+            assert game_score.team_nerd_details["NYY"].tnerd_score == 9.5
+
+            # Verify we can access specific pitcher stats
+            assert "Test Pitcher" in game_score.pitcher_nerd_details
+            assert "Another Pitcher" in game_score.pitcher_nerd_details
+            assert game_score.pitcher_nerd_details["Test Pitcher"].pnerd_score == 6.8
+            assert game_score.pitcher_nerd_details["Another Pitcher"].pnerd_score == 7.5

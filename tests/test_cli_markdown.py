@@ -5,13 +5,76 @@ import tempfile
 
 from mlb_watchability.cli import format_games_as_markdown_table
 from mlb_watchability.game_scores import GameScore
+from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
+from mlb_watchability.team_stats import TeamNerdStats, TeamStats
 
 
 class TestCliMarkdownFormatting:
     """Test cases for CLI markdown table formatting."""
 
+    def create_minimal_stats(
+        self,
+    ) -> tuple[dict[str, TeamNerdStats], dict[str, PitcherNerdStats]]:
+        """Create minimal test data for team and pitcher stats."""
+        team_nerd_details = {
+            "TST": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="TST",
+                    batting_runs=5.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=2.0,
+                    fielding_runs=5.0,
+                    payroll=180.0,
+                    age=28.0,
+                    luck=3.0,
+                ),
+                z_batting_runs=0.5,
+                z_barrel_rate=0.2,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.5,
+                z_payroll=-0.3,
+                z_age=-0.5,
+                z_luck=0.1,
+                adjusted_payroll=0.3,
+                adjusted_age=0.5,
+                adjusted_luck=0.1,
+                tnerd_score=5.0,
+            )
+        }
+
+        pitcher_nerd_details = {
+            "Test Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Test Pitcher",
+                    team="TST",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=94.0,
+                    age=28,
+                    pace=21.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.0,
+                z_strike_rate=0.5,
+                z_velocity=0.5,
+                z_age=-0.2,
+                z_pace=-0.3,
+                adjusted_velocity=0.5,
+                adjusted_age=0.2,
+                adjusted_luck=0.25,
+                pnerd_score=7.0,
+            )
+        }
+
+        return team_nerd_details, pitcher_nerd_details
+
     def test_format_games_as_markdown_table_with_all_data(self) -> None:
         """Test markdown table formatting with complete game data."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         # Games should be pre-sorted by gNERD (highest first)
         game_scores = [
             GameScore(
@@ -27,6 +90,8 @@ class TestCliMarkdownFormatting:
                 home_pitcher_nerd=6.2,
                 average_pitcher_nerd=7.0,
                 gnerd_score=15.05,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
             GameScore(
                 away_team="Boston Red Sox",
@@ -41,6 +106,8 @@ class TestCliMarkdownFormatting:
                 home_pitcher_nerd=6.7,
                 average_pitcher_nerd=5.3,
                 gnerd_score=13.5,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
         ]
 
@@ -74,6 +141,8 @@ class TestCliMarkdownFormatting:
 
     def test_format_games_as_markdown_table_with_missing_pitcher_data(self) -> None:
         """Test markdown table formatting with missing pitcher data."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="San Francisco Giants",
@@ -88,6 +157,8 @@ class TestCliMarkdownFormatting:
                 home_pitcher_nerd=5.8,
                 average_pitcher_nerd=5.8,
                 gnerd_score=11.95,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             )
         ]
 
@@ -113,6 +184,8 @@ class TestCliMarkdownFormatting:
 
     def test_format_games_as_markdown_table_with_no_pitcher_data(self) -> None:
         """Test markdown table formatting with no pitcher data."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="Miami Marlins",
@@ -127,6 +200,8 @@ class TestCliMarkdownFormatting:
                 home_pitcher_nerd=None,
                 average_pitcher_nerd=None,
                 gnerd_score=3.95,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             )
         ]
 
@@ -148,6 +223,8 @@ class TestCliMarkdownFormatting:
 
     def test_format_games_as_markdown_table_preserves_order(self) -> None:
         """Test that markdown table preserves the input order (should be pre-sorted by gNERD)."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="Team A",
@@ -162,6 +239,8 @@ class TestCliMarkdownFormatting:
                 home_pitcher_nerd=5.0,
                 average_pitcher_nerd=4.5,
                 gnerd_score=10.0,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
             GameScore(
                 away_team="Team C",
@@ -176,6 +255,8 @@ class TestCliMarkdownFormatting:
                 home_pitcher_nerd=3.0,
                 average_pitcher_nerd=2.5,
                 gnerd_score=6.0,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
         ]
 

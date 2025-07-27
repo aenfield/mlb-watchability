@@ -4,11 +4,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from .pitcher_stats import (
+    PitcherNerdStats,
     calculate_detailed_pitcher_nerd_scores,
     find_pitcher_nerd_stats_fuzzy,
 )
 from .team_mappings import get_team_abbreviation
-from .team_stats import calculate_detailed_team_nerd_scores
+from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
 
 
 @dataclass
@@ -37,6 +38,10 @@ class GameScore:
 
     # Final game NERD score
     gnerd_score: float
+
+    # Detailed stats objects for reference
+    team_nerd_details: dict[str, TeamNerdStats]
+    pitcher_nerd_details: dict[str, PitcherNerdStats]
 
     # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
     # pitcher code figure out and make their own game score contributions (while the spec says average of
@@ -132,6 +137,8 @@ class GameScore:
                 home_pitcher_nerd=home_pitcher_nerd,
                 average_pitcher_nerd=average_pitcher_nerd,
                 gnerd_score=gnerd_score,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             )
 
             game_scores.append(game_score)

@@ -14,12 +14,71 @@ from mlb_watchability.markdown_generator import (
     generate_pitcher_breakdown_table,
     generate_team_breakdown_table,
 )
-from mlb_watchability.pitcher_stats import PitcherStats
-from mlb_watchability.team_stats import TeamStats
+from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
+from mlb_watchability.team_stats import TeamNerdStats, TeamStats
 
 
 class TestMarkdownGenerator:
     """Test cases for markdown generation functions."""
+
+    def create_minimal_stats(
+        self,
+    ) -> tuple[dict[str, TeamNerdStats], dict[str, PitcherNerdStats]]:
+        """Create minimal test data for team and pitcher stats."""
+        team_nerd_details = {
+            "TST": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="TST",
+                    batting_runs=5.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=2.0,
+                    fielding_runs=5.0,
+                    payroll=180.0,
+                    age=28.0,
+                    luck=3.0,
+                ),
+                z_batting_runs=0.5,
+                z_barrel_rate=0.2,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.5,
+                z_payroll=-0.3,
+                z_age=-0.5,
+                z_luck=0.1,
+                adjusted_payroll=0.3,
+                adjusted_age=0.5,
+                adjusted_luck=0.1,
+                tnerd_score=5.0,
+            )
+        }
+
+        pitcher_nerd_details = {
+            "Test Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Test Pitcher",
+                    team="TST",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=94.0,
+                    age=28,
+                    pace=21.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.0,
+                z_strike_rate=0.5,
+                z_velocity=0.5,
+                z_age=-0.2,
+                z_pace=-0.3,
+                adjusted_velocity=0.5,
+                adjusted_age=0.2,
+                adjusted_luck=0.25,
+                pnerd_score=7.0,
+            )
+        }
+
+        return team_nerd_details, pitcher_nerd_details
 
     def test_generate_metadata_block(self) -> None:
         """Test metadata block generation."""
@@ -124,6 +183,8 @@ tags: mlbw
 
     def test_generate_markdown_table_with_complete_data(self) -> None:
         """Test markdown table generation with complete game data."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="New York Yankees",
@@ -138,6 +199,8 @@ tags: mlbw
                 home_pitcher_nerd=6.2,
                 average_pitcher_nerd=7.0,
                 gnerd_score=15.05,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
             GameScore(
                 away_team="Boston Red Sox",
@@ -152,6 +215,8 @@ tags: mlbw
                 home_pitcher_nerd=6.7,
                 average_pitcher_nerd=5.3,
                 gnerd_score=13.5,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
         ]
 
@@ -201,6 +266,8 @@ tags: mlbw
 
     def test_generate_markdown_table_anchor_links(self) -> None:
         """Test that table anchor links match automatic anchor generation."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="Houston Astros",
@@ -215,6 +282,8 @@ tags: mlbw
                 home_pitcher_nerd=4.4,
                 average_pitcher_nerd=6.65,
                 gnerd_score=13.1,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             )
         ]
 
@@ -234,6 +303,8 @@ tags: mlbw
 
     def test_generate_markdown_table_with_missing_data(self) -> None:
         """Test markdown table generation with missing pitcher data."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="San Francisco Giants",
@@ -248,6 +319,8 @@ tags: mlbw
                 home_pitcher_nerd=5.8,
                 average_pitcher_nerd=5.8,
                 gnerd_score=11.95,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             )
         ]
 
@@ -278,6 +351,8 @@ tags: mlbw
 
     def test_generate_complete_markdown_content(self) -> None:
         """Test complete markdown content generation."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         game_scores = [
             GameScore(
                 away_team="Test Team A",
@@ -292,6 +367,8 @@ tags: mlbw
                 home_pitcher_nerd=5.0,
                 average_pitcher_nerd=4.5,
                 gnerd_score=10.0,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             )
         ]
 
@@ -433,6 +510,8 @@ tags: mlbw
 
     def test_generate_game_detail_section(self) -> None:
         """Test game detail section generation."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
         # Create a game score
         game_score = GameScore(
             away_team="New York Yankees",
@@ -447,6 +526,8 @@ tags: mlbw
             home_pitcher_nerd=6.2,
             average_pitcher_nerd=7.0,
             gnerd_score=15.05,
+            team_nerd_details=team_nerd_details,
+            pitcher_nerd_details=pitcher_nerd_details,
         )
 
         # Create properly structured mock team stats
@@ -607,6 +688,7 @@ tags: mlbw
 
     def test_generate_all_game_details_sorts_by_gnerd_score(self) -> None:
         """Test that games in Detail section are sorted by gNERD score descending."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
 
         # Create multiple games with different gNERD scores
         game_scores = [
@@ -623,6 +705,8 @@ tags: mlbw
                 home_pitcher_nerd=5.0,
                 average_pitcher_nerd=4.5,
                 gnerd_score=10.0,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
             GameScore(
                 away_team="Team C",
@@ -637,6 +721,8 @@ tags: mlbw
                 home_pitcher_nerd=7.0,
                 average_pitcher_nerd=6.5,
                 gnerd_score=15.0,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
             GameScore(
                 away_team="Team E",
@@ -651,6 +737,8 @@ tags: mlbw
                 home_pitcher_nerd=4.0,
                 average_pitcher_nerd=3.5,
                 gnerd_score=8.0,
+                team_nerd_details=team_nerd_details,
+                pitcher_nerd_details=pitcher_nerd_details,
             ),
         ]
 
