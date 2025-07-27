@@ -118,7 +118,17 @@ Core Implementation
 
 The example section ends here. There should be a section like the above for each game.
 
-29. Add within-page links in the table at the top that go to specific detail section for the game below, using anchors and fragments - i.e., with # in the link. If the user clicks on the overall game score it sholud go to the top of the section and if they click on one of the tNERD or pNERD scores it should go to that specific part of the section.
+29. ~~Add within-page links in the table at the top that go to specific detail section for the game below, using anchors and fragments - i.e., with # in the link. If the user clicks on the overall game score it sholud go to the top of the section and if they click on one of the tNERD or pNERD scores it should go to that specific part of the section.~~
+
+## Use an LLM to generate game descriptions
+
+(I've worked on this a little bit before adding TODOs, for exploration and to create the start of an LLM abstraction layer in llm_client, so not everything I've done here is a checked of TODO here.)
+
+30. Expand the generate_text_from_llm function in llm_client.py to take a boolean parameter called 'include_web_search' that defaults to false. If false, do things like you do now. If true, though, tell the LLM it's ok to do a web search. Change the abstract base class stuff only if required. For the specific Anthropic implementation changes, refer to claude_api.py to see how things work - specifically, the changes in the client.messages.create call to include "name": "web_search" and "max_uses": max_web_searches (the latter should be set to 1). Also update the return value of generate_text_from_llm to be a tuple where the first element is the text response (like the function already returns), and the second element is a list of 'web_sources' citations. If there are no citations/sources, return an empty list. You don't need to include the additional other stuff in claude_api.py, like figuring out tokens and costs. Add tests for the syntax and calls, but don't yet add any tests that actually call the API and incur charges.
+
+31. TODO item for integration/actual API call tests for #30. Add minimal integration tests for #30 that actually call the Anthropic API. Check with and without web search. Use a super simple prompt like 'Generate a short 150 character summary of today's Seattle Mariners game'. For the model, use 'claude-3-5-haiku-latest'. Don't test that any particular text is in the text results since that's brittle.
+
+32. Add an instance method to GameScore called 'generate_description' that uses the properties of the GameScore instance - both game properties and also the detailed team and pitcher properties in the referenced TeamNerdStats and PitcherNerdStats objects - to a) populate a prompt template stored in the src/mlb_watchability/prompt-game-summary-template.md file, and b) call a LLM using src/mlb_watchability/llm_client.py - specifically generate_text_from_llm - to retrieve the
 
 ## Notes for possible integration and enhancement
 

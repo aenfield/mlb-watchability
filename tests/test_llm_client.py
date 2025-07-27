@@ -12,7 +12,7 @@ from mlb_watchability.llm_client import (
     LLMClientError,
     LLMResponse,
     create_llm_client,
-    generate_summary,
+    generate_text_from_llm,
 )
 
 
@@ -241,11 +241,11 @@ class TestCreateLLMClient:
             )
 
 
-class TestGenerateSummary:
+class TestGenerateTextFromLLM:
     """Test convenience function."""
 
-    def test_generate_summary_success(self) -> None:
-        """Test successful summary generation."""
+    def test_generate_text_from_llm_success(self) -> None:
+        """Test successful text generation."""
         mock_response = LLMResponse(
             content="Generated summary", model="claude-sonnet-4-20250514"
         )
@@ -255,7 +255,9 @@ class TestGenerateSummary:
             mock_client.generate_text.return_value = mock_response
             mock_create.return_value = mock_client
 
-            result = generate_summary("Test prompt", temperature=0.3, max_tokens=200)
+            result = generate_text_from_llm(
+                "Test prompt", temperature=0.3, max_tokens=200
+            )
 
             assert result == "Generated summary"
             mock_create.assert_called_once_with(model="claude-sonnet-4-20250514")
@@ -263,8 +265,8 @@ class TestGenerateSummary:
                 prompt="Test prompt", max_tokens=200, temperature=0.3
             )
 
-    def test_generate_summary_with_custom_model(self) -> None:
-        """Test summary generation with custom model."""
+    def test_generate_text_from_llm_with_custom_model(self) -> None:
+        """Test text generation with custom model."""
         mock_response = LLMResponse(content="Summary", model="claude-3-sonnet-20240229")
 
         with patch("mlb_watchability.llm_client.create_llm_client") as mock_create:
@@ -272,7 +274,9 @@ class TestGenerateSummary:
             mock_client.generate_text.return_value = mock_response
             mock_create.return_value = mock_client
 
-            result = generate_summary("Test prompt", model="claude-3-sonnet-20240229")
+            result = generate_text_from_llm(
+                "Test prompt", model="claude-3-sonnet-20240229"
+            )
 
             assert result == "Summary"
             mock_create.assert_called_once_with(model="claude-3-sonnet-20240229")

@@ -178,7 +178,7 @@ def create_llm_client(
 
 
 # Convenience function for quick usage
-def generate_summary(
+def generate_text_from_llm(
     prompt: str,
     model: str = "claude-sonnet-4-20250514",
     max_tokens: int | None = None,
