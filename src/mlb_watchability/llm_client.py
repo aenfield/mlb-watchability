@@ -18,6 +18,10 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Model constants
+MODEL_STRING_FULL = "claude-sonnet-4-20250514"
+MODEL_STRING_CHEAP = "claude-3-5-haiku-latest"
+
 
 def _raise_empty_response_error() -> None:
     """Helper function to raise empty response error."""
@@ -76,7 +80,7 @@ class AnthropicClient(LLMClient):
     def __init__(
         self,
         api_key: str | None = None,
-        default_model: str = "claude-sonnet-4-20250514",
+        default_model: str = MODEL_STRING_FULL,
     ):
         """
         Initialize Anthropic client.
@@ -190,7 +194,7 @@ class AnthropicClient(LLMClient):
                 content=content,
                 model=model_to_use,
                 usage_tokens=usage_tokens,
-                web_sources=web_sources if web_sources else None,
+                web_sources=web_sources,
             )
 
         except Exception as e:
@@ -222,7 +226,7 @@ def create_llm_client(
     provider = provider.lower()
 
     if provider == "anthropic":
-        default_model = model or "claude-sonnet-4-20250514"
+        default_model = model or MODEL_STRING_FULL
         return AnthropicClient(default_model=default_model, **kwargs)
     else:
         raise LLMClientError(f"Unsupported LLM provider: {provider}")
@@ -231,7 +235,7 @@ def create_llm_client(
 # Convenience function for quick usage
 def generate_text_from_llm(
     prompt: str,
-    model: str = "claude-sonnet-4-20250514",
+    model: str = MODEL_STRING_FULL,
     max_tokens: int | None = None,
     temperature: float = 0.7,
     include_web_search: bool = False,
@@ -260,5 +264,4 @@ def generate_text_from_llm(
         temperature=temperature,
         include_web_search=include_web_search,
     )
-    web_sources = response.web_sources or []
-    return response.content, web_sources
+    return response.content, response.web_sources or []

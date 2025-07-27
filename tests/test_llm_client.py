@@ -8,6 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from mlb_watchability.llm_client import (
+    MODEL_STRING_CHEAP,
+    MODEL_STRING_FULL,
     AnthropicClient,
     LLMClientError,
     LLMResponse,
@@ -15,15 +17,21 @@ from mlb_watchability.llm_client import (
     generate_text_from_llm,
 )
 
+# Test constants
+TEST_PROMPT_MARINERS_GAME = (
+    "Generate a short 150 character summary of today's Seattle Mariners game"
+)
+TEST_PROMPT_MARINERS_GAME_WITH_SEARCH = "Search the web for the latest and generate a short 100 character summary of today's Seattle Mariners game"
+
 
 class TestLLMResponse:
     """Test LLMResponse dataclass."""
 
     def test_basic_response(self) -> None:
         """Test basic response creation."""
-        response = LLMResponse(content="test content", model="claude-sonnet-4-20250514")
+        response = LLMResponse(content="test content", model=MODEL_STRING_CHEAP)
         assert response.content == "test content"
-        assert response.model == "claude-sonnet-4-20250514"
+        assert response.model == MODEL_STRING_CHEAP
         assert response.usage_tokens is None
         assert response.cost_estimate is None
 
@@ -31,7 +39,7 @@ class TestLLMResponse:
         """Test response with optional metadata."""
         response = LLMResponse(
             content="test content",
-            model="claude-sonnet-4-20250514",
+            model=MODEL_STRING_CHEAP,
             usage_tokens=150,
             cost_estimate=0.003,
         )
@@ -50,7 +58,7 @@ class TestLLMResponse:
         ]
         response = LLMResponse(
             content="test content",
-            model="claude-sonnet-4-20250514",
+            model=MODEL_STRING_CHEAP,
             web_sources=web_sources,
         )
         assert response.web_sources == web_sources
@@ -63,10 +71,10 @@ class TestAnthropicClient:
         """Test initialization with explicit API key."""
         with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic:
             client = AnthropicClient(
-                api_key="test-key", default_model="claude-3-sonnet-20240229"
+                api_key="test-key", default_model=MODEL_STRING_CHEAP
             )
             assert client.api_key == "test-key"
-            assert client.default_model == "claude-3-sonnet-20240229"
+            assert client.default_model == MODEL_STRING_CHEAP
             mock_anthropic.assert_called_once_with(api_key="test-key")
 
     def test_init_with_env_var(self) -> None:
@@ -77,7 +85,7 @@ class TestAnthropicClient:
         ):
             client = AnthropicClient()
             assert client.api_key == "env-key"
-            assert client.default_model == "claude-sonnet-4-20250514"
+            assert client.default_model == MODEL_STRING_FULL
             mock_anthropic.assert_called_once_with(api_key="env-key")
 
     def test_init_without_api_key(self) -> None:
@@ -115,19 +123,21 @@ class TestAnthropicClient:
             mock_client.messages.create.return_value = mock_response
             mock_anthropic_class.return_value = mock_client
 
-            client = AnthropicClient(api_key="test-key")
+            client = AnthropicClient(
+                api_key="test-key", default_model=MODEL_STRING_CHEAP
+            )
             response = client.generate_text(
                 "Test prompt", max_tokens=150, temperature=0.5
             )
 
             assert isinstance(response, LLMResponse)
             assert response.content == "Generated response text"
-            assert response.model == "claude-sonnet-4-20250514"
+            assert response.model == MODEL_STRING_CHEAP
             assert response.usage_tokens == 100
 
             # Verify the API call
             mock_client.messages.create.assert_called_once_with(
-                model="claude-sonnet-4-20250514",
+                model=MODEL_STRING_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 temperature=0.5,
                 max_tokens=150,
@@ -148,15 +158,13 @@ class TestAnthropicClient:
             mock_anthropic_class.return_value = mock_client
 
             client = AnthropicClient(api_key="test-key")
-            response = client.generate_text(
-                "Test prompt", model="claude-3-sonnet-20240229"
-            )
+            response = client.generate_text("Test prompt", model=MODEL_STRING_CHEAP)
 
-            assert response.model == "claude-3-sonnet-20240229"
+            assert response.model == MODEL_STRING_CHEAP
             assert response.usage_tokens is None
 
             mock_client.messages.create.assert_called_once_with(
-                model="claude-3-sonnet-20240229",
+                model=MODEL_STRING_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 temperature=0.7,
                 max_tokens=1000,
@@ -257,7 +265,7 @@ class TestAnthropicClient:
             response = client.generate_text("Test prompt", include_web_search=False)
 
             assert response.content == "Generated response without web search"
-            assert response.web_sources is None
+            assert response.web_sources == []
 
             # Verify the API call does not include tools
             mock_client.messages.create.assert_called_once()
@@ -290,7 +298,7 @@ class TestAnthropicClient:
             response = client.generate_text("Test prompt", include_web_search=True)
 
             assert response.content == "Generated response"
-            assert response.web_sources is None  # Error results filtered out
+            assert response.web_sources == []  # Error results filtered out
 
 
 class TestCreateLLMClient:
@@ -302,14 +310,10 @@ class TestCreateLLMClient:
             mock_instance = Mock()
             mock_anthropic.return_value = mock_instance
 
-            client = create_llm_client(
-                provider="anthropic", model="claude-3-sonnet-20240229"
-            )
+            client = create_llm_client(provider="anthropic", model=MODEL_STRING_FULL)
 
             assert client == mock_instance
-            mock_anthropic.assert_called_once_with(
-                default_model="claude-3-sonnet-20240229"
-            )
+            mock_anthropic.assert_called_once_with(default_model=MODEL_STRING_FULL)
 
     def test_create_anthropic_client_default_model(self) -> None:
         """Test creating Anthropic client with default model."""
@@ -320,9 +324,7 @@ class TestCreateLLMClient:
             client = create_llm_client(provider="anthropic")
 
             assert client == mock_instance
-            mock_anthropic.assert_called_once_with(
-                default_model="claude-sonnet-4-20250514"
-            )
+            mock_anthropic.assert_called_once_with(default_model=MODEL_STRING_FULL)
 
     def test_create_anthropic_client_case_insensitive(self) -> None:
         """Test provider name is case insensitive."""
@@ -348,13 +350,13 @@ class TestCreateLLMClient:
 
             client = create_llm_client(
                 provider="anthropic",
-                model="claude-3-sonnet-20240229",
+                model=MODEL_STRING_CHEAP,
                 api_key="custom-key",
             )
 
             assert client == mock_instance
             mock_anthropic.assert_called_once_with(
-                default_model="claude-3-sonnet-20240229",
+                default_model=MODEL_STRING_CHEAP,
                 api_key="custom-key",
             )
 
@@ -365,7 +367,7 @@ class TestGenerateTextFromLLM:
     def test_generate_text_from_llm_success(self) -> None:
         """Test successful text generation."""
         mock_response = LLMResponse(
-            content="Generated summary", model="claude-sonnet-4-20250514"
+            content="Generated summary", model=MODEL_STRING_FULL, web_sources=[]
         )
 
         with patch("mlb_watchability.llm_client.create_llm_client") as mock_create:
@@ -379,7 +381,7 @@ class TestGenerateTextFromLLM:
 
             assert text == "Generated summary"
             assert sources == []
-            mock_create.assert_called_once_with(model="claude-sonnet-4-20250514")
+            mock_create.assert_called_once_with(model=MODEL_STRING_FULL)
             mock_client.generate_text.assert_called_once_with(
                 prompt="Test prompt",
                 max_tokens=200,
@@ -389,7 +391,9 @@ class TestGenerateTextFromLLM:
 
     def test_generate_text_from_llm_with_custom_model(self) -> None:
         """Test text generation with custom model."""
-        mock_response = LLMResponse(content="Summary", model="claude-3-sonnet-20240229")
+        mock_response = LLMResponse(
+            content="Summary", model=MODEL_STRING_CHEAP, web_sources=[]
+        )
 
         with patch("mlb_watchability.llm_client.create_llm_client") as mock_create:
             mock_client = Mock()
@@ -397,12 +401,12 @@ class TestGenerateTextFromLLM:
             mock_create.return_value = mock_client
 
             text, sources = generate_text_from_llm(
-                "Test prompt", model="claude-3-sonnet-20240229"
+                "Test prompt", model=MODEL_STRING_CHEAP
             )
 
             assert text == "Summary"
             assert sources == []
-            mock_create.assert_called_once_with(model="claude-3-sonnet-20240229")
+            mock_create.assert_called_once_with(model=MODEL_STRING_CHEAP)
 
     def test_generate_text_from_llm_with_web_search(self) -> None:
         """Test text generation with web search enabled."""
@@ -411,7 +415,7 @@ class TestGenerateTextFromLLM:
         ]
         mock_response = LLMResponse(
             content="Summary with web search",
-            model="claude-sonnet-4-20250514",
+            model=MODEL_STRING_FULL,
             web_sources=web_sources,
         )
 
@@ -458,7 +462,7 @@ class TestIntegrationScenarios:
 
             # Test the full workflow
             with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"}):
-                client = create_llm_client("anthropic", "claude-sonnet-4-20250514")
+                client = create_llm_client("anthropic", MODEL_STRING_CHEAP)
 
                 prompt = "Analyze this baseball game: Team A vs Team B"
                 response = client.generate_text(prompt, max_tokens=100, temperature=0.8)
@@ -467,12 +471,12 @@ class TestIntegrationScenarios:
                     response.content
                     == "This is a comprehensive game summary with analysis."
                 )
-                assert response.model == "claude-sonnet-4-20250514"
+                assert response.model == MODEL_STRING_CHEAP
                 assert response.usage_tokens == 75
 
                 # Verify the API was called correctly
                 expected_call = {
-                    "model": "claude-sonnet-4-20250514",
+                    "model": MODEL_STRING_CHEAP,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.8,
                     "max_tokens": 100,
@@ -480,19 +484,76 @@ class TestIntegrationScenarios:
                 mock_client.messages.create.assert_called_once_with(**expected_call)
 
 
-@pytest.mark.costly
-def test_real_api_call() -> None:
-    """Test actual API call with Haiku model - no mocks."""
-    # Use the cheapest model for this test
-    client = AnthropicClient(default_model="claude-3-haiku-20240307")
+class TestCallActualAPI:
+    """Test with actual calls to the LLM API."""
 
-    # Send a very simple prompt to minimize cost
-    response = client.generate_text(
-        prompt="Say 'hello'", max_tokens=10, temperature=0.0
-    )
+    @pytest.mark.costly
+    def test_generate_text_from_llm_real_api_call_no_web_search(self) -> None:
+        """Test convenience function (and thereby also client.generate_text) with real API calls without web search."""
+        text, sources = generate_text_from_llm(
+            prompt=TEST_PROMPT_MARINERS_GAME,
+            model=MODEL_STRING_CHEAP,
+            max_tokens=100,
+            temperature=0.0,
+            include_web_search=False,
+        )
 
-    # Basic validation
-    assert isinstance(response, LLMResponse)
-    assert response.model == "claude-3-haiku-20240307"
-    assert response.usage_tokens is not None
-    assert response.usage_tokens > 0
+        assert len(text) > 0
+        assert sources == []
+
+    @pytest.mark.costly
+    def test_generate_text_from_llm_real_api_call_with_web_search(self) -> None:
+        """Test convenience function (and thereby also client.generate_text) with real API calls with a web search."""
+        text_with_search, sources_with_search = generate_text_from_llm(
+            prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH,
+            model=MODEL_STRING_CHEAP,
+            max_tokens=100,
+            temperature=0.0,
+            include_web_search=True,
+        )
+
+        assert len(text_with_search) > 0
+        assert isinstance(sources_with_search, list) and len(sources_with_search) > 0
+
+    # to save run time and a bit of money, I'll just text client.generate_text via
+    # the convenience function tests above (which call it immediately) - not ideal, but ok
+    # @pytest.mark.costly
+    # def test_real_api_call_without_web_search() -> None:
+    #     """Test actual API call without web search using the cheap model."""
+    #     client = AnthropicClient(default_model=MODEL_STRING_CHEAP)
+
+    #     response = client.generate_text(
+    #         prompt=TEST_PROMPT_MARINERS_GAME,
+    #         max_tokens=100,
+    #         temperature=0.0,
+    #         include_web_search=False,
+    #     )
+
+    #     # Basic validation - don't test specific content as it's brittle
+    #     assert isinstance(response, LLMResponse)
+    #     assert response.model == MODEL_STRING_CHEAP
+    #     assert response.usage_tokens is not None
+    #     assert response.usage_tokens > 0
+    #     assert len(response.content) > 0
+    #     assert response.web_sources == []
+
+    # @pytest.mark.costly
+    # def test_real_api_call_with_web_search() -> None:
+    #     """Test actual API call with web search using the cheap model."""
+    #     client = AnthropicClient(default_model=MODEL_STRING_CHEAP)
+
+    #     response = client.generate_text(
+    #         prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH,
+    #         max_tokens=100,
+    #         temperature=0.0,
+    #         include_web_search=True,
+    #     )
+
+    #     # Basic validation - don't test specific content as it's brittle
+    #     assert isinstance(response, LLMResponse)
+    #     assert response.model == MODEL_STRING_CHEAP
+    #     assert response.usage_tokens is not None
+    #     assert response.usage_tokens > 0
+    #     assert len(response.content) > 0
+    #     # I'm going to test for web results even though I don't know 100% since the model decides when to search
+    #     assert isinstance(response.web_sources, list) and len(response.web_sources) > 0
