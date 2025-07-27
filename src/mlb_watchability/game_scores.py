@@ -29,21 +29,23 @@ class GameScore:
     game_time: str | None
 
     # Team NERD scores
-    away_team_nerd: float
-    home_team_nerd: float
-    average_team_nerd: float
+    away_team_nerd_score: float
+    home_team_nerd_score: float
+    average_team_nerd_score: float
 
     # Pitcher NERD scores
-    away_pitcher_nerd: float | None
-    home_pitcher_nerd: float | None
-    average_pitcher_nerd: float | None
+    away_pitcher_nerd_score: float | None
+    home_pitcher_nerd_score: float | None
+    average_pitcher_nerd_score: float | None
 
     # Final game NERD score
     gnerd_score: float
 
-    # Detailed stats objects for reference
-    team_nerd_details: dict[str, TeamNerdStats]
-    pitcher_nerd_details: dict[str, PitcherNerdStats]
+    # Team and pitcher stats objects for this specific game
+    away_team_nerd_stats: TeamNerdStats | None
+    home_team_nerd_stats: TeamNerdStats | None
+    away_pitcher_nerd_stats: PitcherNerdStats | None
+    home_pitcher_nerd_stats: PitcherNerdStats | None
 
     # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
     # pitcher code figure out and make their own game score contributions (while the spec says average of
@@ -67,12 +69,6 @@ class GameScore:
         team_nerd_details = calculate_detailed_team_nerd_scores(season)
         pitcher_nerd_details = calculate_detailed_pitcher_nerd_scores(season)
 
-        # Extract team scores for easier lookup
-        team_nerd_scores = {
-            team: nerd_stats.tnerd_score
-            for team, nerd_stats in team_nerd_details.items()
-        }
-
         game_scores = []
 
         for game in games:
@@ -86,45 +82,58 @@ class GameScore:
             away_team_abbr = get_team_abbreviation(away_team)
             home_team_abbr = get_team_abbreviation(home_team)
 
-            # Get team NERD scores
-            away_team_nerd = team_nerd_scores.get(away_team_abbr, 0.0)
-            home_team_nerd = team_nerd_scores.get(home_team_abbr, 0.0)
-            average_team_nerd = (away_team_nerd + home_team_nerd) / 2
+            # Get team NERD stats and scores
+            away_team_nerd_stats = team_nerd_details.get(away_team_abbr)
+            home_team_nerd_stats = team_nerd_details.get(home_team_abbr)
+            away_team_nerd_score = (
+                away_team_nerd_stats.tnerd_score if away_team_nerd_stats else 0.0
+            )
+            home_team_nerd_score = (
+                home_team_nerd_stats.tnerd_score if home_team_nerd_stats else 0.0
+            )
+            average_team_nerd_score = (away_team_nerd_score + home_team_nerd_score) / 2
 
-            # Get pitcher NERD scores using fuzzy matching
-            away_pitcher_nerd = None
-            home_pitcher_nerd = None
-            average_pitcher_nerd = None
+            # Get pitcher NERD stats and scores using fuzzy matching
+            away_pitcher_nerd_stats = None
+            home_pitcher_nerd_stats = None
+            away_pitcher_nerd_score = None
+            home_pitcher_nerd_score = None
+            average_pitcher_nerd_score = None
 
             if away_starter and away_starter != "TBD":
-                away_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
+                away_pitcher_nerd_stats = find_pitcher_nerd_stats_fuzzy(
                     pitcher_nerd_details, away_starter
                 )
-                if away_pitcher_stats:
-                    away_pitcher_nerd = away_pitcher_stats.pnerd_score
+                if away_pitcher_nerd_stats:
+                    away_pitcher_nerd_score = away_pitcher_nerd_stats.pnerd_score
 
             if home_starter and home_starter != "TBD":
-                home_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
+                home_pitcher_nerd_stats = find_pitcher_nerd_stats_fuzzy(
                     pitcher_nerd_details, home_starter
                 )
-                if home_pitcher_stats:
-                    home_pitcher_nerd = home_pitcher_stats.pnerd_score
+                if home_pitcher_nerd_stats:
+                    home_pitcher_nerd_score = home_pitcher_nerd_stats.pnerd_score
 
             # Calculate average pitcher NERD if we have at least one score
-            if away_pitcher_nerd is not None and home_pitcher_nerd is not None:
-                average_pitcher_nerd = (away_pitcher_nerd + home_pitcher_nerd) / 2
-            elif away_pitcher_nerd is not None:
-                average_pitcher_nerd = away_pitcher_nerd
-            elif home_pitcher_nerd is not None:
-                average_pitcher_nerd = home_pitcher_nerd
+            if (
+                away_pitcher_nerd_score is not None
+                and home_pitcher_nerd_score is not None
+            ):
+                average_pitcher_nerd_score = (
+                    away_pitcher_nerd_score + home_pitcher_nerd_score
+                ) / 2
+            elif away_pitcher_nerd_score is not None:
+                average_pitcher_nerd_score = away_pitcher_nerd_score
+            elif home_pitcher_nerd_score is not None:
+                average_pitcher_nerd_score = home_pitcher_nerd_score
 
             # Calculate final gNERD score
             # gNERD = average of team NERD + average of pitcher NERD
-            if average_pitcher_nerd is not None:
-                gnerd_score = average_team_nerd + average_pitcher_nerd
+            if average_pitcher_nerd_score is not None:
+                gnerd_score = average_team_nerd_score + average_pitcher_nerd_score
             else:
                 # If no pitcher data available, use only team NERD
-                gnerd_score = average_team_nerd
+                gnerd_score = average_team_nerd_score
 
             game_score = cls(
                 away_team=away_team,
@@ -132,15 +141,17 @@ class GameScore:
                 away_starter=away_starter,
                 home_starter=home_starter,
                 game_time=game_time,
-                away_team_nerd=away_team_nerd,
-                home_team_nerd=home_team_nerd,
-                average_team_nerd=average_team_nerd,
-                away_pitcher_nerd=away_pitcher_nerd,
-                home_pitcher_nerd=home_pitcher_nerd,
-                average_pitcher_nerd=average_pitcher_nerd,
+                away_team_nerd_score=away_team_nerd_score,
+                home_team_nerd_score=home_team_nerd_score,
+                average_team_nerd_score=average_team_nerd_score,
+                away_pitcher_nerd_score=away_pitcher_nerd_score,
+                home_pitcher_nerd_score=home_pitcher_nerd_score,
+                average_pitcher_nerd_score=average_pitcher_nerd_score,
                 gnerd_score=gnerd_score,
-                team_nerd_details=team_nerd_details,
-                pitcher_nerd_details=pitcher_nerd_details,
+                away_team_nerd_stats=away_team_nerd_stats,
+                home_team_nerd_stats=home_team_nerd_stats,
+                away_pitcher_nerd_stats=away_pitcher_nerd_stats,
+                home_pitcher_nerd_stats=home_pitcher_nerd_stats,
             )
 
             game_scores.append(game_score)
@@ -150,7 +161,9 @@ class GameScore:
 
         return game_scores
 
-    def generate_description(self, game_date: str | None = None) -> tuple[str, list[dict[str, Any]]]:
+    def generate_description(
+        self, game_date: str | None = None
+    ) -> tuple[str, list[dict[str, Any]]]:
         """
         Generate an AI-powered description of the game using team and pitcher details.
 
@@ -176,26 +189,11 @@ class GameScore:
         with open(template_path, encoding="utf-8") as f:
             template = f.read()
 
-        # Get detailed team stats
-        away_team_abbr = get_team_abbreviation(self.away_team)
-        home_team_abbr = get_team_abbreviation(self.home_team)
-
-        away_team_stats = self.team_nerd_details.get(away_team_abbr)
-        home_team_stats = self.team_nerd_details.get(home_team_abbr)
-
-        # Get detailed pitcher stats
-        away_pitcher_stats = None
-        home_pitcher_stats = None
-
-        if self.away_starter and self.away_starter != "TBD":
-            away_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
-                self.pitcher_nerd_details, self.away_starter
-            )
-
-        if self.home_starter and self.home_starter != "TBD":
-            home_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
-                self.pitcher_nerd_details, self.home_starter
-            )
+        # Get detailed team and pitcher stats from stored objects
+        away_team_stats = self.away_team_nerd_stats
+        home_team_stats = self.home_team_nerd_stats
+        away_pitcher_stats = self.away_pitcher_nerd_stats
+        home_pitcher_stats = self.home_pitcher_nerd_stats
 
         # Helper function to create pitcher stats section
         def create_pitcher_stats_section(pitcher_stats: PitcherNerdStats | None) -> str:
@@ -221,12 +219,12 @@ class GameScore:
             away_starter=self.away_starter or "TBD",
             home_starter=self.home_starter or "TBD",
             gnerd_score=self.gnerd_score,
-            average_team_nerd=self.average_team_nerd,
-            away_team_nerd=self.away_team_nerd,
-            home_team_nerd=self.home_team_nerd,
-            average_pitcher_nerd=self.average_pitcher_nerd or 0.0,
-            away_pitcher_nerd=self.away_pitcher_nerd or 0.0,
-            home_pitcher_nerd=self.home_pitcher_nerd or 0.0,
+            average_team_nerd=self.average_team_nerd_score,
+            away_team_nerd=self.away_team_nerd_score,
+            home_team_nerd=self.home_team_nerd_score,
+            average_pitcher_nerd=self.average_pitcher_nerd_score or 0.0,
+            away_pitcher_nerd=self.away_pitcher_nerd_score or 0.0,
+            home_pitcher_nerd=self.home_pitcher_nerd_score or 0.0,
             # Away team detailed stats
             away_batting_runs=(
                 away_team_stats.team_stats.batting_runs if away_team_stats else 0.0

@@ -23,7 +23,7 @@ class TestMarkdownCliIntegration:
     def create_sample_game_scores(self) -> list[GameScore]:
         """Create sample game scores for testing."""
         # Create sample detailed stats for testing
-        team_nerd_details = {
+        {
             "NYY": TeamNerdStats(
                 team_stats=TeamStats(
                     name="NYY",
@@ -118,7 +118,7 @@ class TestMarkdownCliIntegration:
             ),
         }
 
-        pitcher_nerd_details = {
+        {
             "Gerrit Cole": PitcherNerdStats(
                 pitcher_stats=PitcherStats(
                     name="Gerrit Cole",
@@ -224,15 +224,17 @@ class TestMarkdownCliIntegration:
                 away_starter="Gerrit Cole",
                 home_starter="Walker Buehler",
                 game_time="22:10",
-                away_team_nerd=8.2,
-                home_team_nerd=7.9,
-                average_team_nerd=8.05,
-                away_pitcher_nerd=7.8,
-                home_pitcher_nerd=6.2,
-                average_pitcher_nerd=7.0,
+                away_team_nerd_score=8.2,
+                home_team_nerd_score=7.9,
+                average_team_nerd_score=8.05,
+                away_pitcher_nerd_score=7.8,
+                home_pitcher_nerd_score=6.2,
+                average_pitcher_nerd_score=7.0,
                 gnerd_score=15.05,
-                team_nerd_details=team_nerd_details,
-                pitcher_nerd_details=pitcher_nerd_details,
+                away_team_nerd_stats=None,
+                home_team_nerd_stats=None,
+                away_pitcher_nerd_stats=None,
+                home_pitcher_nerd_stats=None,
             ),
             GameScore(
                 away_team="Boston Red Sox",
@@ -240,15 +242,17 @@ class TestMarkdownCliIntegration:
                 away_starter="Brayan Bello",
                 home_starter="Shota Imanaga",
                 game_time="19:15",
-                away_team_nerd=6.8,
-                home_team_nerd=9.5,
-                average_team_nerd=8.15,
-                away_pitcher_nerd=3.9,
-                home_pitcher_nerd=6.7,
-                average_pitcher_nerd=5.3,
+                away_team_nerd_score=6.8,
+                home_team_nerd_score=9.5,
+                average_team_nerd_score=8.15,
+                away_pitcher_nerd_score=3.9,
+                home_pitcher_nerd_score=6.7,
+                average_pitcher_nerd_score=5.3,
                 gnerd_score=13.5,
-                team_nerd_details=team_nerd_details,
-                pitcher_nerd_details=pitcher_nerd_details,
+                away_team_nerd_stats=None,
+                home_team_nerd_stats=None,
+                away_pitcher_nerd_stats=None,
+                home_pitcher_nerd_stats=None,
             ),
         ]
 

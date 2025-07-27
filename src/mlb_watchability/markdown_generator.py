@@ -7,7 +7,6 @@ from datetime import datetime
 from .game_scores import GameScore
 from .pitcher_stats import (
     PitcherNerdStats,
-    find_pitcher_nerd_stats_fuzzy,
     format_pitcher_with_fangraphs_link,
 )
 from .team_mappings import format_team_with_fangraphs_link, get_team_abbreviation
@@ -161,29 +160,29 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
         # Format scores with anchor links
         game_score_link = f"[{game_score.gnerd_score:.1f}](#{game_anchor_id})"
         away_team_score_link = (
-            f"[{game_score.away_team_nerd:.1f}](#{away_team_anchor_id})"
+            f"[{game_score.away_team_nerd_score:.1f}](#{away_team_anchor_id})"
         )
         home_team_score_link = (
-            f"[{game_score.home_team_nerd:.1f}](#{home_team_anchor_id})"
+            f"[{game_score.home_team_nerd_score:.1f}](#{home_team_anchor_id})"
         )
 
         # Format pitcher scores with anchor links
-        if game_score.away_pitcher_nerd is not None and game_score.away_starter:
+        if game_score.away_pitcher_nerd_score is not None and game_score.away_starter:
             # Pitcher heading: "### Visiting starter: Pitcher Name"
             away_pitcher_heading = f"Visiting starter: {game_score.away_starter}"
             away_pitcher_anchor_id = generate_automatic_anchor_id(away_pitcher_heading)
             away_pitcher_score = (
-                f"[{game_score.away_pitcher_nerd:.1f}](#{away_pitcher_anchor_id})"
+                f"[{game_score.away_pitcher_nerd_score:.1f}](#{away_pitcher_anchor_id})"
             )
         else:
             away_pitcher_score = "No data"
 
-        if game_score.home_pitcher_nerd is not None and game_score.home_starter:
+        if game_score.home_pitcher_nerd_score is not None and game_score.home_starter:
             # Pitcher heading: "### Home starter: Pitcher Name"
             home_pitcher_heading = f"Home starter: {game_score.home_starter}"
             home_pitcher_anchor_id = generate_automatic_anchor_id(home_pitcher_heading)
             home_pitcher_score = (
-                f"[{game_score.home_pitcher_nerd:.1f}](#{home_pitcher_anchor_id})"
+                f"[{game_score.home_pitcher_nerd_score:.1f}](#{home_pitcher_anchor_id})"
             )
         else:
             home_pitcher_score = "No data"
@@ -418,54 +417,52 @@ def generate_game_detail_section(game_score: GameScore) -> str:
     ]
 
     # Add away team breakdown
-    if away_abbr in game_score.team_nerd_details:
+    if game_score.away_team_nerd_stats:
         lines.append(
             generate_team_breakdown_table(
                 game_score.away_team,
-                game_score.team_nerd_details[away_abbr],
+                game_score.away_team_nerd_stats,
                 away_abbr,
             )
         )
 
     # Add home team breakdown
-    if home_abbr in game_score.team_nerd_details:
+    if game_score.home_team_nerd_stats:
         lines.append(
             generate_team_breakdown_table(
                 game_score.home_team,
-                game_score.team_nerd_details[home_abbr],
+                game_score.home_team_nerd_stats,
                 home_abbr,
             )
         )
 
     # Add visiting pitcher breakdown
-    if game_score.away_starter and game_score.away_starter != "TBD":
-        away_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
-            game_score.pitcher_nerd_details,
-            game_score.away_starter,
-        )
-        if away_pitcher_stats:
-            lines.append(
-                generate_pitcher_breakdown_table(
-                    game_score.away_starter,
-                    away_pitcher_stats,
-                    is_home=False,
-                )
+    if (
+        game_score.away_starter
+        and game_score.away_starter != "TBD"
+        and game_score.away_pitcher_nerd_stats
+    ):
+        lines.append(
+            generate_pitcher_breakdown_table(
+                game_score.away_starter,
+                game_score.away_pitcher_nerd_stats,
+                is_home=False,
             )
+        )
 
     # Add home pitcher breakdown
-    if game_score.home_starter and game_score.home_starter != "TBD":
-        home_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
-            game_score.pitcher_nerd_details,
-            game_score.home_starter,
-        )
-        if home_pitcher_stats:
-            lines.append(
-                generate_pitcher_breakdown_table(
-                    game_score.home_starter,
-                    home_pitcher_stats,
-                    is_home=True,
-                )
+    if (
+        game_score.home_starter
+        and game_score.home_starter != "TBD"
+        and game_score.home_pitcher_nerd_stats
+    ):
+        lines.append(
+            generate_pitcher_breakdown_table(
+                game_score.home_starter,
+                game_score.home_pitcher_nerd_stats,
+                is_home=True,
             )
+        )
 
     # Add "Go back to top of page" link at the bottom of each game section
     lines.extend(["", "[Go back to top of page](#)", ""])

@@ -112,12 +112,12 @@ def get_game_data(
         "away_starter": selected_game.away_starter or "TBD",
         "home_starter": selected_game.home_starter or "TBD",
         "gnerd_score": selected_game.gnerd_score,
-        "average_team_nerd": selected_game.average_team_nerd,
-        "away_team_nerd": selected_game.away_team_nerd,
-        "home_team_nerd": selected_game.home_team_nerd,
-        "average_pitcher_nerd": selected_game.average_pitcher_nerd or 0.0,
-        "away_pitcher_nerd": selected_game.away_pitcher_nerd or 0.0,
-        "home_pitcher_nerd": selected_game.home_pitcher_nerd or 0.0,
+        "average_team_nerd_score": selected_game.average_team_nerd_score,
+        "away_team_nerd_score": selected_game.away_team_nerd_score,
+        "home_team_nerd_score": selected_game.home_team_nerd_score,
+        "average_pitcher_nerd_score": selected_game.average_pitcher_nerd_score or 0.0,
+        "away_pitcher_nerd_score": selected_game.away_pitcher_nerd_score or 0.0,
+        "home_pitcher_nerd_score": selected_game.home_pitcher_nerd_score or 0.0,
     }
 
     # Add away team detailed stats
@@ -384,10 +384,10 @@ def main() -> None:
     print(f"Output written to: {output_file}")
     print(f"gNERD Score: {game_data['gnerd_score']:.2f}")
     print(
-        f"Team NERDs: {game_data['away_team_nerd']:.2f} (away) + {game_data['home_team_nerd']:.2f} (home)"
+        f"Team NERDs: {game_data['away_team_nerd_score']:.2f} (away) + {game_data['home_team_nerd_score']:.2f} (home)"
     )
     print(
-        f"Pitcher NERDs: {game_data['away_pitcher_nerd']:.2f} (away) + {game_data['home_pitcher_nerd']:.2f} (home)"
+        f"Pitcher NERDs: {game_data['away_pitcher_nerd_score']:.2f} (away) + {game_data['home_pitcher_nerd_score']:.2f} (home)"
     )
 
 

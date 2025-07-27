@@ -168,18 +168,18 @@ def format_games_output(
 
         # Format pitcher names with NERD scores if available
         if pitcher_nerd_scores and away_starter != "TBD":
-            away_pitcher_nerd = pitcher_nerd_scores.get(away_starter)
-            if away_pitcher_nerd is not None:
-                away_pitcher_display = f"{away_starter} ({away_pitcher_nerd:.1f})"
+            away_pitcher_nerd_score = pitcher_nerd_scores.get(away_starter)
+            if away_pitcher_nerd_score is not None:
+                away_pitcher_display = f"{away_starter} ({away_pitcher_nerd_score:.1f})"
             else:
                 away_pitcher_display = away_starter
         else:
             away_pitcher_display = away_starter
 
         if pitcher_nerd_scores and home_starter != "TBD":
-            home_pitcher_nerd = pitcher_nerd_scores.get(home_starter)
-            if home_pitcher_nerd is not None:
-                home_pitcher_display = f"{home_starter} ({home_pitcher_nerd:.1f})"
+            home_pitcher_nerd_score = pitcher_nerd_scores.get(home_starter)
+            if home_pitcher_nerd_score is not None:
+                home_pitcher_display = f"{home_starter} ({home_pitcher_nerd_score:.1f})"
             else:
                 home_pitcher_display = home_starter
         else:
@@ -206,23 +206,23 @@ def format_games_with_gnerd_scores(game_scores: list[GameScore], date: str) -> s
 
         # Format team names with individual tNERD scores
         away_team_display = (
-            f"{game_score.away_team} (tNERD: {game_score.away_team_nerd:.1f})"
+            f"{game_score.away_team} (tNERD: {game_score.away_team_nerd_score:.1f})"
         )
         home_team_display = (
-            f"{game_score.home_team} (tNERD: {game_score.home_team_nerd:.1f})"
+            f"{game_score.home_team} (tNERD: {game_score.home_team_nerd_score:.1f})"
         )
 
         # Format pitcher names with individual pNERD scores
-        if game_score.away_pitcher_nerd is not None:
+        if game_score.away_pitcher_nerd_score is not None:
             away_pitcher_display = (
-                f"{away_starter} (pNERD: {game_score.away_pitcher_nerd:.1f})"
+                f"{away_starter} (pNERD: {game_score.away_pitcher_nerd_score:.1f})"
             )
         else:
             away_pitcher_display = away_starter
 
-        if game_score.home_pitcher_nerd is not None:
+        if game_score.home_pitcher_nerd_score is not None:
             home_pitcher_display = (
-                f"{home_starter} (pNERD: {game_score.home_pitcher_nerd:.1f})"
+                f"{home_starter} (pNERD: {game_score.home_pitcher_nerd_score:.1f})"
             )
         else:
             home_pitcher_display = home_starter
@@ -273,16 +273,16 @@ def format_games_as_markdown_table(game_scores: list[GameScore]) -> str:
         )
 
         # Format scores
-        away_team_score = f"{game_score.away_team_nerd:.1f}"
-        home_team_score = f"{game_score.home_team_nerd:.1f}"
+        away_team_score = f"{game_score.away_team_nerd_score:.1f}"
+        home_team_score = f"{game_score.home_team_nerd_score:.1f}"
         away_pitcher_score = (
-            f"{game_score.away_pitcher_nerd:.1f}"
-            if game_score.away_pitcher_nerd is not None
+            f"{game_score.away_pitcher_nerd_score:.1f}"
+            if game_score.away_pitcher_nerd_score is not None
             else "No data"
         )
         home_pitcher_score = (
-            f"{game_score.home_pitcher_nerd:.1f}"
-            if game_score.home_pitcher_nerd is not None
+            f"{game_score.home_pitcher_nerd_score:.1f}"
+            if game_score.home_pitcher_nerd_score is not None
             else "No data"
         )
 
