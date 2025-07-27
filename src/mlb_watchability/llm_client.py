@@ -32,6 +32,7 @@ class LLMResponse:
     model: str
     usage_tokens: int | None = None
     cost_estimate: float | None = None
+    web_sources: list[dict[str, Any]] | None = None
 
 
 class LLMClientError(Exception):
@@ -48,6 +49,7 @@ class LLMClient(ABC):
         max_tokens: int | None = None,
         temperature: float = 0.7,
         model: str | None = None,
+        include_web_search: bool = False,
     ) -> LLMResponse:
         """
         Generate text from a prompt.
@@ -57,6 +59,7 @@ class LLMClient(ABC):
             max_tokens: Maximum tokens to generate (None for model default)
             temperature: Sampling temperature (0.0-1.0)
             model: Override the default model
+            include_web_search: Whether to enable web search capabilities
 
         Returns:
             LLMResponse with generated content and metadata
@@ -100,6 +103,7 @@ class AnthropicClient(LLMClient):
         max_tokens: int | None = None,
         temperature: float = 0.7,
         model: str | None = None,
+        include_web_search: bool = False,
     ) -> LLMResponse:
         """Generate text using Anthropic API."""
         model_to_use = model or self.default_model
@@ -113,7 +117,19 @@ class AnthropicClient(LLMClient):
                 "max_tokens": max_tokens or 1000,  # Anthropic requires max_tokens
             }
 
-            logger.debug(f"Making Anthropic request with model: {model_to_use}")
+            # Add web search tool if requested
+            if include_web_search:
+                request_params["tools"] = [
+                    {
+                        "type": "web_search_20250305",
+                        "name": "web_search",
+                        "max_uses": 1,
+                    }
+                ]
+
+            logger.debug(
+                f"Making Anthropic request with model: {model_to_use}, web_search: {include_web_search}"
+            )
 
             response = self.client.messages.create(**request_params)
 
@@ -133,13 +149,48 @@ class AnthropicClient(LLMClient):
                     response.usage.input_tokens + response.usage.output_tokens
                 )
 
+            # Extract web search sources if available
+            web_sources = []
+            if include_web_search:
+                for block in response.content:
+                    if (
+                        hasattr(block, "type")
+                        and block.type == "web_search_tool_result"
+                        and hasattr(block, "content")
+                    ):
+                        # Check if this is an error result first
+                        content_str = str(block.content)
+                        if (
+                            "WebSearchToolResultError" in content_str
+                            or "error_code" in content_str
+                            or "max_uses_exceeded" in content_str
+                        ):
+                            continue  # Skip error results
+
+                        # block.content is a list of search results
+                        if isinstance(block.content, list):
+                            for result in block.content:
+                                if hasattr(result, "url") and hasattr(result, "title"):
+                                    web_sources.append(
+                                        {
+                                            "url": result.url,
+                                            "title": result.title,
+                                            "page_age": getattr(
+                                                result, "page_age", None
+                                            ),
+                                        }
+                                    )
+
             logger.info(
                 f"Generated {len(content)} characters using {model_to_use}, "
-                f"tokens: {usage_tokens}"
+                f"tokens: {usage_tokens}, web_sources: {len(web_sources)}"
             )
 
             return LLMResponse(
-                content=content, model=model_to_use, usage_tokens=usage_tokens
+                content=content,
+                model=model_to_use,
+                usage_tokens=usage_tokens,
+                web_sources=web_sources if web_sources else None,
             )
 
         except Exception as e:
@@ -183,7 +234,8 @@ def generate_text_from_llm(
     model: str = "claude-sonnet-4-20250514",
     max_tokens: int | None = None,
     temperature: float = 0.7,
-) -> str:
+    include_web_search: bool = False,
+) -> tuple[str, list[dict[str, Any]]]:
     """
     Convenience function to generate text with default settings.
 
@@ -192,15 +244,21 @@ def generate_text_from_llm(
         model: Model to use
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature
+        include_web_search: Whether to enable web search capabilities
 
     Returns:
-        Generated text content
+        Tuple of (generated text content, list of web sources)
+        Web sources list will be empty if include_web_search is False or no sources found
 
     Raises:
         LLMClientError: If generation fails
     """
     client = create_llm_client(model=model)
     response = client.generate_text(
-        prompt=prompt, max_tokens=max_tokens, temperature=temperature
+        prompt=prompt,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        include_web_search=include_web_search,
     )
-    return response.content
+    web_sources = response.web_sources or []
+    return response.content, web_sources

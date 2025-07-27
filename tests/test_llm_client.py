@@ -37,6 +37,23 @@ class TestLLMResponse:
         )
         assert response.usage_tokens == 150
         assert response.cost_estimate == 0.003
+        assert response.web_sources is None
+
+    def test_response_with_web_sources(self) -> None:
+        """Test response with web sources."""
+        web_sources = [
+            {
+                "url": "https://example.com",
+                "title": "Example Title",
+                "page_age": "1 day",
+            }
+        ]
+        response = LLMResponse(
+            content="test content",
+            model="claude-sonnet-4-20250514",
+            web_sources=web_sources,
+        )
+        assert response.web_sources == web_sources
 
 
 class TestAnthropicClient:
@@ -174,6 +191,107 @@ class TestAnthropicClient:
             with pytest.raises(LLMClientError, match="Unexpected error"):
                 client.generate_text("Test prompt")
 
+    def test_generate_text_with_web_search(self) -> None:
+        """Test text generation with web search enabled."""
+        # Mock text content block
+        mock_text_block = Mock()
+        mock_text_block.type = "text"
+        mock_text_block.text = "Generated response with web search"
+
+        # Mock web search result block
+        mock_web_result = Mock()
+        mock_web_result.url = "https://example.com"
+        mock_web_result.title = "Example Article"
+        mock_web_result.page_age = "2 hours"
+
+        mock_web_search_block = Mock()
+        mock_web_search_block.type = "web_search_tool_result"
+        mock_web_search_block.content = [mock_web_result]
+        # Ensure this block doesn't have a text attribute
+        del mock_web_search_block.text
+
+        mock_response = Mock()
+        mock_response.content = [mock_text_block, mock_web_search_block]
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(api_key="test-key")
+            response = client.generate_text(
+                "Test prompt with web search", include_web_search=True
+            )
+
+            assert response.content == "Generated response with web search"
+            assert response.web_sources is not None
+            assert len(response.web_sources) == 1
+            assert response.web_sources[0]["url"] == "https://example.com"
+            assert response.web_sources[0]["title"] == "Example Article"
+            assert response.web_sources[0]["page_age"] == "2 hours"
+
+            # Verify the API call includes web search tools
+            mock_client.messages.create.assert_called_once()
+            call_args = mock_client.messages.create.call_args[1]
+            assert "tools" in call_args
+            assert call_args["tools"][0]["type"] == "web_search_20250305"
+            assert call_args["tools"][0]["name"] == "web_search"
+            assert call_args["tools"][0]["max_uses"] == 1
+
+    def test_generate_text_web_search_disabled(self) -> None:
+        """Test text generation with web search disabled (default)."""
+        mock_content_block = Mock()
+        mock_content_block.text = "Generated response without web search"
+
+        mock_response = Mock()
+        mock_response.content = [mock_content_block]
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(api_key="test-key")
+            response = client.generate_text("Test prompt", include_web_search=False)
+
+            assert response.content == "Generated response without web search"
+            assert response.web_sources is None
+
+            # Verify the API call does not include tools
+            mock_client.messages.create.assert_called_once()
+            call_args = mock_client.messages.create.call_args[1]
+            assert "tools" not in call_args
+
+    def test_generate_text_web_search_error_handling(self) -> None:
+        """Test handling of web search errors."""
+        mock_text_block = Mock()
+        mock_text_block.type = "text"
+        mock_text_block.text = "Generated response"
+
+        # Mock web search error block
+        mock_web_error_block = Mock()
+        mock_web_error_block.type = "web_search_tool_result"
+        mock_web_error_block.content = "WebSearchToolResultError: Search failed"
+        # Ensure this block doesn't have a text attribute
+        del mock_web_error_block.text
+
+        mock_response = Mock()
+        mock_response.content = [mock_text_block, mock_web_error_block]
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(api_key="test-key")
+            response = client.generate_text("Test prompt", include_web_search=True)
+
+            assert response.content == "Generated response"
+            assert response.web_sources is None  # Error results filtered out
+
 
 class TestCreateLLMClient:
     """Test LLM client factory function."""
@@ -255,14 +373,18 @@ class TestGenerateTextFromLLM:
             mock_client.generate_text.return_value = mock_response
             mock_create.return_value = mock_client
 
-            result = generate_text_from_llm(
+            text, sources = generate_text_from_llm(
                 "Test prompt", temperature=0.3, max_tokens=200
             )
 
-            assert result == "Generated summary"
+            assert text == "Generated summary"
+            assert sources == []
             mock_create.assert_called_once_with(model="claude-sonnet-4-20250514")
             mock_client.generate_text.assert_called_once_with(
-                prompt="Test prompt", max_tokens=200, temperature=0.3
+                prompt="Test prompt",
+                max_tokens=200,
+                temperature=0.3,
+                include_web_search=False,
             )
 
     def test_generate_text_from_llm_with_custom_model(self) -> None:
@@ -274,12 +396,42 @@ class TestGenerateTextFromLLM:
             mock_client.generate_text.return_value = mock_response
             mock_create.return_value = mock_client
 
-            result = generate_text_from_llm(
+            text, sources = generate_text_from_llm(
                 "Test prompt", model="claude-3-sonnet-20240229"
             )
 
-            assert result == "Summary"
+            assert text == "Summary"
+            assert sources == []
             mock_create.assert_called_once_with(model="claude-3-sonnet-20240229")
+
+    def test_generate_text_from_llm_with_web_search(self) -> None:
+        """Test text generation with web search enabled."""
+        web_sources = [
+            {"url": "https://example.com", "title": "Test", "page_age": None}
+        ]
+        mock_response = LLMResponse(
+            content="Summary with web search",
+            model="claude-sonnet-4-20250514",
+            web_sources=web_sources,
+        )
+
+        with patch("mlb_watchability.llm_client.create_llm_client") as mock_create:
+            mock_client = Mock()
+            mock_client.generate_text.return_value = mock_response
+            mock_create.return_value = mock_client
+
+            text, sources = generate_text_from_llm(
+                "Test prompt", include_web_search=True
+            )
+
+            assert text == "Summary with web search"
+            assert sources == web_sources
+            mock_client.generate_text.assert_called_once_with(
+                prompt="Test prompt",
+                max_tokens=None,
+                temperature=0.7,
+                include_web_search=True,
+            )
 
 
 class TestIntegrationScenarios:
