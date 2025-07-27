@@ -701,7 +701,7 @@ tags: mlbw
             age=28.7,
             luck=3.2,
         )
-        
+
         home_team_stats = TeamStats(
             name="Tampa Bay Rays",
             batting_runs=22.8,
@@ -712,7 +712,7 @@ tags: mlbw
             age=27.9,
             luck=-2.7,
         )
-        
+
         away_team_nerd = MagicMock()
         away_team_nerd.team_stats = away_team_stats
         away_team_nerd.z_batting_runs = 0.8
@@ -731,7 +731,7 @@ tags: mlbw
         away_team_nerd.luck_component = 0.3
         away_team_nerd.constant_component = 4.0
         away_team_nerd.tnerd_score = 6.8
-        
+
         home_team_nerd = MagicMock()
         home_team_nerd.team_stats = home_team_stats
         home_team_nerd.z_batting_runs = 0.5
@@ -750,7 +750,7 @@ tags: mlbw
         home_team_nerd.luck_component = 0.0
         home_team_nerd.constant_component = 4.0
         home_team_nerd.tnerd_score = 6.2
-        
+
         # Create pitcher stats for home pitcher (who has data)
         home_pitcher_stats = PitcherStats(
             name="Shane Baz",
@@ -764,7 +764,7 @@ tags: mlbw
             luck=2,
             knuckleball_rate=0.0,
         )
-        
+
         home_pitcher_nerd = MagicMock()
         home_pitcher_nerd.pitcher_stats = home_pitcher_stats
         home_pitcher_nerd.z_xfip_minus = -0.8
@@ -783,7 +783,7 @@ tags: mlbw
         home_pitcher_nerd.knuckleball_component = 0.0
         home_pitcher_nerd.constant_component = 3.8
         home_pitcher_nerd.pnerd_score = 6.7
-        
+
         # Create a game score with missing pitcher data
         game_score = GameScore(
             away_team="Boston Red Sox",
@@ -795,7 +795,7 @@ tags: mlbw
             home_team_nerd_score=5.8,
             average_team_nerd_score=6.15,
             away_pitcher_nerd_score=None,  # No data for away pitcher
-            home_pitcher_nerd_score=4.2,   # Home pitcher has data
+            home_pitcher_nerd_score=4.2,  # Home pitcher has data
             average_pitcher_nerd_score=4.2,
             gnerd_score=10.35,
             away_team_nerd_stats=away_team_nerd,
@@ -809,15 +809,15 @@ tags: mlbw
         # Check that both pitcher sections are present
         assert "### Visiting starter: Nick Pivetta" in result
         assert "### Home starter: Shane Baz" in result
-        
+
         # Check that the missing pitcher shows "No detailed stats available"
         assert "No detailed stats available" in result
-        
+
         # Verify the structure - "No detailed stats available" should come after the visiting starter heading
         nick_pivetta_index = result.find("### Visiting starter: Nick Pivetta")
         shane_baz_index = result.find("### Home starter: Shane Baz")
         no_data_index = result.find("No detailed stats available")
-        
+
         assert nick_pivetta_index < no_data_index < shane_baz_index
 
     def test_generate_all_game_details_sorts_by_gnerd_score(self) -> None:

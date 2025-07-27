@@ -1014,7 +1014,9 @@ class TestGameScores:
         # Mock Jinja2 Environment.get_template to raise TemplateNotFound
         with patch("mlb_watchability.game_scores.Environment") as mock_env_class:
             mock_env = MagicMock()
-            mock_env.get_template.side_effect = TemplateNotFound("prompt-game-summary-template.md")
+            mock_env.get_template.side_effect = TemplateNotFound(
+                "prompt-game-summary-template.md"
+            )
             mock_env_class.return_value = mock_env
 
             with pytest.raises(FileNotFoundError) as exc_info:

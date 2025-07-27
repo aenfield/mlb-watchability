@@ -322,14 +322,14 @@ def generate_pitcher_no_data_section(
         Formatted markdown section indicating no detailed stats available
     """
     starter_type = "Home starter" if is_home else "Visiting starter"
-    
+
     lines = [
         f"### {starter_type}: {pitcher_name}",
         "",
         "No detailed stats available",
         "",
     ]
-    
+
     return "\n".join(lines)
 
 
@@ -473,7 +473,9 @@ def generate_game_detail_section(game_score: GameScore) -> str:
                 )
             )
         else:
-            lines.append(generate_pitcher_no_data_section(game_score.away_starter, is_home=False))
+            lines.append(
+                generate_pitcher_no_data_section(game_score.away_starter, is_home=False)
+            )
 
     # Add home pitcher breakdown
     if game_score.home_starter and game_score.home_starter != "TBD":
@@ -486,7 +488,9 @@ def generate_game_detail_section(game_score: GameScore) -> str:
                 )
             )
         else:
-            lines.append(generate_pitcher_no_data_section(game_score.home_starter, is_home=True))
+            lines.append(
+                generate_pitcher_no_data_section(game_score.home_starter, is_home=True)
+            )
 
     # Add "Go back to top of page" link at the bottom of each game section
     lines.extend(["", "[Go back to top of page](#)", ""])

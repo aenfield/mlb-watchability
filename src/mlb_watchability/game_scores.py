@@ -218,7 +218,7 @@ class GameScore:
             prefix: str,
             field_list: list[tuple[str, str | None]],
             stats_attr: str,
-            extra_fields: dict[str, Any] | None = None
+            extra_fields: dict[str, Any] | None = None,
         ) -> dict[str, Any]:
             """Create a dictionary of stats with appropriate prefix."""
             result: dict[str, Any] = extra_fields.copy() if extra_fields else {}
@@ -230,7 +230,9 @@ class GameScore:
                     result[f"{prefix}_{field_name}"] = getattr(stat_source, field_name)
                     # Get the z-score from the main stats object (if it exists)
                     if z_field_name:
-                        result[f"{prefix}_{z_field_name}"] = getattr(stats_obj, z_field_name)
+                        result[f"{prefix}_{z_field_name}"] = getattr(
+                            stats_obj, z_field_name
+                        )
                 else:
                     # Use default values when no stats available
                     result[f"{prefix}_{field_name}"] = 0.0
@@ -240,21 +242,35 @@ class GameScore:
             return result
 
         # Helper function to create team stats dictionary
-        def create_team_stats_dict(team_stats: TeamNerdStats | None, prefix: str) -> dict[str, Any]:
+        def create_team_stats_dict(
+            team_stats: TeamNerdStats | None, prefix: str
+        ) -> dict[str, Any]:
             """Create a dictionary of team stats with appropriate prefix."""
             return create_stats_dict(team_stats, prefix, TEAM_STAT_FIELDS, "team_stats")
 
         # Helper function to create pitcher stats dictionary
-        def create_pitcher_stats_dict(pitcher_stats: PitcherNerdStats | None, prefix: str) -> dict[str, Any]:
+        def create_pitcher_stats_dict(
+            pitcher_stats: PitcherNerdStats | None, prefix: str
+        ) -> dict[str, Any]:
             """Create a dictionary of pitcher stats with appropriate prefix."""
             extra_fields = {f"{prefix}_has_stats": pitcher_stats is not None}
-            return create_stats_dict(pitcher_stats, prefix, PITCHER_STAT_FIELDS, "pitcher_stats", extra_fields)
+            return create_stats_dict(
+                pitcher_stats,
+                prefix,
+                PITCHER_STAT_FIELDS,
+                "pitcher_stats",
+                extra_fields,
+            )
 
         # Create team and pitcher stats dictionaries and combine all template data
         away_team_data = create_team_stats_dict(away_team_stats, "away")
         home_team_data = create_team_stats_dict(home_team_stats, "home")
-        away_pitcher_data = create_pitcher_stats_dict(away_pitcher_stats, "away_pitcher")
-        home_pitcher_data = create_pitcher_stats_dict(home_pitcher_stats, "home_pitcher")
+        away_pitcher_data = create_pitcher_stats_dict(
+            away_pitcher_stats, "away_pitcher"
+        )
+        home_pitcher_data = create_pitcher_stats_dict(
+            home_pitcher_stats, "home_pitcher"
+        )
 
         # Set up Jinja2 environment and load template
         template_dir = os.path.dirname(__file__)
