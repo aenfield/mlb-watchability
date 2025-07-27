@@ -186,24 +186,16 @@ class GameScore:
 
         return game_scores
 
-    def generate_description(
-        self, game_date: str | None = None
-    ) -> tuple[str, list[dict[str, Any]]]:
+    def _prepare_template_data(self, game_date: str | None = None) -> dict[str, Any]:
         """
-        Generate an AI-powered description of the game using team and pitcher details.
+        Prepare template data for generating prompts.
 
         Args:
             game_date: Date of the game (optional, for context in prompt)
 
         Returns:
-            Tuple of (generated description string, list of web sources)
-            Web sources list will be empty if no web search was performed or no sources found
-
-        Raises:
-            FileNotFoundError: If the prompt template file is not found
-            Exception: If LLM generation fails
+            Dictionary of template data including game info, NERD scores, and team/pitcher stats
         """
-
         # Get detailed team and pitcher stats from stored objects
         away_team_stats = self.away_team_nerd_stats
         home_team_stats = self.home_team_nerd_stats
@@ -211,8 +203,6 @@ class GameScore:
         home_pitcher_stats = self.home_pitcher_nerd_stats
 
         # Helper function to create stats dictionary for both teams and pitchers
-        # could be located outside of the func since it doesn't use generate_description's
-        # variables, but only used here so for now at least I'll leave it here as is
         def create_stats_dict(
             stats_obj: TeamNerdStats | PitcherNerdStats | None,
             prefix: str,
@@ -262,7 +252,7 @@ class GameScore:
                 extra_fields,
             )
 
-        # Create team and pitcher stats dictionaries and combine all template data
+        # Create team and pitcher stats dictionaries
         away_team_data = create_team_stats_dict(away_team_stats, "away")
         home_team_data = create_team_stats_dict(home_team_stats, "home")
         away_pitcher_data = create_pitcher_stats_dict(
@@ -272,16 +262,7 @@ class GameScore:
             home_pitcher_stats, "home_pitcher"
         )
 
-        # Set up Jinja2 environment and load template
-        template_dir = os.path.dirname(__file__)
-        env = Environment(loader=FileSystemLoader(template_dir))
-
-        try:
-            template = env.get_template("prompt-game-summary-template.md")
-        except TemplateNotFound as e:
-            raise FileNotFoundError(f"Prompt template not found: {e}") from e
-
-        # Render the template with Jinja2
+        # Build combined template data
         template_data = {
             # Game basics
             "game_date": game_date or "TBD",
@@ -306,7 +287,66 @@ class GameScore:
         template_data.update(away_pitcher_data)
         template_data.update(home_pitcher_data)
 
-        formatted_prompt = template.render(template_data)
+        return template_data
+
+    def _render_prompt_template(self, template_data: dict[str, Any]) -> str:
+        """
+        Render the Jinja2 prompt template with the provided data.
+
+        Args:
+            template_data: Dictionary of data to pass to the template
+
+        Returns:
+            Rendered prompt string
+
+        Raises:
+            FileNotFoundError: If the prompt template file is not found
+        """
+        # Set up Jinja2 environment and load template
+        template_dir = os.path.dirname(__file__)
+        env = Environment(loader=FileSystemLoader(template_dir))
+
+        try:
+            template = env.get_template("prompt-game-summary-template.md")
+        except TemplateNotFound as e:
+            raise FileNotFoundError(f"Prompt template not found: {e}") from e
+
+        return template.render(template_data)
+
+    def generate_formatted_prompt(self, game_date: str | None = None) -> str:
+        """
+        Generate a formatted prompt for the game using template data and Jinja2 rendering.
+
+        Args:
+            game_date: Date of the game (optional, for context in prompt)
+
+        Returns:
+            Formatted prompt string ready for LLM
+
+        Raises:
+            FileNotFoundError: If the prompt template file is not found
+        """
+        template_data = self._prepare_template_data(game_date)
+        return self._render_prompt_template(template_data)
+
+    def generate_description(
+        self, game_date: str | None = None
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """
+        Generate an AI-powered description of the game using team and pitcher details.
+
+        Args:
+            game_date: Date of the game (optional, for context in prompt)
+
+        Returns:
+            Tuple of (generated description string, list of web sources)
+            Web sources list will be empty if no web search was performed or no sources found
+
+        Raises:
+            FileNotFoundError: If the prompt template file is not found
+            Exception: If LLM generation fails
+        """
+        formatted_prompt = self.generate_formatted_prompt(game_date)
 
         # Call the LLM to generate the description
         description, web_sources = generate_text_from_llm(
