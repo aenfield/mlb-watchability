@@ -307,6 +307,32 @@ def generate_team_breakdown_table(
     return "\n".join(lines)
 
 
+def generate_pitcher_no_data_section(
+    pitcher_name: str,
+    is_home: bool = False,
+) -> str:
+    """
+    Generate a section for a pitcher with no detailed stats available.
+
+    Args:
+        pitcher_name: Pitcher name
+        is_home: Whether this is the home team pitcher
+
+    Returns:
+        Formatted markdown section indicating no detailed stats available
+    """
+    starter_type = "Home starter" if is_home else "Visiting starter"
+    
+    lines = [
+        f"### {starter_type}: {pitcher_name}",
+        "",
+        "No detailed stats available",
+        "",
+    ]
+    
+    return "\n".join(lines)
+
+
 def generate_pitcher_breakdown_table(
     pitcher_name: str,
     pitcher_nerd_stats: PitcherNerdStats,
@@ -437,32 +463,30 @@ def generate_game_detail_section(game_score: GameScore) -> str:
         )
 
     # Add visiting pitcher breakdown
-    if (
-        game_score.away_starter
-        and game_score.away_starter != "TBD"
-        and game_score.away_pitcher_nerd_stats
-    ):
-        lines.append(
-            generate_pitcher_breakdown_table(
-                game_score.away_starter,
-                game_score.away_pitcher_nerd_stats,
-                is_home=False,
+    if game_score.away_starter and game_score.away_starter != "TBD":
+        if game_score.away_pitcher_nerd_stats:
+            lines.append(
+                generate_pitcher_breakdown_table(
+                    game_score.away_starter,
+                    game_score.away_pitcher_nerd_stats,
+                    is_home=False,
+                )
             )
-        )
+        else:
+            lines.append(generate_pitcher_no_data_section(game_score.away_starter, is_home=False))
 
     # Add home pitcher breakdown
-    if (
-        game_score.home_starter
-        and game_score.home_starter != "TBD"
-        and game_score.home_pitcher_nerd_stats
-    ):
-        lines.append(
-            generate_pitcher_breakdown_table(
-                game_score.home_starter,
-                game_score.home_pitcher_nerd_stats,
-                is_home=True,
+    if game_score.home_starter and game_score.home_starter != "TBD":
+        if game_score.home_pitcher_nerd_stats:
+            lines.append(
+                generate_pitcher_breakdown_table(
+                    game_score.home_starter,
+                    game_score.home_pitcher_nerd_stats,
+                    is_home=True,
+                )
             )
-        )
+        else:
+            lines.append(generate_pitcher_no_data_section(game_score.home_starter, is_home=True))
 
     # Add "Go back to top of page" link at the bottom of each game section
     lines.extend(["", "[Go back to top of page](#)", ""])

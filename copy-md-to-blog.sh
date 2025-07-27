@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Script to copy generated MLB watchability markdown files to blog directory
-# Usage: ./copy-to-blog.sh 2025-07-28
+# Usage: ./copy-to-blog.sh [date]
+# If no date is provided, uses today's date
 
-# Check if date argument is provided
+# Check if date argument is provided, use today's date if not
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <date>"
-    echo "Example: $0 2025-07-28"
-    exit 1
+    DATE=$(date +%Y-%m-%d)
+    echo "No date provided, using today's date: $DATE"
+else
+    DATE="$1"
 fi
-
-DATE="$1"
 SOURCE_FILE="mlb_what_to_watch_${DATE//-/_}.md"
 BLOG_DIR="../blog-eleventy/content/blog/mlbw"
 TARGET_FILE="$BLOG_DIR/$SOURCE_FILE"
