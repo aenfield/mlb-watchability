@@ -10,11 +10,11 @@ To see how to run tests, lint, install dependencies, etc, use @README.md .
 
 ## Architecture
 
-Retrieve the architecture from architecture.md.
+Retrieve the architecture from @specs/architecture.md. This might be older than the actual implementation, so check the code too and prefer what you learn from the code.
 
 ## Key statistics and calculations
 
-Retrieve details for statistic calculations - pNERD, tNERD, gNERD - from vision-and-reqs.md.
+Retrieve details for statistic calculations - pNERD, tNERD, gNERD - from specs/@vision-and-reqs.md .
 
 ## Technology stack
 
