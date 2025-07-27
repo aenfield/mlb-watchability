@@ -6,7 +6,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from .llm_client import MODEL_STRING_CHEAP, generate_text_from_llm
+from .llm_client import MODEL_STRING_FULL, generate_text_from_llm
 from .pitcher_stats import (
     PitcherNerdStats,
     calculate_detailed_pitcher_nerd_scores,
@@ -329,6 +329,19 @@ class GameScore:
         template_data = self._prepare_template_data(game_date)
         return self._render_prompt_template(template_data)
 
+    def get_description_from_llm_using_prompt(
+        self, completed_prompt: str
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Generate description from LLM using the provided completed prompt."""
+        description, web_sources = generate_text_from_llm(
+            prompt=completed_prompt,
+            model=MODEL_STRING_FULL,
+            max_tokens=300,
+            temperature=0.7,
+            include_web_search=True,
+        )
+        return description, web_sources
+
     def generate_description(
         self, game_date: str | None = None
     ) -> tuple[str, list[dict[str, Any]]]:
@@ -347,14 +360,18 @@ class GameScore:
             Exception: If LLM generation fails
         """
         formatted_prompt = self.generate_formatted_prompt(game_date)
+        # TODO why do we have to pass game_date? we should use what's in the GameScore instance
 
-        # Call the LLM to generate the description
-        description, web_sources = generate_text_from_llm(
-            prompt=formatted_prompt,
-            model=MODEL_STRING_CHEAP,
-            max_tokens=300,
-            temperature=0.7,
-            include_web_search=True,
+        description, web_sources = self.get_description_from_llm_using_prompt(
+            formatted_prompt
         )
+
+        # description, web_sources = generate_text_from_llm(
+        #     prompt=formatted_prompt,
+        #     model=MODEL_STRING_CHEAP,
+        #     max_tokens=300,
+        #     temperature=0.7,
+        #     include_web_search=True,
+        # )
 
         return description.strip(), web_sources

@@ -6,6 +6,7 @@ import pytest
 from jinja2 import TemplateNotFound
 
 from mlb_watchability.game_scores import GameScore
+from mlb_watchability.llm_client import MODEL_STRING_FULL
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
 from mlb_watchability.team_stats import TeamNerdStats, TeamStats
 
@@ -977,7 +978,7 @@ class TestGameScores:
             # Verify LLM was called with correct parameters
             mock_llm.assert_called_once()
             call_args = mock_llm.call_args
-            assert call_args[1]["model"] == "claude-3-5-haiku-latest"
+            assert call_args[1]["model"] == MODEL_STRING_FULL
             assert call_args[1]["max_tokens"] == 300
             assert call_args[1]["temperature"] == 0.7
             assert call_args[1]["include_web_search"] is True
@@ -1285,8 +1286,7 @@ class TestGameScores:
 
         # Basic validations - don't test specific content since it's generated
         assert isinstance(description, str)
-        assert len(description) > 10  # Should have some meaningful content
-        assert len(description) < 1000  # Should be reasonable length
+        assert len(description) > 10  # Should have some content
 
         # Should not contain template variables (basic sanity check)
         assert "{" not in description

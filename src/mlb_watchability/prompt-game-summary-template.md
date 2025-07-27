@@ -1,9 +1,6 @@
 ## Context
 
-You are analyzing an MLB game for "watchability", using as input "game NERD scores" (gNERD) and
-supporting statistics. The project helps baseball fans identify the most entertaining games to watch each day.
-The gNERD score combines pitcher-specific statistics (pNERD) and team-specific statistics (tNERD) to generate an
-overall watchability score for each game.
+You are analyzing an MLB game for "watchability", using as input "game NERD scores" (gNERD) and supporting statistics. The project helps baseball fans identify the most entertaining games to watch each day. The gNERD score combines pitcher-specific statistics (pNERD) and team-specific statistics (tNERD) to generate an overall watchability score for each game.
 
 ## Game Details
 
@@ -47,6 +44,7 @@ overall watchability score for each game.
 ### {{ away_starter }} Pitcher Stats (pNERD: {{ "%.2f"|format(away_pitcher_nerd) }})
 
 {% if away_pitcher_has_stats %}
+
 - xFIP-: {{ "%.1f"|format(away_pitcher_xfip_minus) }} (z-score: {{ "%.2f"|format(away_pitcher_z_xfip_minus) }})
 - SwStr%: {{ "%.1f"|format(away_pitcher_swinging_strike_rate) }}% (z-score: {{ "%.2f"|format(away_pitcher_z_swinging_strike_rate) }})
 - Strike%: {{ "%.1f"|format(away_pitcher_strike_rate) }}% (z-score: {{ "%.2f"|format(away_pitcher_z_strike_rate) }})
@@ -55,13 +53,14 @@ overall watchability score for each game.
 - Pace: {{ "%.1f"|format(away_pitcher_pace) }}s (z-score: {{ "%.2f"|format(away_pitcher_z_pace) }})
 - Luck: {{ "%.1f"|format(away_pitcher_luck) }}
 - KN%: {{ "%.1f"|format(away_pitcher_knuckleball_rate) }}%
-{% else %}
-No detailed stats available
-{% endif %}
+  {% else %}
+  No detailed stats available
+  {% endif %}
 
 ### {{ home_starter }} Pitcher Stats (pNERD: {{ "%.2f"|format(home_pitcher_nerd) }})
 
 {% if home_pitcher_has_stats %}
+
 - xFIP-: {{ "%.1f"|format(home_pitcher_xfip_minus) }} (z-score: {{ "%.2f"|format(home_pitcher_z_xfip_minus) }})
 - SwStr%: {{ "%.1f"|format(home_pitcher_swinging_strike_rate) }}% (z-score: {{ "%.2f"|format(home_pitcher_z_swinging_strike_rate) }})
 - Strike%: {{ "%.1f"|format(home_pitcher_strike_rate) }}% (z-score: {{ "%.2f"|format(home_pitcher_z_strike_rate) }})
@@ -70,9 +69,9 @@ No detailed stats available
 - Pace: {{ "%.1f"|format(home_pitcher_pace) }}s (z-score: {{ "%.2f"|format(home_pitcher_z_pace) }})
 - Luck: {{ "%.1f"|format(home_pitcher_luck) }}
 - KN%: {{ "%.1f"|format(home_pitcher_knuckleball_rate) }}%
-{% else %}
-No detailed stats available
-{% endif %}
+  {% else %}
+  No detailed stats available
+  {% endif %}
 
 ## Instructions
 
@@ -91,4 +90,4 @@ No detailed stats available
 - If there's not much to say for a particular instruction, leave it out - prefer being concise and only saying things when they're worthwhile.
 - When you output the overall one or two sentences that summarize everything you're saying, which you usually do at the end of the summary, emphasize them by making them bold.
 
-Now, following the above instructions, create a **concise** summary - no more than 150 words. Don't preface or follow your summary with text that's not part of the summary.
+Now, following the above instructions, create a **concise** summary. Don't preface or follow your summary with text that's not part of the summary.
