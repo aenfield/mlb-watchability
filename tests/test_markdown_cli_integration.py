@@ -51,7 +51,7 @@ class TestMarkdownCliIntegration:
             ),
         ]
 
-    @patch("mlb_watchability.markdown_cli.calculate_game_scores")
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
     @patch("mlb_watchability.markdown_cli.get_game_schedule")
     @patch("mlb_watchability.markdown_cli.extract_year_from_date")
     def test_markdown_cli_with_date_argument(
@@ -118,7 +118,7 @@ class TestMarkdownCliIntegration:
                 os.chdir(original_cwd)
 
     @patch("mlb_watchability.markdown_cli.get_today")
-    @patch("mlb_watchability.markdown_cli.calculate_game_scores")
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
     @patch("mlb_watchability.markdown_cli.get_game_schedule")
     @patch("mlb_watchability.markdown_cli.extract_year_from_date")
     def test_markdown_cli_without_date_argument(
@@ -165,7 +165,7 @@ class TestMarkdownCliIntegration:
             finally:
                 os.chdir(original_cwd)
 
-    @patch("mlb_watchability.markdown_cli.calculate_game_scores")
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
     @patch("mlb_watchability.markdown_cli.get_game_schedule")
     @patch("mlb_watchability.markdown_cli.extract_year_from_date")
     def test_markdown_cli_with_no_games(
@@ -211,7 +211,7 @@ class TestMarkdownCliIntegration:
                 "mlb_watchability.markdown_cli.get_game_schedule"
             ) as mock_get_schedule,
             patch(
-                "mlb_watchability.markdown_cli.calculate_game_scores"
+                "mlb_watchability.markdown_cli.GameScore.from_games"
             ) as mock_calculate_scores,
             patch(
                 "mlb_watchability.markdown_cli.extract_year_from_date"

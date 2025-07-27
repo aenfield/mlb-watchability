@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mlb_watchability.game_scores import GameScore, calculate_game_scores
+from mlb_watchability.game_scores import GameScore
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
 from mlb_watchability.team_stats import TeamNerdStats, TeamStats
 
@@ -139,7 +139,7 @@ class TestGameScores:
             mock_team.return_value = mock_team_nerd_details
             mock_pitcher.return_value = mock_pitcher_nerd_details
 
-            game_scores = calculate_game_scores(games, 2025)
+            game_scores = GameScore.from_games(games, 2025)
 
             assert len(game_scores) == 1
             game_score = game_scores[0]
@@ -264,7 +264,7 @@ class TestGameScores:
             mock_team.return_value = mock_team_nerd_details
             mock_pitcher.return_value = mock_pitcher_nerd_details
 
-            game_scores = calculate_game_scores(games, 2025)
+            game_scores = GameScore.from_games(games, 2025)
 
             assert len(game_scores) == 1
             game_score = game_scores[0]
@@ -359,7 +359,7 @@ class TestGameScores:
             mock_team.return_value = mock_team_nerd_details
             mock_pitcher.return_value = mock_pitcher_nerd_details
 
-            game_scores = calculate_game_scores(games, 2025)
+            game_scores = GameScore.from_games(games, 2025)
 
             assert len(game_scores) == 1
             game_score = game_scores[0]
@@ -580,7 +580,7 @@ class TestGameScores:
             mock_team.return_value = mock_team_nerd_details
             mock_pitcher.return_value = mock_pitcher_nerd_details
 
-            game_scores = calculate_game_scores(games, 2025)
+            game_scores = GameScore.from_games(games, 2025)
 
             assert len(game_scores) == 2
 

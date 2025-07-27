@@ -5,7 +5,7 @@ from typing import Any
 import typer
 
 from mlb_watchability.data_retrieval import get_game_schedule
-from mlb_watchability.game_scores import GameScore, calculate_game_scores
+from mlb_watchability.game_scores import GameScore
 from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
     format_pitcher_with_fangraphs_link,
@@ -306,7 +306,7 @@ def main(
         try:
             games = get_game_schedule(date)
             season = extract_year_from_date(date)
-            game_scores = calculate_game_scores(games, season)
+            game_scores = GameScore.from_games(games, season)
             typer.echo(format_games_with_gnerd_scores(game_scores, date))
         except Exception as e:
             typer.echo(f"Error retrieving games for {date}: {e}", err=True)
@@ -330,7 +330,7 @@ def main(
         game_scores = []
         try:
             today_games = get_game_schedule(today)
-            game_scores = calculate_game_scores(today_games, today_season)
+            game_scores = GameScore.from_games(today_games, today_season)
             typer.echo(format_games_with_gnerd_scores(game_scores, f"Today ({today})"))
         except Exception as e:
             typer.echo(f"Error retrieving games for today: {e}", err=True)

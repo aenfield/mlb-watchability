@@ -18,7 +18,7 @@ project_root = script_dir.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from mlb_watchability.data_retrieval import get_game_schedule
-from mlb_watchability.game_scores import calculate_game_scores
+from mlb_watchability.game_scores import GameScore
 from mlb_watchability.team_stats import calculate_detailed_team_nerd_scores
 from mlb_watchability.pitcher_stats import (
     calculate_detailed_pitcher_nerd_scores,
@@ -41,7 +41,7 @@ def get_game_data(
 
     # Calculate all game scores to get the specified one with full data
     print("Calculating game NERD scores (this may take a moment)...")
-    game_scores = calculate_game_scores(games, season)
+    game_scores = GameScore.from_games(games, season)
     if not game_scores:
         raise ValueError("No games with calculated scores found")
 

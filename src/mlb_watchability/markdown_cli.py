@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 
 from .data_retrieval import get_game_schedule
-from .game_scores import calculate_game_scores
+from .game_scores import GameScore
 from .markdown_generator import (
     generate_complete_markdown_content,
     generate_markdown_filename,
@@ -52,7 +52,7 @@ def main(
 
         # Calculate game scores (pNERD, tNERD, gNERD)
         logger.info("Calculating game scores (pNERD, tNERD, gNERD)")
-        game_scores = calculate_game_scores(games, season)
+        game_scores = GameScore.from_games(games, season)
         logger.info(f"Successfully calculated scores for {len(game_scores)} games")
 
         if not game_scores:
