@@ -26,7 +26,12 @@ As of mid-July 2025, every day, code automatically:
 - **Lint code**: `uv run ruff check`
 - **Format code**: `uv run black .`
 - **Check types**: `uv run mypy .`
+- **Install dependencies**: `uv sync`
+- `./run_all_checks.sh` runs normal tests, lints, formats, and checks types
+- `./run_all_checks.sh --include-costly` runs all tests, lints, formats, and checks types
 
-`./run_all_checks.sh` runs each of the above.
+### Other commands
+
+- **Run the CLI tool to generate a Markdown file for a day**: `uv run mlbw-markdown`
 
 For more information, see the stuff in the specs/ directory, in CLAUDE.md, and in todo.md.

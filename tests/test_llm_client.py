@@ -322,3 +322,26 @@ class TestIntegrationScenarios:
                     "max_tokens": 100,
                 }
                 mock_client.messages.create.assert_called_once_with(**expected_call)
+
+
+@pytest.mark.costly
+def test_real_api_call() -> None:
+    """Test actual API call with Haiku model - no mocks."""
+    # Skip if no API key is available
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        pytest.skip("ANTHROPIC_API_KEY environment variable not set")
+
+    # Use the cheapest model for this test
+    client = AnthropicClient(api_key=api_key, default_model="claude-3-haiku-20240307")
+
+    # Send a very simple prompt to minimize cost
+    response = client.generate_text(
+        prompt="Say 'hello'", max_tokens=10, temperature=0.0
+    )
+
+    # Basic validation
+    assert isinstance(response, LLMResponse)
+    assert response.model == "claude-3-haiku-20240307"
+    assert response.usage_tokens is not None
+    assert response.usage_tokens > 0

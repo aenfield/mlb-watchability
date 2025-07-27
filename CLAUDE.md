@@ -6,12 +6,7 @@ MLB Watchability is a Python command-line application that calculates "Game NERD
 
 ## Development commands
 
-- **Run the application**: `uv run mlb-watchability-cmd`
-- **Run tests**: `uv run pytest`
-- **Install dependencies**: `uv sync`
-- **Lint code**: `uv run ruff check`
-- **Format code**: `uv run black .`
-- **Type checking**: `uv run mypy .`
+To see how to run tests, lint, install dependencies, etc, use @README.md .
 
 ## Architecture
 
