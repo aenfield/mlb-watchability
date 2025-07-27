@@ -15,6 +15,29 @@ from .pitcher_stats import (
 from .team_mappings import get_team_abbreviation
 from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
 
+# Field mappings for stats dictionaries
+# Format: (field_name, z_score_field_name)
+TEAM_STAT_FIELDS: list[tuple[str, str | None]] = [
+    ("batting_runs", "z_batting_runs"),
+    ("barrel_rate", "z_barrel_rate"),
+    ("baserunning_runs", "z_baserunning_runs"),
+    ("fielding_runs", "z_fielding_runs"),
+    ("payroll", "z_payroll"),
+    ("age", "z_age"),
+    ("luck", "z_luck"),
+]
+
+PITCHER_STAT_FIELDS: list[tuple[str, str | None]] = [
+    ("xfip_minus", "z_xfip_minus"),
+    ("swinging_strike_rate", "z_swinging_strike_rate"),
+    ("strike_rate", "z_strike_rate"),
+    ("velocity", "z_velocity"),
+    ("age", "z_age"),
+    ("pace", "z_pace"),
+    ("luck", None),  # No z-score for luck
+    ("knuckleball_rate", None),  # No z-score for knuckleball rate
+]
+
 
 @dataclass
 class GameScore:
@@ -187,84 +210,45 @@ class GameScore:
         away_pitcher_stats = self.away_pitcher_nerd_stats
         home_pitcher_stats = self.home_pitcher_nerd_stats
 
+        # Helper function to create stats dictionary for both teams and pitchers
+        # could be located outside of the func since it doesn't use generate_description's
+        # variables, but only used here so for now at least I'll leave it here as is
+        def create_stats_dict(
+            stats_obj: TeamNerdStats | PitcherNerdStats | None,
+            prefix: str,
+            field_list: list[tuple[str, str | None]],
+            stats_attr: str,
+            extra_fields: dict[str, Any] | None = None
+        ) -> dict[str, Any]:
+            """Create a dictionary of stats with appropriate prefix."""
+            result: dict[str, Any] = extra_fields.copy() if extra_fields else {}
+
+            for field_name, z_field_name in field_list:
+                if stats_obj:
+                    # Get the actual stat value from the nested stats object
+                    stat_source = getattr(stats_obj, stats_attr)
+                    result[f"{prefix}_{field_name}"] = getattr(stat_source, field_name)
+                    # Get the z-score from the main stats object (if it exists)
+                    if z_field_name:
+                        result[f"{prefix}_{z_field_name}"] = getattr(stats_obj, z_field_name)
+                else:
+                    # Use default values when no stats available
+                    result[f"{prefix}_{field_name}"] = 0.0
+                    if z_field_name:
+                        result[f"{prefix}_{z_field_name}"] = 0.0
+
+            return result
+
         # Helper function to create team stats dictionary
         def create_team_stats_dict(team_stats: TeamNerdStats | None, prefix: str) -> dict[str, Any]:
             """Create a dictionary of team stats with appropriate prefix."""
-            if not team_stats:
-                return {
-                    f"{prefix}_batting_runs": 0.0,
-                    f"{prefix}_z_batting_runs": 0.0,
-                    f"{prefix}_barrel_rate": 0.0,
-                    f"{prefix}_z_barrel_rate": 0.0,
-                    f"{prefix}_baserunning_runs": 0.0,
-                    f"{prefix}_z_baserunning_runs": 0.0,
-                    f"{prefix}_fielding_runs": 0.0,
-                    f"{prefix}_z_fielding_runs": 0.0,
-                    f"{prefix}_payroll": 0.0,
-                    f"{prefix}_z_payroll": 0.0,
-                    f"{prefix}_age": 0.0,
-                    f"{prefix}_z_age": 0.0,
-                    f"{prefix}_luck": 0.0,
-                    f"{prefix}_z_luck": 0.0,
-                }
-
-            return {
-                f"{prefix}_batting_runs": team_stats.team_stats.batting_runs,
-                f"{prefix}_z_batting_runs": team_stats.z_batting_runs,
-                f"{prefix}_barrel_rate": team_stats.team_stats.barrel_rate,
-                f"{prefix}_z_barrel_rate": team_stats.z_barrel_rate,
-                f"{prefix}_baserunning_runs": team_stats.team_stats.baserunning_runs,
-                f"{prefix}_z_baserunning_runs": team_stats.z_baserunning_runs,
-                f"{prefix}_fielding_runs": team_stats.team_stats.fielding_runs,
-                f"{prefix}_z_fielding_runs": team_stats.z_fielding_runs,
-                f"{prefix}_payroll": team_stats.team_stats.payroll,
-                f"{prefix}_z_payroll": team_stats.z_payroll,
-                f"{prefix}_age": team_stats.team_stats.age,
-                f"{prefix}_z_age": team_stats.z_age,
-                f"{prefix}_luck": team_stats.team_stats.luck,
-                f"{prefix}_z_luck": team_stats.z_luck,
-            }
+            return create_stats_dict(team_stats, prefix, TEAM_STAT_FIELDS, "team_stats")
 
         # Helper function to create pitcher stats dictionary
         def create_pitcher_stats_dict(pitcher_stats: PitcherNerdStats | None, prefix: str) -> dict[str, Any]:
             """Create a dictionary of pitcher stats with appropriate prefix."""
-            if not pitcher_stats:
-                return {
-                    f"{prefix}_has_stats": False,
-                    f"{prefix}_xfip_minus": 0.0,
-                    f"{prefix}_z_xfip_minus": 0.0,
-                    f"{prefix}_swinging_strike_rate": 0.0,
-                    f"{prefix}_z_swinging_strike_rate": 0.0,
-                    f"{prefix}_strike_rate": 0.0,
-                    f"{prefix}_z_strike_rate": 0.0,
-                    f"{prefix}_velocity": 0.0,
-                    f"{prefix}_z_velocity": 0.0,
-                    f"{prefix}_age": 0.0,
-                    f"{prefix}_z_age": 0.0,
-                    f"{prefix}_pace": 0.0,
-                    f"{prefix}_z_pace": 0.0,
-                    f"{prefix}_luck": 0.0,
-                    f"{prefix}_knuckleball_rate": 0.0,
-                }
-
-            stats = pitcher_stats.pitcher_stats
-            return {
-                f"{prefix}_has_stats": True,
-                f"{prefix}_xfip_minus": stats.xfip_minus,
-                f"{prefix}_z_xfip_minus": pitcher_stats.z_xfip_minus,
-                f"{prefix}_swinging_strike_rate": stats.swinging_strike_rate,
-                f"{prefix}_z_swinging_strike_rate": pitcher_stats.z_swinging_strike_rate,
-                f"{prefix}_strike_rate": stats.strike_rate,
-                f"{prefix}_z_strike_rate": pitcher_stats.z_strike_rate,
-                f"{prefix}_velocity": stats.velocity,
-                f"{prefix}_z_velocity": pitcher_stats.z_velocity,
-                f"{prefix}_age": stats.age,
-                f"{prefix}_z_age": pitcher_stats.z_age,
-                f"{prefix}_pace": stats.pace,
-                f"{prefix}_z_pace": pitcher_stats.z_pace,
-                f"{prefix}_luck": stats.luck,
-                f"{prefix}_knuckleball_rate": stats.knuckleball_rate,
-            }
+            extra_fields = {f"{prefix}_has_stats": pitcher_stats is not None}
+            return create_stats_dict(pitcher_stats, prefix, PITCHER_STAT_FIELDS, "pitcher_stats", extra_fields)
 
         # Create team and pitcher stats dictionaries and combine all template data
         away_team_data = create_team_stats_dict(away_team_stats, "away")
