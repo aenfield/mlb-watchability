@@ -106,7 +106,7 @@ def main(
 
         # Generate formatted prompt content
         logger.info("Generating formatted prompt content")
-        prompt_content = selected_game_score.generate_formatted_prompt(target_date)
+        prompt_content = selected_game_score.generate_formatted_prompt()
 
         # Generate filename
         filename = generate_prompt_filename(target_date, game_index)

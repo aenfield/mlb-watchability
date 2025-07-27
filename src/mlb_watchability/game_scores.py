@@ -52,6 +52,7 @@ class GameScore:
     away_starter: str | None
     home_starter: str | None
     game_time: str | None
+    game_date: str | None
 
     # Team NERD scores
     away_team_nerd_score: float
@@ -102,6 +103,7 @@ class GameScore:
             away_starter = game.get("away_starter")
             home_starter = game.get("home_starter")
             game_time = game.get("time")
+            game_date = game.get("date")
 
             # Map team names to abbreviations for NERD score lookup
             away_team_abbr = get_team_abbreviation(away_team)
@@ -166,6 +168,7 @@ class GameScore:
                 away_starter=away_starter,
                 home_starter=home_starter,
                 game_time=game_time,
+                game_date=game_date,
                 away_team_nerd_score=away_team_nerd_score,
                 home_team_nerd_score=home_team_nerd_score,
                 average_team_nerd_score=average_team_nerd_score,
@@ -186,12 +189,9 @@ class GameScore:
 
         return game_scores
 
-    def _prepare_template_data(self, game_date: str | None = None) -> dict[str, Any]:
+    def _prepare_template_data(self) -> dict[str, Any]:
         """
         Prepare template data for generating prompts.
-
-        Args:
-            game_date: Date of the game (optional, for context in prompt)
 
         Returns:
             Dictionary of template data including game info, NERD scores, and team/pitcher stats
@@ -265,7 +265,7 @@ class GameScore:
         # Build combined template data
         template_data = {
             # Game basics
-            "game_date": game_date or "TBD",
+            "game_date": self.game_date or "TBD",
             "away_team": self.away_team,
             "home_team": self.home_team,
             "game_time": self.game_time or "TBD",
@@ -313,12 +313,9 @@ class GameScore:
 
         return template.render(template_data)
 
-    def generate_formatted_prompt(self, game_date: str | None = None) -> str:
+    def generate_formatted_prompt(self) -> str:
         """
         Generate a formatted prompt for the game using template data and Jinja2 rendering.
-
-        Args:
-            game_date: Date of the game (optional, for context in prompt)
 
         Returns:
             Formatted prompt string ready for LLM
@@ -326,7 +323,7 @@ class GameScore:
         Raises:
             FileNotFoundError: If the prompt template file is not found
         """
-        template_data = self._prepare_template_data(game_date)
+        template_data = self._prepare_template_data()
         return self._render_prompt_template(template_data)
 
     def get_description_from_llm_using_prompt(
@@ -341,14 +338,9 @@ class GameScore:
         )
         return description, web_sources
 
-    def generate_description(
-        self, game_date: str | None = None
-    ) -> tuple[str, list[dict[str, Any]]]:
+    def generate_description(self) -> tuple[str, list[dict[str, Any]]]:
         """
         Generate an AI-powered description of the game using team and pitcher details.
-
-        Args:
-            game_date: Date of the game (optional, for context in prompt)
 
         Returns:
             Tuple of (generated description string, list of web sources)
@@ -358,8 +350,7 @@ class GameScore:
             FileNotFoundError: If the prompt template file is not found
             Exception: If LLM generation fails
         """
-        formatted_prompt = self.generate_formatted_prompt(game_date)
-        # TODO why do we have to pass game_date? we should use what's in the GameScore instance
+        formatted_prompt = self.generate_formatted_prompt()
 
         description, web_sources = self.get_description_from_llm_using_prompt(
             formatted_prompt

@@ -673,6 +673,7 @@ class TestGameScores:
             away_starter="Pitcher A",
             home_starter="Pitcher B",
             game_time="7:00 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=5.0,
             home_team_nerd_score=6.0,
             average_team_nerd_score=5.5,
@@ -951,6 +952,7 @@ class TestGameScores:
             away_starter="John Pitcher",
             home_starter="Jane Starter",
             game_time="7:05 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=9.5,
             average_team_nerd_score=8.85,
@@ -970,7 +972,7 @@ class TestGameScores:
         with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
             mock_llm.return_value = (mock_response, [])
 
-            description, web_sources = game_score.generate_description("2025-07-27")
+            description, web_sources = game_score.generate_description()
 
             assert description == mock_response
             assert web_sources == []
@@ -1000,6 +1002,7 @@ class TestGameScores:
             away_starter="John Pitcher",
             home_starter="Jane Starter",
             game_time="7:05 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=9.5,
             average_team_nerd_score=8.85,
@@ -1060,6 +1063,7 @@ class TestGameScores:
             away_starter="TBD",
             home_starter="Unknown Pitcher",
             game_time="7:05 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=0.0,
             average_team_nerd_score=4.1,
@@ -1096,6 +1100,7 @@ class TestGameScores:
             away_starter="John Pitcher",
             home_starter="Jane Starter",
             game_time="7:05 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=9.5,
             average_team_nerd_score=8.85,
@@ -1128,6 +1133,7 @@ class TestGameScores:
             away_starter="John Pitcher",
             home_starter="Jane Starter",
             game_time="7:05 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=9.5,
             average_team_nerd_score=8.85,
@@ -1269,6 +1275,7 @@ class TestGameScores:
             away_starter="Reid Detmers",
             home_starter="Logan Gilbert",
             game_time="9:40 PM",
+            game_date="2025-07-27",
             away_team_nerd_score=6.5,
             home_team_nerd_score=8.9,
             average_team_nerd_score=7.7,
@@ -1283,7 +1290,7 @@ class TestGameScores:
         )
 
         # Call the real API
-        description, web_sources = game_score.generate_description("2025-07-27")
+        description, web_sources = game_score.generate_description()
 
         # Basic validations - don't test specific content since it's generated
         assert isinstance(description, str)
@@ -1302,3 +1309,93 @@ class TestGameScores:
                 assert isinstance(source["url"], str)
             if "title" in source:
                 assert isinstance(source["title"], str)
+
+    def test_game_date_field_storage_and_usage(self) -> None:
+        """Test that game_date field is properly stored and used in template data."""
+        game_date = "2025-07-27"
+        game_score = GameScore(
+            away_team="Test Team A",
+            home_team="Test Team B",
+            away_starter="Pitcher A",
+            home_starter="Pitcher B",
+            game_time="7:00 PM",
+            game_date=game_date,
+            away_team_nerd_score=5.0,
+            home_team_nerd_score=6.0,
+            average_team_nerd_score=5.5,
+            away_pitcher_nerd_score=4.0,
+            home_pitcher_nerd_score=7.0,
+            average_pitcher_nerd_score=5.5,
+            gnerd_score=11.0,
+            away_team_nerd_stats=None,
+            home_team_nerd_stats=None,
+            away_pitcher_nerd_stats=None,
+            home_pitcher_nerd_stats=None,
+        )
+
+        # Test that game_date is stored correctly
+        assert game_score.game_date == game_date
+
+        # Test that template data uses stored game_date
+        template_data = game_score._prepare_template_data()
+        assert template_data["game_date"] == game_date
+
+        # Test that template data falls back to parameter if no stored date
+        game_score_no_date = GameScore(
+            away_team="Test Team A",
+            home_team="Test Team B",
+            away_starter="Pitcher A",
+            home_starter="Pitcher B",
+            game_time="7:00 PM",
+            game_date=None,
+            away_team_nerd_score=5.0,
+            home_team_nerd_score=6.0,
+            average_team_nerd_score=5.5,
+            away_pitcher_nerd_score=4.0,
+            home_pitcher_nerd_score=7.0,
+            average_pitcher_nerd_score=5.5,
+            gnerd_score=11.0,
+            away_team_nerd_stats=None,
+            home_team_nerd_stats=None,
+            away_pitcher_nerd_stats=None,
+            home_pitcher_nerd_stats=None,
+        )
+
+        # Test fallback to "TBD" when no stored date
+        template_data_tbd = game_score_no_date._prepare_template_data()
+        assert template_data_tbd["game_date"] == "TBD"
+
+    def test_from_games_extracts_game_date(self) -> None:
+        """Test that from_games method extracts and stores game_date from game dictionaries."""
+        games = [
+            {
+                "away_team": "New York Yankees",
+                "home_team": "Boston Red Sox",
+                "away_starter": "Gerrit Cole",
+                "home_starter": "Brayan Bello",
+                "time": "7:10 PM",
+                "date": "2025-07-27",
+            }
+        ]
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team_scores,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher_scores,
+            patch(
+                "mlb_watchability.game_scores.get_team_abbreviation"
+            ) as mock_get_abbr,
+        ):
+
+            # Mock return values
+            mock_team_scores.return_value = {}
+            mock_pitcher_scores.return_value = {}
+            mock_get_abbr.side_effect = lambda x: x[:3].upper()
+
+            game_scores = GameScore.from_games(games)
+
+            assert len(game_scores) == 1
+            assert game_scores[0].game_date == "2025-07-27"
