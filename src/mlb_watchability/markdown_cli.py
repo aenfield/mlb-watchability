@@ -28,6 +28,10 @@ def main(
         default=None,
         help="Date to generate markdown for (YYYY-MM-DD format). Defaults to today.",
     ),
+    game_descriptions: bool = typer.Option(
+        default=False,
+        help="Include game descriptions in the detail output.",
+    ),
 ) -> None:
     """Generate a markdown file with MLB game watchability scores for a given date."""
 
@@ -69,7 +73,9 @@ def main(
 
         # Generate markdown content
         logger.info("Generating markdown content")
-        markdown_content = generate_complete_markdown_content(target_date, game_scores)
+        markdown_content = generate_complete_markdown_content(
+            target_date, game_scores, game_descriptions
+        )
 
         # Generate filename
         filename = generate_markdown_filename(target_date)

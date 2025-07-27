@@ -128,7 +128,15 @@ The example section ends here. There should be a section like the above for each
 
 31. ~~Add minimal integration tests for #30 that actually call the Anthropic API. Check with and without web search. Use a super simple prompt like 'Generate a short 100 character summary of today's Seattle Mariners game'. For the model, use 'claude-3-5-haiku-latest'. Don't test that any particular text is in the text results since that's brittle.~~
 
-32. Add an instance method to GameScore called 'generate_description' that uses the properties of the GameScore instance - use both game properties and also the detailed team and pitcher properties in the referenced TeamNerdStats and PitcherNerdStats objects - to a) populate a prompt template stored in the src/mlb_watchability/prompt-game-summary-template.md file to generate the description, and b) call a LLM using src/mlb_watchability/llm_client.py - specifically generate_text_from_llm - to retrieve the response. For your tests, use MODEL_STRING_CHEAP to specify the model to use.
+32. ~~Add an instance method to GameScore called 'generate_description' that uses the properties of the GameScore instance - use both game properties and also the detailed team and pitcher properties in the referenced TeamNerdStats and PitcherNerdStats objects - to a) populate a prompt template stored in the src/mlb_watchability/prompt-game-summary-template.md file to generate the description, and b) call a LLM using src/mlb_watchability/llm_client.py - specifically generate_text_from_llm - to retrieve the response. For your tests, use MODEL_STRING_CHEAP to specify the model to use.~~
+
+(I did a bunch more refactoring and tidying up as part of implementing the generate_description method, and also added an mlbw-prompt CLI app to generate a completed prompt and optionally send it to Anthropic.)
+
+33. ~~Expand the functionality used by mlbw-markdown to optionally (controlled by a command line flag "--game_descriptions") include a "Description" section in the detail output, per game, located after the overall header and before the team detail data. For this TODO, we'll work on the change in the markdown with a canned description that you can generate creatively to show "A concise summary of the next Mariners game, consisting of about 150-175 words".~~
+
+34. TODO update to generate game descriptions using LLM and populate the description sections of the markdown.
+
+35. TODO add links from the search to the description UI.
 
 ## Notes for possible integration and enhancement
 

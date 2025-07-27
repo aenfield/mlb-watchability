@@ -448,3 +448,196 @@ class TestMarkdownCliIntegration:
 
                 finally:
                     os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    def test_markdown_cli_with_game_descriptions_flag(
+        self,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test markdown CLI with --game-descriptions flag enabled."""
+        # Setup mocks
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = [
+            {
+                "away_team": "Seattle Mariners",
+                "home_team": "Los Angeles Dodgers",
+                "away_starter": "Logan Gilbert",
+                "home_starter": "Walker Buehler",
+                "time": "22:10",
+            }
+        ]
+
+        # Create a game with Mariners to test the special description
+        mariners_game = GameScore(
+            away_team="Seattle Mariners",
+            home_team="Los Angeles Dodgers",
+            away_starter="Logan Gilbert",
+            home_starter="Walker Buehler",
+            game_time="22:10",
+            game_date="2025-07-27",
+            away_team_nerd_score=7.5,
+            home_team_nerd_score=8.9,
+            average_team_nerd_score=8.2,
+            away_pitcher_nerd_score=6.8,
+            home_pitcher_nerd_score=7.2,
+            average_pitcher_nerd_score=7.0,
+            gnerd_score=15.2,
+            away_team_nerd_stats=None,
+            home_team_nerd_stats=None,
+            away_pitcher_nerd_stats=None,
+            home_pitcher_nerd_stats=None,
+        )
+        mock_calculate_scores.return_value = [mariners_game]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command with --game-descriptions flag
+                result = self.runner.invoke(
+                    markdown_app, ["2025-07-20", "--game-descriptions"]
+                )
+
+                # Check that command succeeded
+                assert result.exit_code == 0
+                assert (
+                    "Markdown file generated: mlb_what_to_watch_2025_07_20.md"
+                    in result.stdout
+                )
+
+                # Check that output file was created
+                output_file = Path("mlb_what_to_watch_2025_07_20.md")
+                assert output_file.exists()
+
+                # Check file contents include description sections
+                content = output_file.read_text(encoding="utf-8")
+
+                # Should contain Description sections
+                assert "### Summary" in content
+
+                # Should contain Mariners-specific description text
+                assert (
+                    "Seattle Mariners continue their pursuit of playoff contention"
+                    in content
+                )
+                assert "characteristic strong pitching staff" in content
+
+            finally:
+                os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    def test_markdown_cli_without_game_descriptions_flag(
+        self,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test markdown CLI without --game-descriptions flag (default behavior)."""
+        # Setup mocks
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = [
+            {
+                "away_team": "New York Yankees",
+                "home_team": "Los Angeles Dodgers",
+                "away_starter": "Gerrit Cole",
+                "home_starter": "Walker Buehler",
+                "time": "22:10",
+            }
+        ]
+        mock_calculate_scores.return_value = self.create_sample_game_scores()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command without --game-descriptions flag
+                result = self.runner.invoke(markdown_app, ["2025-07-20"])
+
+                # Check that command succeeded
+                assert result.exit_code == 0
+                assert (
+                    "Markdown file generated: mlb_what_to_watch_2025_07_20.md"
+                    in result.stdout
+                )
+
+                # Check that output file was created
+                output_file = Path("mlb_what_to_watch_2025_07_20.md")
+                assert output_file.exists()
+
+                # Check file contents do NOT include description sections
+                content = output_file.read_text(encoding="utf-8")
+
+                # Should NOT contain Description sections
+                assert "### Summary" not in content
+
+                # Should still contain the detail sections but without descriptions
+                assert "# Detail" in content
+                assert "New York Yankees" in content
+                assert "Los Angeles Dodgers" in content
+
+            finally:
+                os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    def test_markdown_cli_with_generic_game_descriptions(
+        self,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test markdown CLI with --game-descriptions flag for non-Mariners games."""
+        # Setup mocks
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = [
+            {
+                "away_team": "New York Yankees",
+                "home_team": "Boston Red Sox",
+                "away_starter": "Gerrit Cole",
+                "home_starter": "Brayan Bello",
+                "time": "19:15",
+            }
+        ]
+        mock_calculate_scores.return_value = self.create_sample_game_scores()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command with --game-descriptions flag
+                result = self.runner.invoke(
+                    markdown_app, ["2025-07-20", "--game-descriptions"]
+                )
+
+                # Check that command succeeded
+                assert result.exit_code == 0
+
+                # Check that output file was created
+                output_file = Path("mlb_what_to_watch_2025_07_20.md")
+                assert output_file.exists()
+
+                # Check file contents include generic description sections
+                content = output_file.read_text(encoding="utf-8")
+
+                # Should contain Description sections
+                assert "### Summary" in content
+
+                # Should contain generic description text (not Mariners-specific)
+                assert "A concise summary of this compelling matchup" in content
+                assert "distinct strengths and strategic approaches" in content
+
+                # Should NOT contain Mariners-specific text
+                assert "Seattle Mariners continue their pursuit" not in content
+
+            finally:
+                os.chdir(original_cwd)
