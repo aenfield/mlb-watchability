@@ -1,6 +1,7 @@
 """Tests for markdown generation functionality."""
 
-from unittest.mock import MagicMock, patch
+from typing import cast
+from unittest.mock import MagicMock
 
 from mlb_watchability.game_scores import GameScore
 from mlb_watchability.markdown_generator import (
@@ -510,25 +511,6 @@ tags: mlbw
 
     def test_generate_game_detail_section(self) -> None:
         """Test game detail section generation."""
-        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
-
-        # Create a game score
-        game_score = GameScore(
-            away_team="New York Yankees",
-            home_team="Los Angeles Dodgers",
-            away_starter="Gerrit Cole",
-            home_starter="Walker Buehler",
-            game_time="22:10",
-            away_team_nerd=8.2,
-            home_team_nerd=7.9,
-            average_team_nerd=8.05,
-            away_pitcher_nerd=7.8,
-            home_pitcher_nerd=6.2,
-            average_pitcher_nerd=7.0,
-            gnerd_score=15.05,
-            team_nerd_details=team_nerd_details,
-            pitcher_nerd_details=pitcher_nerd_details,
-        )
 
         # Create properly structured mock team stats
         away_team_stats = TeamStats(
@@ -659,15 +641,36 @@ tags: mlbw
         home_pitcher_nerd.pnerd_score = 7.3
 
         # Create team and pitcher details dicts
-        team_nerd_details = {"NYY": away_team_nerd, "LAD": home_team_nerd}
-        pitcher_nerd_details = {
-            "Gerrit Cole": away_pitcher_nerd,
-            "Walker Buehler": home_pitcher_nerd,
-        }
-
-        result = generate_game_detail_section(
-            game_score, team_nerd_details, pitcher_nerd_details
+        team_nerd_details = cast(
+            "dict[str, TeamNerdStats]", {"NYY": away_team_nerd, "LAD": home_team_nerd}
         )
+        pitcher_nerd_details = cast(
+            "dict[str, PitcherNerdStats]",
+            {
+                "Gerrit Cole": away_pitcher_nerd,
+                "Walker Buehler": home_pitcher_nerd,
+            },
+        )
+
+        # Create a game score with the detailed stats
+        game_score = GameScore(
+            away_team="New York Yankees",
+            home_team="Los Angeles Dodgers",
+            away_starter="Gerrit Cole",
+            home_starter="Walker Buehler",
+            game_time="22:10",
+            away_team_nerd=8.2,
+            home_team_nerd=7.9,
+            average_team_nerd=8.05,
+            away_pitcher_nerd=7.8,
+            home_pitcher_nerd=6.2,
+            average_pitcher_nerd=7.0,
+            gnerd_score=15.05,
+            team_nerd_details=team_nerd_details,
+            pitcher_nerd_details=pitcher_nerd_details,
+        )
+
+        result = generate_game_detail_section(game_score)
 
         # Check section header
         assert "## New York Yankees @ Los Angeles Dodgers, 10:10p" in result
@@ -742,29 +745,17 @@ tags: mlbw
             ),
         ]
 
-        # Mock the detailed score functions to return empty dicts
-        with (
-            patch(
-                "mlb_watchability.markdown_generator.calculate_detailed_team_nerd_scores"
-            ) as mock_teams,
-            patch(
-                "mlb_watchability.markdown_generator.calculate_detailed_pitcher_nerd_scores"
-            ) as mock_pitchers,
-        ):
+        # No need to mock the detailed score functions since they're no longer called
+        result = generate_all_game_details(game_scores)
 
-            mock_teams.return_value = {}
-            mock_pitchers.return_value = {}
+        # Check that games appear in order of gNERD score (highest first)
+        # Game with score 15.0 should appear before game with score 10.0,
+        # which should appear before game with score 8.0
+        team_c_pos = result.find("Team C @ Team D")  # gnerd_score=15.0
+        team_a_pos = result.find("Team A @ Team B")  # gnerd_score=10.0
+        team_e_pos = result.find("Team E @ Team F")  # gnerd_score=8.0
 
-            result = generate_all_game_details(game_scores, "2025-07-20")
+        assert team_c_pos < team_a_pos < team_e_pos
 
-            # Check that games appear in order of gNERD score (highest first)
-            # Game with score 15.0 should appear before game with score 10.0,
-            # which should appear before game with score 8.0
-            team_c_pos = result.find("Team C @ Team D")  # gnerd_score=15.0
-            team_a_pos = result.find("Team A @ Team B")  # gnerd_score=10.0
-            team_e_pos = result.find("Team E @ Team F")  # gnerd_score=8.0
-
-            assert team_c_pos < team_a_pos < team_e_pos
-
-            # Verify Detail header is present
-            assert "# Detail" in result
+        # Verify Detail header is present
+        assert "# Detail" in result

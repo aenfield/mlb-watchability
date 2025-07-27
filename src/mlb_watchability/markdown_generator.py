@@ -2,20 +2,17 @@
 
 import re
 import unicodedata
-from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, cast
 
 from .game_scores import GameScore
 from .pitcher_stats import (
     PitcherNerdStats,
-    calculate_detailed_pitcher_nerd_scores,
     find_pitcher_nerd_stats_fuzzy,
     format_pitcher_with_fangraphs_link,
 )
 from .team_mappings import format_team_with_fangraphs_link, get_team_abbreviation
-from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
-from .utils import extract_year_from_date, format_time_12_hour
+from .team_stats import TeamNerdStats
+from .utils import format_time_12_hour
 
 
 def generate_automatic_anchor_id(heading_text: str) -> str:
@@ -214,7 +211,7 @@ def generate_complete_markdown_content(
     """
     metadata_block = generate_metadata_block(date_str)
     table_content = generate_markdown_table(game_scores)
-    detail_content = generate_all_game_details(game_scores, date_str)
+    detail_content = generate_all_game_details(game_scores)
 
     # Combine all parts with proper spacing
     content_parts = [
@@ -397,18 +394,12 @@ def generate_pitcher_breakdown_table(
     return "\n".join(lines)
 
 
-def generate_game_detail_section(
-    game_score: GameScore,
-    team_nerd_details: Mapping[str, Any],
-    pitcher_nerd_details: Mapping[str, Any],
-) -> str:
+def generate_game_detail_section(game_score: GameScore) -> str:
     """
     Generate detailed breakdown section for a single game.
 
     Args:
-        game_score: GameScore object containing game information
-        team_nerd_details: Dictionary of team NERD details
-        pitcher_nerd_details: Dictionary of pitcher NERD details
+        game_score: GameScore object containing game information and detailed stats
 
     Returns:
         Formatted markdown section with detailed breakdowns for teams and pitchers
@@ -427,21 +418,21 @@ def generate_game_detail_section(
     ]
 
     # Add away team breakdown
-    if away_abbr in team_nerd_details:
+    if away_abbr in game_score.team_nerd_details:
         lines.append(
             generate_team_breakdown_table(
                 game_score.away_team,
-                team_nerd_details[away_abbr],
+                game_score.team_nerd_details[away_abbr],
                 away_abbr,
             )
         )
 
     # Add home team breakdown
-    if home_abbr in team_nerd_details:
+    if home_abbr in game_score.team_nerd_details:
         lines.append(
             generate_team_breakdown_table(
                 game_score.home_team,
-                team_nerd_details[home_abbr],
+                game_score.team_nerd_details[home_abbr],
                 home_abbr,
             )
         )
@@ -449,7 +440,7 @@ def generate_game_detail_section(
     # Add visiting pitcher breakdown
     if game_score.away_starter and game_score.away_starter != "TBD":
         away_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
-            cast("dict[str, PitcherNerdStats]", pitcher_nerd_details),
+            game_score.pitcher_nerd_details,
             game_score.away_starter,
         )
         if away_pitcher_stats:
@@ -464,7 +455,7 @@ def generate_game_detail_section(
     # Add home pitcher breakdown
     if game_score.home_starter and game_score.home_starter != "TBD":
         home_pitcher_stats = find_pitcher_nerd_stats_fuzzy(
-            cast("dict[str, PitcherNerdStats]", pitcher_nerd_details),
+            game_score.pitcher_nerd_details,
             game_score.home_starter,
         )
         if home_pitcher_stats:
@@ -482,13 +473,12 @@ def generate_game_detail_section(
     return "\n".join(lines)
 
 
-def generate_all_game_details(game_scores: list[GameScore], date_str: str) -> str:
+def generate_all_game_details(game_scores: list[GameScore]) -> str:
     """
     Generate detailed breakdown sections for all games.
 
     Args:
-        game_scores: List of GameScore objects
-        date_str: Date string in YYYY-MM-DD format
+        game_scores: List of GameScore objects with detailed stats already calculated
 
     Returns:
         Formatted markdown with detailed breakdowns for all games
@@ -496,23 +486,12 @@ def generate_all_game_details(game_scores: list[GameScore], date_str: str) -> st
     if not game_scores:
         return ""
 
-    # Get season year for stats lookup
-    season = extract_year_from_date(date_str)
-
-    # Get detailed NERD statistics
-    team_nerd_details = calculate_detailed_team_nerd_scores(season)
-    pitcher_nerd_details = calculate_detailed_pitcher_nerd_scores(season)
-
     # Generate detail sections - sort by gNERD score descending (highest first)
     sorted_games = sorted(game_scores, key=lambda x: x.gnerd_score, reverse=True)
     lines = ["# Detail", ""]
 
     for game_score in sorted_games:
-        lines.append(
-            generate_game_detail_section(
-                game_score, team_nerd_details, pitcher_nerd_details
-            )
-        )
+        lines.append(generate_game_detail_section(game_score))
 
     return "\n".join(lines)
 
