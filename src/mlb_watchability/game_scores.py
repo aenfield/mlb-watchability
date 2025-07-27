@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+
 from .llm_client import MODEL_STRING_CHEAP, generate_text_from_llm
 from .pitcher_stats import (
     PitcherNerdStats,
@@ -178,16 +180,6 @@ class GameScore:
             FileNotFoundError: If the prompt template file is not found
             Exception: If LLM generation fails
         """
-        # Load the prompt template
-        template_path = os.path.join(
-            os.path.dirname(__file__), "prompt-game-summary-template.md"
-        )
-
-        if not os.path.exists(template_path):
-            raise FileNotFoundError(f"Prompt template not found at {template_path}")
-
-        with open(template_path, encoding="utf-8") as f:
-            template = f.read()
 
         # Get detailed team and pitcher stats from stored objects
         away_team_stats = self.away_team_nerd_stats
@@ -195,102 +187,126 @@ class GameScore:
         away_pitcher_stats = self.away_pitcher_nerd_stats
         home_pitcher_stats = self.home_pitcher_nerd_stats
 
-        # Helper function to create pitcher stats section
-        def create_pitcher_stats_section(pitcher_stats: PitcherNerdStats | None) -> str:
+        # Helper function to create team stats dictionary
+        def create_team_stats_dict(team_stats: TeamNerdStats | None, prefix: str) -> dict[str, Any]:
+            """Create a dictionary of team stats with appropriate prefix."""
+            if not team_stats:
+                return {
+                    f"{prefix}_batting_runs": 0.0,
+                    f"{prefix}_z_batting_runs": 0.0,
+                    f"{prefix}_barrel_rate": 0.0,
+                    f"{prefix}_z_barrel_rate": 0.0,
+                    f"{prefix}_baserunning_runs": 0.0,
+                    f"{prefix}_z_baserunning_runs": 0.0,
+                    f"{prefix}_fielding_runs": 0.0,
+                    f"{prefix}_z_fielding_runs": 0.0,
+                    f"{prefix}_payroll": 0.0,
+                    f"{prefix}_z_payroll": 0.0,
+                    f"{prefix}_age": 0.0,
+                    f"{prefix}_z_age": 0.0,
+                    f"{prefix}_luck": 0.0,
+                    f"{prefix}_z_luck": 0.0,
+                }
+
+            return {
+                f"{prefix}_batting_runs": team_stats.team_stats.batting_runs,
+                f"{prefix}_z_batting_runs": team_stats.z_batting_runs,
+                f"{prefix}_barrel_rate": team_stats.team_stats.barrel_rate,
+                f"{prefix}_z_barrel_rate": team_stats.z_barrel_rate,
+                f"{prefix}_baserunning_runs": team_stats.team_stats.baserunning_runs,
+                f"{prefix}_z_baserunning_runs": team_stats.z_baserunning_runs,
+                f"{prefix}_fielding_runs": team_stats.team_stats.fielding_runs,
+                f"{prefix}_z_fielding_runs": team_stats.z_fielding_runs,
+                f"{prefix}_payroll": team_stats.team_stats.payroll,
+                f"{prefix}_z_payroll": team_stats.z_payroll,
+                f"{prefix}_age": team_stats.team_stats.age,
+                f"{prefix}_z_age": team_stats.z_age,
+                f"{prefix}_luck": team_stats.team_stats.luck,
+                f"{prefix}_z_luck": team_stats.z_luck,
+            }
+
+        # Helper function to create pitcher stats dictionary
+        def create_pitcher_stats_dict(pitcher_stats: PitcherNerdStats | None, prefix: str) -> dict[str, Any]:
+            """Create a dictionary of pitcher stats with appropriate prefix."""
             if not pitcher_stats:
-                return "No detailed stats available"
+                return {
+                    f"{prefix}_has_stats": False,
+                    f"{prefix}_xfip_minus": 0.0,
+                    f"{prefix}_z_xfip_minus": 0.0,
+                    f"{prefix}_swinging_strike_rate": 0.0,
+                    f"{prefix}_z_swinging_strike_rate": 0.0,
+                    f"{prefix}_strike_rate": 0.0,
+                    f"{prefix}_z_strike_rate": 0.0,
+                    f"{prefix}_velocity": 0.0,
+                    f"{prefix}_z_velocity": 0.0,
+                    f"{prefix}_age": 0.0,
+                    f"{prefix}_z_age": 0.0,
+                    f"{prefix}_pace": 0.0,
+                    f"{prefix}_z_pace": 0.0,
+                    f"{prefix}_luck": 0.0,
+                    f"{prefix}_knuckleball_rate": 0.0,
+                }
 
             stats = pitcher_stats.pitcher_stats
-            return f"""- xFIP-: {stats.xfip_minus:.1f} (z-score: {pitcher_stats.z_xfip_minus:.2f})
-- SwStr%: {stats.swinging_strike_rate:.1f}% (z-score: {pitcher_stats.z_swinging_strike_rate:.2f})
-- Strike%: {stats.strike_rate:.1f}% (z-score: {pitcher_stats.z_strike_rate:.2f})
-- Velocity: {stats.velocity:.1f} mph (z-score: {pitcher_stats.z_velocity:.2f})
-- Age: {stats.age} (z-score: {pitcher_stats.z_age:.2f})
-- Pace: {stats.pace:.1f}s (z-score: {pitcher_stats.z_pace:.2f})
-- Luck: {stats.luck:.1f}
-- KN%: {stats.knuckleball_rate:.1f}%"""
+            return {
+                f"{prefix}_has_stats": True,
+                f"{prefix}_xfip_minus": stats.xfip_minus,
+                f"{prefix}_z_xfip_minus": pitcher_stats.z_xfip_minus,
+                f"{prefix}_swinging_strike_rate": stats.swinging_strike_rate,
+                f"{prefix}_z_swinging_strike_rate": pitcher_stats.z_swinging_strike_rate,
+                f"{prefix}_strike_rate": stats.strike_rate,
+                f"{prefix}_z_strike_rate": pitcher_stats.z_strike_rate,
+                f"{prefix}_velocity": stats.velocity,
+                f"{prefix}_z_velocity": pitcher_stats.z_velocity,
+                f"{prefix}_age": stats.age,
+                f"{prefix}_z_age": pitcher_stats.z_age,
+                f"{prefix}_pace": stats.pace,
+                f"{prefix}_z_pace": pitcher_stats.z_pace,
+                f"{prefix}_luck": stats.luck,
+                f"{prefix}_knuckleball_rate": stats.knuckleball_rate,
+            }
 
-        # Format the template with actual values
-        formatted_prompt = template.format(
-            game_date=game_date or "TBD",
-            away_team=self.away_team,
-            home_team=self.home_team,
-            game_time=self.game_time or "TBD",
-            away_starter=self.away_starter or "TBD",
-            home_starter=self.home_starter or "TBD",
-            gnerd_score=self.gnerd_score,
-            average_team_nerd=self.average_team_nerd_score,
-            away_team_nerd=self.away_team_nerd_score,
-            home_team_nerd=self.home_team_nerd_score,
-            average_pitcher_nerd=self.average_pitcher_nerd_score or 0.0,
-            away_pitcher_nerd=self.away_pitcher_nerd_score or 0.0,
-            home_pitcher_nerd=self.home_pitcher_nerd_score or 0.0,
-            # Away team detailed stats
-            away_batting_runs=(
-                away_team_stats.team_stats.batting_runs if away_team_stats else 0.0
-            ),
-            away_z_batting_runs=(
-                away_team_stats.z_batting_runs if away_team_stats else 0.0
-            ),
-            away_barrel_rate=(
-                away_team_stats.team_stats.barrel_rate if away_team_stats else 0.0
-            ),
-            away_z_barrel_rate=(
-                away_team_stats.z_barrel_rate if away_team_stats else 0.0
-            ),
-            away_baserunning_runs=(
-                away_team_stats.team_stats.baserunning_runs if away_team_stats else 0.0
-            ),
-            away_z_baserunning_runs=(
-                away_team_stats.z_baserunning_runs if away_team_stats else 0.0
-            ),
-            away_fielding_runs=(
-                away_team_stats.team_stats.fielding_runs if away_team_stats else 0.0
-            ),
-            away_z_fielding_runs=(
-                away_team_stats.z_fielding_runs if away_team_stats else 0.0
-            ),
-            away_payroll=away_team_stats.team_stats.payroll if away_team_stats else 0.0,
-            away_z_payroll=away_team_stats.z_payroll if away_team_stats else 0.0,
-            away_age=away_team_stats.team_stats.age if away_team_stats else 0.0,
-            away_z_age=away_team_stats.z_age if away_team_stats else 0.0,
-            away_luck=away_team_stats.team_stats.luck if away_team_stats else 0.0,
-            away_z_luck=away_team_stats.z_luck if away_team_stats else 0.0,
-            # Home team detailed stats
-            home_batting_runs=(
-                home_team_stats.team_stats.batting_runs if home_team_stats else 0.0
-            ),
-            home_z_batting_runs=(
-                home_team_stats.z_batting_runs if home_team_stats else 0.0
-            ),
-            home_barrel_rate=(
-                home_team_stats.team_stats.barrel_rate if home_team_stats else 0.0
-            ),
-            home_z_barrel_rate=(
-                home_team_stats.z_barrel_rate if home_team_stats else 0.0
-            ),
-            home_baserunning_runs=(
-                home_team_stats.team_stats.baserunning_runs if home_team_stats else 0.0
-            ),
-            home_z_baserunning_runs=(
-                home_team_stats.z_baserunning_runs if home_team_stats else 0.0
-            ),
-            home_fielding_runs=(
-                home_team_stats.team_stats.fielding_runs if home_team_stats else 0.0
-            ),
-            home_z_fielding_runs=(
-                home_team_stats.z_fielding_runs if home_team_stats else 0.0
-            ),
-            home_payroll=home_team_stats.team_stats.payroll if home_team_stats else 0.0,
-            home_z_payroll=home_team_stats.z_payroll if home_team_stats else 0.0,
-            home_age=home_team_stats.team_stats.age if home_team_stats else 0.0,
-            home_z_age=home_team_stats.z_age if home_team_stats else 0.0,
-            home_luck=home_team_stats.team_stats.luck if home_team_stats else 0.0,
-            home_z_luck=home_team_stats.z_luck if home_team_stats else 0.0,
-            # Pitcher stats sections
-            away_pitcher_stats_section=create_pitcher_stats_section(away_pitcher_stats),
-            home_pitcher_stats_section=create_pitcher_stats_section(home_pitcher_stats),
-        )
+        # Create team and pitcher stats dictionaries and combine all template data
+        away_team_data = create_team_stats_dict(away_team_stats, "away")
+        home_team_data = create_team_stats_dict(home_team_stats, "home")
+        away_pitcher_data = create_pitcher_stats_dict(away_pitcher_stats, "away_pitcher")
+        home_pitcher_data = create_pitcher_stats_dict(home_pitcher_stats, "home_pitcher")
+
+        # Set up Jinja2 environment and load template
+        template_dir = os.path.dirname(__file__)
+        env = Environment(loader=FileSystemLoader(template_dir))
+
+        try:
+            template = env.get_template("prompt-game-summary-template.md")
+        except TemplateNotFound as e:
+            raise FileNotFoundError(f"Prompt template not found: {e}") from e
+
+        # Render the template with Jinja2
+        template_data = {
+            # Game basics
+            "game_date": game_date or "TBD",
+            "away_team": self.away_team,
+            "home_team": self.home_team,
+            "game_time": self.game_time or "TBD",
+            "away_starter": self.away_starter or "TBD",
+            "home_starter": self.home_starter or "TBD",
+            # NERD scores
+            "gnerd_score": self.gnerd_score,
+            "average_team_nerd": self.average_team_nerd_score,
+            "away_team_nerd": self.away_team_nerd_score,
+            "home_team_nerd": self.home_team_nerd_score,
+            "average_pitcher_nerd": self.average_pitcher_nerd_score or 0.0,
+            "away_pitcher_nerd": self.away_pitcher_nerd_score or 0.0,
+            "home_pitcher_nerd": self.home_pitcher_nerd_score or 0.0,
+        }
+
+        # Add all stats data
+        template_data.update(away_team_data)
+        template_data.update(home_team_data)
+        template_data.update(away_pitcher_data)
+        template_data.update(home_pitcher_data)
+
+        formatted_prompt = template.render(template_data)
 
         # Call the LLM to generate the description
         description, web_sources = generate_text_from_llm(

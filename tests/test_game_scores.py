@@ -1,8 +1,9 @@
 """Tests for game score calculator."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from jinja2 import TemplateNotFound
 
 from mlb_watchability.game_scores import GameScore
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
@@ -1010,9 +1011,11 @@ class TestGameScores:
             home_pitcher_nerd_stats=None,
         )
 
-        # Mock os.path.exists to return False
-        with patch("mlb_watchability.game_scores.os.path.exists") as mock_exists:
-            mock_exists.return_value = False
+        # Mock Jinja2 Environment.get_template to raise TemplateNotFound
+        with patch("mlb_watchability.game_scores.Environment") as mock_env_class:
+            mock_env = MagicMock()
+            mock_env.get_template.side_effect = TemplateNotFound("prompt-game-summary-template.md")
+            mock_env_class.return_value = mock_env
 
             with pytest.raises(FileNotFoundError) as exc_info:
                 game_score.generate_description()

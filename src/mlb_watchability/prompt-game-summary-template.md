@@ -7,50 +7,72 @@ overall watchability score for each game.
 
 ## Game Details
 
-**Date:** {game_date}
-**Teams:** {away_team} @ {home_team}
-**Game Time:** {game_time}
-**Starting Pitchers:** {away_starter} vs {home_starter}
+**Date:** {{ game_date }}
+**Teams:** {{ away_team }} @ {{ home_team }}
+**Game Time:** {{ game_time }}
+**Starting Pitchers:** {{ away_starter }} vs {{ home_starter }}
 
 ## NERD Scores
 
-- **Game NERD (gNERD):** {gnerd_score:.2f}
-- **Average Team NERD:** {average_team_nerd:.2f}
-  - {away_team} tNERD: {away_team_nerd:.2f}
-  - {home_team} tNERD: {home_team_nerd:.2f}
-- **Average Pitcher NERD:** {average_pitcher_nerd:.2f}
-  - {away_starter} pNERD: {away_pitcher_nerd:.2f}
-  - {home_starter} pNERD: {home_pitcher_nerd:.2f}
+- **Game NERD (gNERD):** {{ "%.2f"|format(gnerd_score) }}
+- **Average Team NERD:** {{ "%.2f"|format(average_team_nerd) }}
+  - {{ away_team }} tNERD: {{ "%.2f"|format(away_team_nerd) }}
+  - {{ home_team }} tNERD: {{ "%.2f"|format(home_team_nerd) }}
+- **Average Pitcher NERD:** {{ "%.2f"|format(average_pitcher_nerd) }}
+  - {{ away_starter }} pNERD: {{ "%.2f"|format(away_pitcher_nerd) }}
+  - {{ home_starter }} pNERD: {{ "%.2f"|format(home_pitcher_nerd) }}
 
 ## Supporting Statistics
 
-### {away_team} Team Stats (tNERD: {away_team_nerd:.2f})
+### {{ away_team }} Team Stats (tNERD: {{ "%.2f"|format(away_team_nerd) }})
 
-- Batting Runs: {away_batting_runs:.1f} (z-score: {away_z_batting_runs:.2f})
-- Barrel Rate: {away_barrel_rate:.3f} (z-score: {away_z_barrel_rate:.2f})
-- Baserunning Runs: {away_baserunning_runs:.1f} (z-score: {away_z_baserunning_runs:.2f})
-- Fielding Runs: {away_fielding_runs:.1f} (z-score: {away_z_fielding_runs:.2f})
-- Payroll: ${away_payroll:.1f}M (z-score: {away_z_payroll:.2f})
-- Age: {away_age:.1f} (z-score: {away_z_age:.2f})
-- Luck: {away_luck:.1f} (z-score: {away_z_luck:.2f})
+- Batting Runs: {{ "%.1f"|format(away_batting_runs) }} (z-score: {{ "%.2f"|format(away_z_batting_runs) }})
+- Barrel Rate: {{ "%.3f"|format(away_barrel_rate) }} (z-score: {{ "%.2f"|format(away_z_barrel_rate) }})
+- Baserunning Runs: {{ "%.1f"|format(away_baserunning_runs) }} (z-score: {{ "%.2f"|format(away_z_baserunning_runs) }})
+- Fielding Runs: {{ "%.1f"|format(away_fielding_runs) }} (z-score: {{ "%.2f"|format(away_z_fielding_runs) }})
+- Payroll: ${{ "%.1f"|format(away_payroll) }}M (z-score: {{ "%.2f"|format(away_z_payroll) }})
+- Age: {{ "%.1f"|format(away_age) }} (z-score: {{ "%.2f"|format(away_z_age) }})
+- Luck: {{ "%.1f"|format(away_luck) }} (z-score: {{ "%.2f"|format(away_z_luck) }})
 
-### {home_team} Team Stats (tNERD: {home_team_nerd:.2f})
+### {{ home_team }} Team Stats (tNERD: {{ "%.2f"|format(home_team_nerd) }})
 
-- Batting Runs: {home_batting_runs:.1f} (z-score: {home_z_batting_runs:.2f})
-- Barrel Rate: {home_barrel_rate:.3f} (z-score: {home_z_barrel_rate:.2f})
-- Baserunning Runs: {home_baserunning_runs:.1f} (z-score: {home_z_baserunning_runs:.2f})
-- Fielding Runs: {home_fielding_runs:.1f} (z-score: {home_z_fielding_runs:.2f})
-- Payroll: ${home_payroll:.1f}M (z-score: {home_z_payroll:.2f})
-- Age: {home_age:.1f} (z-score: {home_z_age:.2f})
-- Luck: {home_luck:.1f} (z-score: {home_z_luck:.2f})
+- Batting Runs: {{ "%.1f"|format(home_batting_runs) }} (z-score: {{ "%.2f"|format(home_z_batting_runs) }})
+- Barrel Rate: {{ "%.3f"|format(home_barrel_rate) }} (z-score: {{ "%.2f"|format(home_z_barrel_rate) }})
+- Baserunning Runs: {{ "%.1f"|format(home_baserunning_runs) }} (z-score: {{ "%.2f"|format(home_z_baserunning_runs) }})
+- Fielding Runs: {{ "%.1f"|format(home_fielding_runs) }} (z-score: {{ "%.2f"|format(home_z_fielding_runs) }})
+- Payroll: ${{ "%.1f"|format(home_payroll) }}M (z-score: {{ "%.2f"|format(home_z_payroll) }})
+- Age: {{ "%.1f"|format(home_age) }} (z-score: {{ "%.2f"|format(home_z_age) }})
+- Luck: {{ "%.1f"|format(home_luck) }} (z-score: {{ "%.2f"|format(home_z_luck) }})
 
-### {away_starter} Pitcher Stats (pNERD: {away_pitcher_nerd:.2f})
+### {{ away_starter }} Pitcher Stats (pNERD: {{ "%.2f"|format(away_pitcher_nerd) }})
 
-{away_pitcher_stats_section}
+{% if away_pitcher_has_stats %}
+- xFIP-: {{ "%.1f"|format(away_pitcher_xfip_minus) }} (z-score: {{ "%.2f"|format(away_pitcher_z_xfip_minus) }})
+- SwStr%: {{ "%.1f"|format(away_pitcher_swinging_strike_rate) }}% (z-score: {{ "%.2f"|format(away_pitcher_z_swinging_strike_rate) }})
+- Strike%: {{ "%.1f"|format(away_pitcher_strike_rate) }}% (z-score: {{ "%.2f"|format(away_pitcher_z_strike_rate) }})
+- Velocity: {{ "%.1f"|format(away_pitcher_velocity) }} mph (z-score: {{ "%.2f"|format(away_pitcher_z_velocity) }})
+- Age: {{ away_pitcher_age }} (z-score: {{ "%.2f"|format(away_pitcher_z_age) }})
+- Pace: {{ "%.1f"|format(away_pitcher_pace) }}s (z-score: {{ "%.2f"|format(away_pitcher_z_pace) }})
+- Luck: {{ "%.1f"|format(away_pitcher_luck) }}
+- KN%: {{ "%.1f"|format(away_pitcher_knuckleball_rate) }}%
+{% else %}
+No detailed stats available
+{% endif %}
 
-### {home_starter} Pitcher Stats (pNERD: {home_pitcher_nerd:.2f})
+### {{ home_starter }} Pitcher Stats (pNERD: {{ "%.2f"|format(home_pitcher_nerd) }})
 
-{home_pitcher_stats_section}
+{% if home_pitcher_has_stats %}
+- xFIP-: {{ "%.1f"|format(home_pitcher_xfip_minus) }} (z-score: {{ "%.2f"|format(home_pitcher_z_xfip_minus) }})
+- SwStr%: {{ "%.1f"|format(home_pitcher_swinging_strike_rate) }}% (z-score: {{ "%.2f"|format(home_pitcher_z_swinging_strike_rate) }})
+- Strike%: {{ "%.1f"|format(home_pitcher_strike_rate) }}% (z-score: {{ "%.2f"|format(home_pitcher_z_strike_rate) }})
+- Velocity: {{ "%.1f"|format(home_pitcher_velocity) }} mph (z-score: {{ "%.2f"|format(home_pitcher_z_velocity) }})
+- Age: {{ home_pitcher_age }} (z-score: {{ "%.2f"|format(home_pitcher_z_age) }})
+- Pace: {{ "%.1f"|format(home_pitcher_pace) }}s (z-score: {{ "%.2f"|format(home_pitcher_z_pace) }})
+- Luck: {{ "%.1f"|format(home_pitcher_luck) }}
+- KN%: {{ "%.1f"|format(home_pitcher_knuckleball_rate) }}%
+{% else %}
+No detailed stats available
+{% endif %}
 
 ## Instructions
 
