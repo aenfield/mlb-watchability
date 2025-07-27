@@ -90,4 +90,4 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
 - If there's not much to say for a particular instruction, leave it out - prefer being concise and only saying things when they're worthwhile.
 - When you output the overall one or two sentences that summarize everything you're saying, which you usually do at the end of the summary, emphasize them by making them bold.
 
-Now, following the above instructions, create a **concise** summary. Don't preface or follow your summary with text that's not part of the summary.
+Now, following the above instructions, create a **concise** summary. Don't preface or follow your summary with text that's not part of the summary. The summary should have approximately 150-175 words.

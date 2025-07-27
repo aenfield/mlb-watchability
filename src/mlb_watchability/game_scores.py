@@ -336,7 +336,6 @@ class GameScore:
         description, web_sources = generate_text_from_llm(
             prompt=completed_prompt,
             model=MODEL_STRING_FULL,
-            max_tokens=300,
             temperature=0.7,
             include_web_search=True,
         )

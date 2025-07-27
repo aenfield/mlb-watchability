@@ -979,7 +979,8 @@ class TestGameScores:
             mock_llm.assert_called_once()
             call_args = mock_llm.call_args
             assert call_args[1]["model"] == MODEL_STRING_FULL
-            assert call_args[1]["max_tokens"] == 300
+            # max_tokens should not be explicitly passed, using function default (None)
+            assert "max_tokens" not in call_args[1]
             assert call_args[1]["temperature"] == 0.7
             assert call_args[1]["include_web_search"] is True
 
