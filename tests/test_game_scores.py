@@ -837,3 +837,448 @@ class TestGameScores:
             assert "Another Pitcher" in game_score.pitcher_nerd_details
             assert game_score.pitcher_nerd_details["Test Pitcher"].pnerd_score == 6.8
             assert game_score.pitcher_nerd_details["Another Pitcher"].pnerd_score == 7.5
+
+    def test_generate_description_with_complete_data(self) -> None:
+        """Test generate_description with complete team and pitcher data."""
+        # Create test data
+        team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+            "NYY": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="NYY",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=250.0,
+                    age=29.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=0.9,
+                z_payroll=-1.2,
+                z_age=-0.3,
+                z_luck=0.2,
+                adjusted_payroll=1.2,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                tnerd_score=9.5,
+            ),
+        }
+
+        pitcher_nerd_details = {
+            "John Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="John Pitcher",
+                    team="BOS",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=95.5,
+                    age=28,
+                    pace=22.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.2,
+                z_strike_rate=0.8,
+                z_velocity=1.0,
+                z_age=-0.3,
+                z_pace=-0.5,
+                adjusted_velocity=1.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.25,
+                pnerd_score=6.8,
+            ),
+            "Jane Starter": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Jane Starter",
+                    team="NYY",
+                    xfip_minus=88.0,
+                    swinging_strike_rate=0.14,
+                    strike_rate=0.68,
+                    velocity=93.2,
+                    age=26,
+                    pace=20.5,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.2,
+                z_swinging_strike_rate=1.8,
+                z_strike_rate=1.2,
+                z_velocity=0.5,
+                z_age=-0.8,
+                z_pace=-1.0,
+                adjusted_velocity=0.5,
+                adjusted_age=0.8,
+                adjusted_luck=0.4,
+                pnerd_score=7.5,
+            ),
+        }
+
+        game_score = GameScore(
+            away_team="Boston Red Sox",
+            home_team="New York Yankees",
+            away_starter="John Pitcher",
+            home_starter="Jane Starter",
+            game_time="7:05 PM",
+            away_team_nerd=8.2,
+            home_team_nerd=9.5,
+            average_team_nerd=8.85,
+            away_pitcher_nerd=6.8,
+            home_pitcher_nerd=7.5,
+            average_pitcher_nerd=7.15,
+            gnerd_score=16.0,
+            team_nerd_details=team_nerd_details,
+            pitcher_nerd_details=pitcher_nerd_details,
+        )
+
+        # Mock the LLM response
+        mock_response = "This is an exciting matchup between two powerhouse teams!"
+
+        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
+            mock_llm.return_value = (mock_response, [])
+
+            description, web_sources = game_score.generate_description("2025-07-27")
+
+            assert description == mock_response
+            assert web_sources == []
+
+            # Verify LLM was called with correct parameters
+            mock_llm.assert_called_once()
+            call_args = mock_llm.call_args
+            assert call_args[1]["model"] == "claude-3-5-haiku-latest"
+            assert call_args[1]["max_tokens"] == 300
+            assert call_args[1]["temperature"] == 0.7
+            assert call_args[1]["include_web_search"] is True
+
+            # Verify prompt contains expected data
+            prompt = call_args[1]["prompt"]
+            assert "Boston Red Sox" in prompt
+            assert "New York Yankees" in prompt
+            assert "John Pitcher" in prompt
+            assert "Jane Starter" in prompt
+            assert "16.0" in prompt  # gNERD score
+
+    def test_generate_description_missing_template_file(self) -> None:
+        """Test generate_description raises error when template file is missing."""
+        game_score = GameScore(
+            away_team="Boston Red Sox",
+            home_team="New York Yankees",
+            away_starter="John Pitcher",
+            home_starter="Jane Starter",
+            game_time="7:05 PM",
+            away_team_nerd=8.2,
+            home_team_nerd=9.5,
+            average_team_nerd=8.85,
+            away_pitcher_nerd=6.8,
+            home_pitcher_nerd=7.5,
+            average_pitcher_nerd=7.15,
+            gnerd_score=16.0,
+            team_nerd_details={},
+            pitcher_nerd_details={},
+        )
+
+        # Mock os.path.exists to return False
+        with patch("mlb_watchability.game_scores.os.path.exists") as mock_exists:
+            mock_exists.return_value = False
+
+            with pytest.raises(FileNotFoundError) as exc_info:
+                game_score.generate_description()
+
+            assert "Prompt template not found" in str(exc_info.value)
+
+    def test_generate_description_with_missing_pitcher_data(self) -> None:
+        """Test generate_description handles missing pitcher data gracefully."""
+        team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+        }
+
+        game_score = GameScore(
+            away_team="Boston Red Sox",
+            home_team="New York Yankees",
+            away_starter="TBD",
+            home_starter="Unknown Pitcher",
+            game_time="7:05 PM",
+            away_team_nerd=8.2,
+            home_team_nerd=0.0,
+            average_team_nerd=4.1,
+            away_pitcher_nerd=None,
+            home_pitcher_nerd=None,
+            average_pitcher_nerd=None,
+            gnerd_score=4.1,
+            team_nerd_details=team_nerd_details,
+            pitcher_nerd_details={},
+        )
+
+        mock_response = "Game with limited pitcher data available."
+
+        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
+            mock_llm.return_value = (mock_response, [])
+
+            description, web_sources = game_score.generate_description()
+
+            assert description == mock_response
+            assert web_sources == []
+
+            # Verify prompt was generated even with missing data
+            prompt = mock_llm.call_args[1]["prompt"]
+            assert "TBD" in prompt
+            assert "No detailed stats available" in prompt
+
+    def test_generate_description_with_whitespace_in_response(self) -> None:
+        """Test generate_description strips whitespace from LLM response."""
+        game_score = GameScore(
+            away_team="Boston Red Sox",
+            home_team="New York Yankees",
+            away_starter="John Pitcher",
+            home_starter="Jane Starter",
+            game_time="7:05 PM",
+            away_team_nerd=8.2,
+            home_team_nerd=9.5,
+            average_team_nerd=8.85,
+            away_pitcher_nerd=6.8,
+            home_pitcher_nerd=7.5,
+            average_pitcher_nerd=7.15,
+            gnerd_score=16.0,
+            team_nerd_details={},
+            pitcher_nerd_details={},
+        )
+
+        # Mock response with leading/trailing whitespace
+        mock_response = "   \n  This is a great game!  \n  "
+
+        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
+            mock_llm.return_value = (mock_response, [])
+
+            description, web_sources = game_score.generate_description()
+
+            assert description == "This is a great game!"  # Whitespace stripped
+            assert web_sources == []
+
+    def test_generate_description_with_web_sources(self) -> None:
+        """Test generate_description returns web sources when available."""
+        game_score = GameScore(
+            away_team="Boston Red Sox",
+            home_team="New York Yankees",
+            away_starter="John Pitcher",
+            home_starter="Jane Starter",
+            game_time="7:05 PM",
+            away_team_nerd=8.2,
+            home_team_nerd=9.5,
+            average_team_nerd=8.85,
+            away_pitcher_nerd=6.8,
+            home_pitcher_nerd=7.5,
+            average_pitcher_nerd=7.15,
+            gnerd_score=16.0,
+            team_nerd_details={},
+            pitcher_nerd_details={},
+        )
+
+        # Mock response with web sources
+        mock_response = "Great game with recent updates!"
+        mock_sources = [
+            {"url": "https://example.com/article1", "title": "Game Preview"},
+            {"url": "https://example.com/article2", "title": "Player Stats"},
+        ]
+
+        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
+            mock_llm.return_value = (mock_response, mock_sources)
+
+            description, web_sources = game_score.generate_description()
+
+            assert description == mock_response
+            assert web_sources == mock_sources
+            assert len(web_sources) == 2
+            assert web_sources[0]["url"] == "https://example.com/article1"
+            assert web_sources[0]["title"] == "Game Preview"
+
+    @pytest.mark.costly
+    def test_generate_description_real_api_call(self) -> None:
+        """Test generate_description with real API call (integration test)."""
+        # Create simple test data
+        team_nerd_details = {
+            "SEA": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="SEA",
+                    batting_runs=15.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=180.0,
+                    age=27.5,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.2,
+                z_barrel_rate=0.7,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=1.0,
+                z_payroll=-0.3,
+                z_age=-0.8,
+                z_luck=0.3,
+                adjusted_payroll=0.3,
+                adjusted_age=0.8,
+                adjusted_luck=0.3,
+                tnerd_score=8.9,
+            ),
+            "LAA": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="LAA",
+                    batting_runs=8.0,
+                    barrel_rate=0.075,
+                    baserunning_runs=2.0,
+                    fielding_runs=5.0,
+                    payroll=200.0,
+                    age=29.0,
+                    luck=8.0,
+                ),
+                z_batting_runs=0.6,
+                z_barrel_rate=0.3,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.4,
+                z_payroll=-0.7,
+                z_age=0.2,
+                z_luck=0.4,
+                adjusted_payroll=0.7,
+                adjusted_age=0.0,
+                adjusted_luck=0.4,
+                tnerd_score=6.5,
+            ),
+        }
+
+        pitcher_nerd_details = {
+            "Logan Gilbert": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Logan Gilbert",
+                    team="SEA",
+                    xfip_minus=85.0,
+                    swinging_strike_rate=0.13,
+                    strike_rate=0.67,
+                    velocity=96.0,
+                    age=28,
+                    pace=20.0,
+                    luck=3.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.3,
+                z_swinging_strike_rate=1.5,
+                z_strike_rate=1.0,
+                z_velocity=1.2,
+                z_age=-0.2,
+                z_pace=-0.8,
+                adjusted_velocity=1.2,
+                adjusted_age=0.2,
+                adjusted_luck=0.15,
+                pnerd_score=9.2,
+            ),
+            "Reid Detmers": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Reid Detmers",
+                    team="LAA",
+                    xfip_minus=102.0,
+                    swinging_strike_rate=0.10,
+                    strike_rate=0.62,
+                    velocity=92.5,
+                    age=25,
+                    pace=23.0,
+                    luck=-2.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=0.4,
+                z_swinging_strike_rate=-0.8,
+                z_strike_rate=-0.3,
+                z_velocity=-0.2,
+                z_age=-0.9,
+                z_pace=0.5,
+                adjusted_velocity=0.0,
+                adjusted_age=0.9,
+                adjusted_luck=0.0,
+                pnerd_score=5.1,
+            ),
+        }
+
+        game_score = GameScore(
+            away_team="Los Angeles Angels",
+            home_team="Seattle Mariners",
+            away_starter="Reid Detmers",
+            home_starter="Logan Gilbert",
+            game_time="9:40 PM",
+            away_team_nerd=6.5,
+            home_team_nerd=8.9,
+            average_team_nerd=7.7,
+            away_pitcher_nerd=5.1,
+            home_pitcher_nerd=9.2,
+            average_pitcher_nerd=7.15,
+            gnerd_score=14.85,
+            team_nerd_details=team_nerd_details,
+            pitcher_nerd_details=pitcher_nerd_details,
+        )
+
+        # Call the real API
+        description, web_sources = game_score.generate_description("2025-07-27")
+
+        # Basic validations - don't test specific content since it's generated
+        assert isinstance(description, str)
+        assert len(description) > 10  # Should have some meaningful content
+        assert len(description) < 1000  # Should be reasonable length
+
+        # Should not contain template variables (basic sanity check)
+        assert "{" not in description
+        assert "}" not in description
+
+        # Validate web sources (list of dicts)
+        assert isinstance(web_sources, list)
+        # Could be empty or have sources, but should be valid structure if present
+        for source in web_sources:
+            assert isinstance(source, dict)
+            if "url" in source:
+                assert isinstance(source["url"], str)
+            if "title" in source:
+                assert isinstance(source["title"], str)
