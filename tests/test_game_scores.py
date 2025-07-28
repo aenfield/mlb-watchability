@@ -6,7 +6,7 @@ import pytest
 from jinja2 import TemplateNotFound
 
 from mlb_watchability.game_scores import GameScore
-from mlb_watchability.llm_client import MODEL_STRING_FULL
+from mlb_watchability.llm_client import MODEL_STRING_CHEAP, MODEL_STRING_FULL
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
 from mlb_watchability.team_stats import TeamNerdStats, TeamStats
 
@@ -1165,6 +1165,1132 @@ class TestGameScores:
             assert web_sources[0]["url"] == "https://example.com/article1"
             assert web_sources[0]["title"] == "Game Preview"
 
+    def test_game_date_field_storage_and_usage(self) -> None:
+        """Test that game_date field is properly stored and used in template data."""
+        game_date = "2025-07-27"
+        game_score = GameScore(
+            away_team="Test Team A",
+            home_team="Test Team B",
+            away_starter="Pitcher A",
+            home_starter="Pitcher B",
+            game_time="7:00 PM",
+            game_date=game_date,
+            away_team_nerd_score=5.0,
+            home_team_nerd_score=6.0,
+            average_team_nerd_score=5.5,
+            away_pitcher_nerd_score=4.0,
+            home_pitcher_nerd_score=7.0,
+            average_pitcher_nerd_score=5.5,
+            gnerd_score=11.0,
+            away_team_nerd_stats=None,
+            home_team_nerd_stats=None,
+            away_pitcher_nerd_stats=None,
+            home_pitcher_nerd_stats=None,
+        )
+
+        # Test that game_date is stored correctly
+        assert game_score.game_date == game_date
+
+        # Test that template data uses stored game_date
+        template_data = game_score._prepare_template_data()
+        assert template_data["game_date"] == game_date
+
+        # Test that template data falls back to parameter if no stored date
+        game_score_no_date = GameScore(
+            away_team="Test Team A",
+            home_team="Test Team B",
+            away_starter="Pitcher A",
+            home_starter="Pitcher B",
+            game_time="7:00 PM",
+            game_date=None,
+            away_team_nerd_score=5.0,
+            home_team_nerd_score=6.0,
+            average_team_nerd_score=5.5,
+            away_pitcher_nerd_score=4.0,
+            home_pitcher_nerd_score=7.0,
+            average_pitcher_nerd_score=5.5,
+            gnerd_score=11.0,
+            away_team_nerd_stats=None,
+            home_team_nerd_stats=None,
+            away_pitcher_nerd_stats=None,
+            home_pitcher_nerd_stats=None,
+        )
+
+        # Test fallback to "TBD" when no stored date
+        template_data_tbd = game_score_no_date._prepare_template_data()
+        assert template_data_tbd["game_date"] == "TBD"
+
+    def test_from_games_extracts_game_date(self) -> None:
+        """Test that from_games method extracts and stores game_date from game dictionaries."""
+        games = [
+            {
+                "away_team": "New York Yankees",
+                "home_team": "Boston Red Sox",
+                "away_starter": "Gerrit Cole",
+                "home_starter": "Brayan Bello",
+                "time": "7:10 PM",
+                "date": "2025-07-27",
+            }
+        ]
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team_scores,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher_scores,
+            patch(
+                "mlb_watchability.game_scores.get_team_abbreviation"
+            ) as mock_get_abbr,
+        ):
+
+            # Mock return values
+            mock_team_scores.return_value = {}
+            mock_pitcher_scores.return_value = {}
+            mock_get_abbr.side_effect = lambda x: x[:3].upper()
+
+            game_scores = GameScore.from_games(games)
+
+            assert len(game_scores) == 1
+            assert game_scores[0].game_date == "2025-07-27"
+
+    def test_game_score_new_description_properties(self) -> None:
+        """Test that GameScore has the new game_description and game_description_sources properties."""
+        game_score = GameScore(
+            away_team="Team A",
+            home_team="Team B",
+            away_starter="Pitcher A",
+            home_starter="Pitcher B",
+            game_time="7:00 PM",
+            game_date="2025-07-27",
+            away_team_nerd_score=5.0,
+            home_team_nerd_score=6.0,
+            average_team_nerd_score=5.5,
+            away_pitcher_nerd_score=7.0,
+            home_pitcher_nerd_score=8.0,
+            average_pitcher_nerd_score=7.5,
+            gnerd_score=13.0,
+            away_team_nerd_stats=None,
+            home_team_nerd_stats=None,
+            away_pitcher_nerd_stats=None,
+            home_pitcher_nerd_stats=None,
+        )
+
+        # Verify new properties default to None
+        assert game_score.game_description is None
+        assert game_score.game_description_sources is None
+
+        # Verify properties can be set
+        game_score.game_description = "Test description"
+        game_score.game_description_sources = [{"url": "test.com", "title": "Test"}]
+
+        assert game_score.game_description == "Test description"
+        assert game_score.game_description_sources == [
+            {"url": "test.com", "title": "Test"}
+        ]
+
+    def test_from_games_with_no_description_source(self) -> None:
+        """Test from_games with game_desc_source=None (default) leaves descriptions as None."""
+        games = [
+            {
+                "away_team": "Boston Red Sox",
+                "home_team": "New York Yankees",
+                "away_starter": "John Pitcher",
+                "home_starter": "Jane Starter",
+                "time": "7:05 PM",
+            }
+        ]
+
+        mock_team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+            "NYY": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="NYY",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=250.0,
+                    age=29.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=0.9,
+                z_payroll=-1.2,
+                z_age=-0.3,
+                z_luck=0.2,
+                adjusted_payroll=1.2,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                tnerd_score=9.5,
+            ),
+        }
+
+        mock_pitcher_nerd_details = {
+            "John Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="John Pitcher",
+                    team="BOS",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=95.5,
+                    age=28,
+                    pace=22.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.2,
+                z_strike_rate=0.8,
+                z_velocity=1.0,
+                z_age=-0.3,
+                z_pace=-0.5,
+                adjusted_velocity=1.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.25,
+                pnerd_score=6.8,
+            ),
+            "Jane Starter": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Jane Starter",
+                    team="NYY",
+                    xfip_minus=88.0,
+                    swinging_strike_rate=0.14,
+                    strike_rate=0.68,
+                    velocity=93.2,
+                    age=26,
+                    pace=20.5,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.2,
+                z_swinging_strike_rate=1.8,
+                z_strike_rate=1.2,
+                z_velocity=0.5,
+                z_age=-0.8,
+                z_pace=-1.0,
+                adjusted_velocity=0.5,
+                adjusted_age=0.8,
+                adjusted_luck=0.4,
+                pnerd_score=7.5,
+            ),
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # Verify descriptions are None when no source specified
+            assert game_score.game_description is None
+            assert game_score.game_description_sources is None
+
+    def test_from_games_with_canned_description(self) -> None:
+        """Test from_games with game_desc_source='canned' sets canned description."""
+        games = [
+            {
+                "away_team": "Boston Red Sox",
+                "home_team": "New York Yankees",
+                "away_starter": "John Pitcher",
+                "home_starter": "Jane Starter",
+                "time": "7:05 PM",
+            },
+            {
+                "away_team": "Chicago Cubs",
+                "home_team": "Milwaukee Brewers",
+                "away_starter": "Low Pitcher",
+                "home_starter": "TBD",
+                "time": "2:20 PM",
+            },
+        ]
+
+        mock_team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+            "NYY": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="NYY",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=250.0,
+                    age=29.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=0.9,
+                z_payroll=-1.2,
+                z_age=-0.3,
+                z_luck=0.2,
+                adjusted_payroll=1.2,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                tnerd_score=9.5,
+            ),
+            "CHC": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="CHC",
+                    batting_runs=5.0,
+                    barrel_rate=0.07,
+                    baserunning_runs=2.0,
+                    fielding_runs=8.0,
+                    payroll=180.0,
+                    age=27.5,
+                    luck=3.0,
+                ),
+                z_batting_runs=0.5,
+                z_barrel_rate=0.2,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.8,
+                z_payroll=-0.3,
+                z_age=-0.8,
+                z_luck=0.1,
+                adjusted_payroll=0.3,
+                adjusted_age=0.8,
+                adjusted_luck=0.1,
+                tnerd_score=6.8,
+            ),
+            "MIL": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="MIL",
+                    batting_runs=12.0,
+                    barrel_rate=0.085,
+                    baserunning_runs=6.0,
+                    fielding_runs=10.0,
+                    payroll=150.0,
+                    age=28.0,
+                    luck=7.0,
+                ),
+                z_batting_runs=1.2,
+                z_barrel_rate=0.6,
+                z_baserunning_runs=0.4,
+                z_fielding_runs=1.0,
+                z_payroll=0.2,
+                z_age=-0.4,
+                z_luck=0.3,
+                adjusted_payroll=0.0,
+                adjusted_age=0.4,
+                adjusted_luck=0.3,
+                tnerd_score=7.9,
+            ),
+        }
+
+        mock_pitcher_nerd_details = {
+            "John Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="John Pitcher",
+                    team="BOS",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=95.5,
+                    age=28,
+                    pace=22.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.2,
+                z_strike_rate=0.8,
+                z_velocity=1.0,
+                z_age=-0.3,
+                z_pace=-0.5,
+                adjusted_velocity=1.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.25,
+                pnerd_score=6.8,
+            ),
+            "Jane Starter": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Jane Starter",
+                    team="NYY",
+                    xfip_minus=88.0,
+                    swinging_strike_rate=0.14,
+                    strike_rate=0.68,
+                    velocity=93.2,
+                    age=26,
+                    pace=20.5,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.2,
+                z_swinging_strike_rate=1.8,
+                z_strike_rate=1.2,
+                z_velocity=0.5,
+                z_age=-0.8,
+                z_pace=-1.0,
+                adjusted_velocity=0.5,
+                adjusted_age=0.8,
+                adjusted_luck=0.4,
+                pnerd_score=7.5,
+            ),
+            "Low Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Low Pitcher",
+                    team="CHC",
+                    xfip_minus=105.0,
+                    swinging_strike_rate=0.08,
+                    strike_rate=0.60,
+                    velocity=90.0,
+                    age=32,
+                    pace=25.0,
+                    luck=0.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=0.8,
+                z_swinging_strike_rate=-1.0,
+                z_strike_rate=-0.5,
+                z_velocity=-1.0,
+                z_age=1.0,
+                z_pace=1.0,
+                adjusted_velocity=0.0,
+                adjusted_age=0.0,
+                adjusted_luck=0.0,
+                pnerd_score=3.5,
+            ),
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            # Test with default limit (1 game gets description)
+            game_scores = GameScore.from_games(games, 2025, game_desc_source="canned")
+
+            assert len(game_scores) == 2
+            # Games are sorted by gNERD score, so highest score gets description
+            assert game_scores[0].game_description is not None
+            assert "compelling matchup" in game_scores[0].game_description
+            assert game_scores[0].game_description_sources == []
+
+            # Second game should not have description with default limit
+            assert game_scores[1].game_description is None
+            assert game_scores[1].game_description_sources is None
+
+    def test_from_games_with_canned_description_custom_limit(self) -> None:
+        """Test from_games with game_desc_source='canned' and custom limit."""
+        games = [
+            {
+                "away_team": "Boston Red Sox",
+                "home_team": "New York Yankees",
+                "away_starter": "John Pitcher",
+                "home_starter": "Jane Starter",
+                "time": "7:05 PM",
+            },
+            {
+                "away_team": "Chicago Cubs",
+                "home_team": "Milwaukee Brewers",
+                "away_starter": "Low Pitcher",
+                "home_starter": "TBD",
+                "time": "2:20 PM",
+            },
+        ]
+
+        mock_team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+            "NYY": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="NYY",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=250.0,
+                    age=29.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=0.9,
+                z_payroll=-1.2,
+                z_age=-0.3,
+                z_luck=0.2,
+                adjusted_payroll=1.2,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                tnerd_score=9.5,
+            ),
+            "CHC": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="CHC",
+                    batting_runs=5.0,
+                    barrel_rate=0.07,
+                    baserunning_runs=2.0,
+                    fielding_runs=8.0,
+                    payroll=180.0,
+                    age=27.5,
+                    luck=3.0,
+                ),
+                z_batting_runs=0.5,
+                z_barrel_rate=0.2,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.8,
+                z_payroll=-0.3,
+                z_age=-0.8,
+                z_luck=0.1,
+                adjusted_payroll=0.3,
+                adjusted_age=0.8,
+                adjusted_luck=0.1,
+                tnerd_score=6.8,
+            ),
+            "MIL": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="MIL",
+                    batting_runs=12.0,
+                    barrel_rate=0.085,
+                    baserunning_runs=6.0,
+                    fielding_runs=10.0,
+                    payroll=150.0,
+                    age=28.0,
+                    luck=7.0,
+                ),
+                z_batting_runs=1.2,
+                z_barrel_rate=0.6,
+                z_baserunning_runs=0.4,
+                z_fielding_runs=1.0,
+                z_payroll=0.2,
+                z_age=-0.4,
+                z_luck=0.3,
+                adjusted_payroll=0.0,
+                adjusted_age=0.4,
+                adjusted_luck=0.3,
+                tnerd_score=7.9,
+            ),
+        }
+
+        mock_pitcher_nerd_details = {
+            "John Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="John Pitcher",
+                    team="BOS",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=95.5,
+                    age=28,
+                    pace=22.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.2,
+                z_strike_rate=0.8,
+                z_velocity=1.0,
+                z_age=-0.3,
+                z_pace=-0.5,
+                adjusted_velocity=1.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.25,
+                pnerd_score=6.8,
+            ),
+            "Jane Starter": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Jane Starter",
+                    team="NYY",
+                    xfip_minus=88.0,
+                    swinging_strike_rate=0.14,
+                    strike_rate=0.68,
+                    velocity=93.2,
+                    age=26,
+                    pace=20.5,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.2,
+                z_swinging_strike_rate=1.8,
+                z_strike_rate=1.2,
+                z_velocity=0.5,
+                z_age=-0.8,
+                z_pace=-1.0,
+                adjusted_velocity=0.5,
+                adjusted_age=0.8,
+                adjusted_luck=0.4,
+                pnerd_score=7.5,
+            ),
+            "Low Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Low Pitcher",
+                    team="CHC",
+                    xfip_minus=105.0,
+                    swinging_strike_rate=0.08,
+                    strike_rate=0.60,
+                    velocity=90.0,
+                    age=32,
+                    pace=25.0,
+                    luck=0.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=0.8,
+                z_swinging_strike_rate=-1.0,
+                z_strike_rate=-0.5,
+                z_velocity=-1.0,
+                z_age=1.0,
+                z_pace=1.0,
+                adjusted_velocity=0.0,
+                adjusted_age=0.0,
+                adjusted_luck=0.0,
+                pnerd_score=3.5,
+            ),
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            # Test with limit of 2 (both games get descriptions)
+            game_scores = GameScore.from_games(
+                games, 2025, game_desc_source="canned", game_desc_limit=2
+            )
+
+            assert len(game_scores) == 2
+            # Both games should have descriptions
+            assert game_scores[0].game_description is not None
+            assert "compelling matchup" in game_scores[0].game_description
+            assert game_scores[0].game_description_sources == []
+
+            assert game_scores[1].game_description is not None
+            assert "compelling matchup" in game_scores[1].game_description
+            assert game_scores[1].game_description_sources == []
+
+    def test_from_games_with_llm_description(self) -> None:
+        """Test from_games with game_desc_source='llm' calls generate_description."""
+        games = [
+            {
+                "away_team": "Boston Red Sox",
+                "home_team": "New York Yankees",
+                "away_starter": "John Pitcher",
+                "home_starter": "Jane Starter",
+                "time": "7:05 PM",
+            }
+        ]
+
+        mock_team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                tnerd_score=8.2,
+            ),
+            "NYY": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="NYY",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=250.0,
+                    age=29.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=0.9,
+                z_payroll=-1.2,
+                z_age=-0.3,
+                z_luck=0.2,
+                adjusted_payroll=1.2,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                tnerd_score=9.5,
+            ),
+        }
+
+        mock_pitcher_nerd_details = {
+            "John Pitcher": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="John Pitcher",
+                    team="BOS",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.12,
+                    strike_rate=0.65,
+                    velocity=95.5,
+                    age=28,
+                    pace=22.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=1.2,
+                z_strike_rate=0.8,
+                z_velocity=1.0,
+                z_age=-0.3,
+                z_pace=-0.5,
+                adjusted_velocity=1.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.25,
+                pnerd_score=6.8,
+            ),
+            "Jane Starter": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Jane Starter",
+                    team="NYY",
+                    xfip_minus=88.0,
+                    swinging_strike_rate=0.14,
+                    strike_rate=0.68,
+                    velocity=93.2,
+                    age=26,
+                    pace=20.5,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.2,
+                z_swinging_strike_rate=1.8,
+                z_strike_rate=1.2,
+                z_velocity=0.5,
+                z_age=-0.8,
+                z_pace=-1.0,
+                adjusted_velocity=0.5,
+                adjusted_age=0.8,
+                adjusted_luck=0.4,
+                pnerd_score=7.5,
+            ),
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            # Mock generate_description to avoid actual LLM calls
+            with patch.object(GameScore, "generate_description") as mock_generate:
+                mock_generate.return_value = (
+                    "LLM generated description",
+                    [{"url": "test.com", "title": "Test"}],
+                )
+
+                game_scores = GameScore.from_games(games, 2025, game_desc_source="llm")
+
+                assert len(game_scores) == 1
+                game_score = game_scores[0]
+
+                # Verify generate_description was called
+                mock_generate.assert_called_once()
+
+                # Verify description and sources were set
+                assert game_score.game_description == "LLM generated description"
+                assert game_score.game_description_sources == [
+                    {"url": "test.com", "title": "Test"}
+                ]
+
+    def test_from_games_description_limit_boundary(self) -> None:
+        """Test that game_desc_limit properly controls which games get descriptions (boundary testing)."""
+        games = [
+            {
+                "away_team": "Team A",
+                "home_team": "Team B",
+                "away_starter": "Pitcher A",
+                "home_starter": "Pitcher B",
+                "time": "7:00 PM",
+            },
+            {
+                "away_team": "Team C",
+                "home_team": "Team D",
+                "away_starter": "Pitcher C",
+                "home_starter": "Pitcher D",
+                "time": "8:00 PM",
+            },
+            {
+                "away_team": "Team E",
+                "home_team": "Team F",
+                "away_starter": "Pitcher E",
+                "home_starter": "Pitcher F",
+                "time": "9:00 PM",
+            },
+        ]
+
+        # Create mock data that results in different gNERD scores for clear ordering
+        mock_team_nerd_details = {
+            "TEA": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="TEA",
+                    batting_runs=20.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=200.0,
+                    age=28.0,
+                    luck=5.0,
+                ),
+                z_batting_runs=2.0,
+                z_barrel_rate=1.0,
+                z_baserunning_runs=0.8,
+                z_fielding_runs=1.2,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.2,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.2,
+                tnerd_score=10.0,
+            ),
+            "TEB": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="TEB",
+                    batting_runs=15.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=10.0,
+                    payroll=180.0,
+                    age=29.0,
+                    luck=3.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.5,
+                z_fielding_runs=1.0,
+                z_payroll=-0.5,
+                z_age=-0.2,
+                z_luck=0.1,
+                adjusted_payroll=0.5,
+                adjusted_age=0.2,
+                adjusted_luck=0.1,
+                tnerd_score=8.0,
+            ),
+            "TEC": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="TEC",
+                    batting_runs=10.0,
+                    barrel_rate=0.07,
+                    baserunning_runs=2.0,
+                    fielding_runs=8.0,
+                    payroll=160.0,
+                    age=30.0,
+                    luck=1.0,
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.2,
+                z_fielding_runs=0.8,
+                z_payroll=-0.2,
+                z_age=0.1,
+                z_luck=0.05,
+                adjusted_payroll=0.2,
+                adjusted_age=0.0,
+                adjusted_luck=0.05,
+                tnerd_score=6.0,
+            ),
+        }
+
+        mock_pitcher_nerd_details = {
+            "Pitcher A": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Pitcher A",
+                    team="TEA",
+                    xfip_minus=80.0,
+                    swinging_strike_rate=0.15,
+                    strike_rate=0.70,
+                    velocity=97.0,
+                    age=25,
+                    pace=18.0,
+                    luck=8.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-2.0,
+                z_swinging_strike_rate=2.0,
+                z_strike_rate=1.5,
+                z_velocity=1.8,
+                z_age=-1.0,
+                z_pace=-1.2,
+                adjusted_velocity=1.8,
+                adjusted_age=1.0,
+                adjusted_luck=0.4,
+                pnerd_score=12.0,
+            ),
+            "Pitcher B": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Pitcher B",
+                    team="TEA",
+                    xfip_minus=85.0,
+                    swinging_strike_rate=0.13,
+                    strike_rate=0.67,
+                    velocity=95.0,
+                    age=27,
+                    pace=20.0,
+                    luck=5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.5,
+                z_swinging_strike_rate=1.5,
+                z_strike_rate=1.0,
+                z_velocity=1.2,
+                z_age=-0.5,
+                z_pace=-0.8,
+                adjusted_velocity=1.2,
+                adjusted_age=0.5,
+                adjusted_luck=0.25,
+                pnerd_score=9.0,
+            ),
+            "Pitcher C": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Pitcher C",
+                    team="TEA",
+                    xfip_minus=90.0,
+                    swinging_strike_rate=0.11,
+                    strike_rate=0.64,
+                    velocity=93.0,
+                    age=29,
+                    pace=22.0,
+                    luck=2.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.0,
+                z_swinging_strike_rate=1.0,
+                z_strike_rate=0.5,
+                z_velocity=0.8,
+                z_age=0.0,
+                z_pace=-0.3,
+                adjusted_velocity=0.8,
+                adjusted_age=0.0,
+                adjusted_luck=0.1,
+                pnerd_score=7.0,
+            ),
+            "Pitcher D": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Pitcher D",
+                    team="TEA",
+                    xfip_minus=95.0,
+                    swinging_strike_rate=0.10,
+                    strike_rate=0.62,
+                    velocity=91.0,
+                    age=31,
+                    pace=24.0,
+                    luck=0.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-0.5,
+                z_swinging_strike_rate=0.5,
+                z_strike_rate=0.2,
+                z_velocity=0.3,
+                z_age=0.5,
+                z_pace=0.2,
+                adjusted_velocity=0.3,
+                adjusted_age=0.0,
+                adjusted_luck=0.0,
+                pnerd_score=5.0,
+            ),
+            "Pitcher E": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Pitcher E",
+                    team="TEA",
+                    xfip_minus=100.0,
+                    swinging_strike_rate=0.09,
+                    strike_rate=0.60,
+                    velocity=89.0,
+                    age=33,
+                    pace=26.0,
+                    luck=-2.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=0.0,
+                z_swinging_strike_rate=0.0,
+                z_strike_rate=0.0,
+                z_velocity=0.0,
+                z_age=1.0,
+                z_pace=0.5,
+                adjusted_velocity=0.0,
+                adjusted_age=0.0,
+                adjusted_luck=0.0,
+                pnerd_score=3.0,
+            ),
+            "Pitcher F": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Pitcher F",
+                    team="TEA",
+                    xfip_minus=105.0,
+                    swinging_strike_rate=0.08,
+                    strike_rate=0.58,
+                    velocity=87.0,
+                    age=35,
+                    pace=28.0,
+                    luck=-5.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=0.5,
+                z_swinging_strike_rate=-0.5,
+                z_strike_rate=-0.2,
+                z_velocity=-0.3,
+                z_age=1.5,
+                z_pace=1.0,
+                adjusted_velocity=0.0,
+                adjusted_age=0.0,
+                adjusted_luck=0.0,
+                pnerd_score=1.0,
+            ),
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+            patch(
+                "mlb_watchability.game_scores.get_team_abbreviation"
+            ) as mock_get_abbr,
+        ):
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+            # Map team names to abbreviations for different teams
+            mock_get_abbr.side_effect = lambda team: {
+                "Team A": "TEA",
+                "Team B": "TEA",
+                "Team C": "TEB",
+                "Team D": "TEB",
+                "Team E": "TEC",
+                "Team F": "TEC",
+            }[team]
+
+            # Test with limit=2, should only get descriptions for top 2 games
+            game_scores = GameScore.from_games(
+                games, 2025, game_desc_source="canned", game_desc_limit=2
+            )
+
+            assert len(game_scores) == 3
+
+            # First two games (highest gNERD scores) should have descriptions
+            assert game_scores[0].game_description is not None
+            assert "compelling matchup" in game_scores[0].game_description
+            assert game_scores[0].game_description_sources == []
+
+            assert game_scores[1].game_description is not None
+            assert "compelling matchup" in game_scores[1].game_description
+            assert game_scores[1].game_description_sources == []
+
+            # Third game (beyond limit) should NOT have description
+            assert game_scores[2].game_description is None
+            assert game_scores[2].game_description_sources is None
+
+
+class TestGameScoresIntegration:
+    """Integration tests for GameScore that make actual API calls."""
+
     @pytest.mark.costly
     def test_generate_description_real_api_call(self) -> None:
         """Test generate_description with real API call (integration test)."""
@@ -1290,7 +2416,9 @@ class TestGameScores:
         )
 
         # Call the real API
-        description, web_sources = game_score.generate_description()
+        description, web_sources = game_score.generate_description(
+            model=MODEL_STRING_CHEAP
+        )
 
         # Basic validations - don't test specific content since it's generated
         assert isinstance(description, str)
@@ -1310,92 +2438,161 @@ class TestGameScores:
             if "title" in source:
                 assert isinstance(source["title"], str)
 
-    def test_game_date_field_storage_and_usage(self) -> None:
-        """Test that game_date field is properly stored and used in template data."""
-        game_date = "2025-07-27"
-        game_score = GameScore(
-            away_team="Test Team A",
-            home_team="Test Team B",
-            away_starter="Pitcher A",
-            home_starter="Pitcher B",
-            game_time="7:00 PM",
-            game_date=game_date,
-            away_team_nerd_score=5.0,
-            home_team_nerd_score=6.0,
-            average_team_nerd_score=5.5,
-            away_pitcher_nerd_score=4.0,
-            home_pitcher_nerd_score=7.0,
-            average_pitcher_nerd_score=5.5,
-            gnerd_score=11.0,
-            away_team_nerd_stats=None,
-            home_team_nerd_stats=None,
-            away_pitcher_nerd_stats=None,
-            home_pitcher_nerd_stats=None,
-        )
-
-        # Test that game_date is stored correctly
-        assert game_score.game_date == game_date
-
-        # Test that template data uses stored game_date
-        template_data = game_score._prepare_template_data()
-        assert template_data["game_date"] == game_date
-
-        # Test that template data falls back to parameter if no stored date
-        game_score_no_date = GameScore(
-            away_team="Test Team A",
-            home_team="Test Team B",
-            away_starter="Pitcher A",
-            home_starter="Pitcher B",
-            game_time="7:00 PM",
-            game_date=None,
-            away_team_nerd_score=5.0,
-            home_team_nerd_score=6.0,
-            average_team_nerd_score=5.5,
-            away_pitcher_nerd_score=4.0,
-            home_pitcher_nerd_score=7.0,
-            average_pitcher_nerd_score=5.5,
-            gnerd_score=11.0,
-            away_team_nerd_stats=None,
-            home_team_nerd_stats=None,
-            away_pitcher_nerd_stats=None,
-            home_pitcher_nerd_stats=None,
-        )
-
-        # Test fallback to "TBD" when no stored date
-        template_data_tbd = game_score_no_date._prepare_template_data()
-        assert template_data_tbd["game_date"] == "TBD"
-
-    def test_from_games_extracts_game_date(self) -> None:
-        """Test that from_games method extracts and stores game_date from game dictionaries."""
+    @pytest.mark.costly
+    def test_from_games_with_llm_description_cheap_model_real_api(self) -> None:
+        """Test from_games with game_desc_source='llm' using real API calls with MODEL_STRING_CHEAP."""
         games = [
             {
-                "away_team": "New York Yankees",
-                "home_team": "Boston Red Sox",
-                "away_starter": "Gerrit Cole",
-                "home_starter": "Brayan Bello",
-                "time": "7:10 PM",
-                "date": "2025-07-27",
+                "away_team": "Seattle Mariners",
+                "home_team": "Los Angeles Angels",
+                "away_starter": "Logan Gilbert",
+                "home_starter": "Reid Detmers",
+                "time": "9:40 PM",
+                "date": "2025-07-28",
             }
         ]
+
+        # Create realistic mock data for the teams and pitchers
+        mock_team_nerd_details = {
+            "SEA": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="SEA",
+                    batting_runs=15.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=8.0,
+                    fielding_runs=12.0,
+                    payroll=180.0,
+                    age=27.5,
+                    luck=5.0,
+                ),
+                z_batting_runs=1.2,
+                z_barrel_rate=0.7,
+                z_baserunning_runs=0.6,
+                z_fielding_runs=1.0,
+                z_payroll=-0.3,
+                z_age=-0.8,
+                z_luck=0.3,
+                adjusted_payroll=0.3,
+                adjusted_age=0.8,
+                adjusted_luck=0.3,
+                tnerd_score=8.9,
+            ),
+            "LAA": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="LAA",
+                    batting_runs=8.0,
+                    barrel_rate=0.075,
+                    baserunning_runs=2.0,
+                    fielding_runs=5.0,
+                    payroll=200.0,
+                    age=29.0,
+                    luck=8.0,
+                ),
+                z_batting_runs=0.6,
+                z_barrel_rate=0.3,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.4,
+                z_payroll=-0.7,
+                z_age=0.2,
+                z_luck=0.4,
+                adjusted_payroll=0.7,
+                adjusted_age=0.0,
+                adjusted_luck=0.4,
+                tnerd_score=6.5,
+            ),
+        }
+
+        mock_pitcher_nerd_details = {
+            "Logan Gilbert": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Logan Gilbert",
+                    team="SEA",
+                    xfip_minus=85.0,
+                    swinging_strike_rate=0.13,
+                    strike_rate=0.67,
+                    velocity=96.0,
+                    age=28,
+                    pace=20.0,
+                    luck=3.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-1.3,
+                z_swinging_strike_rate=1.5,
+                z_strike_rate=1.0,
+                z_velocity=1.2,
+                z_age=-0.2,
+                z_pace=-0.8,
+                adjusted_velocity=1.2,
+                adjusted_age=0.2,
+                adjusted_luck=0.15,
+                pnerd_score=9.2,
+            ),
+            "Reid Detmers": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Reid Detmers",
+                    team="LAA",
+                    xfip_minus=102.0,
+                    swinging_strike_rate=0.10,
+                    strike_rate=0.62,
+                    velocity=92.5,
+                    age=25,
+                    pace=23.0,
+                    luck=-2.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=0.4,
+                z_swinging_strike_rate=-0.8,
+                z_strike_rate=-0.3,
+                z_velocity=-0.2,
+                z_age=-0.9,
+                z_pace=0.5,
+                adjusted_velocity=0.0,
+                adjusted_age=0.9,
+                adjusted_luck=0.0,
+                pnerd_score=5.1,
+            ),
+        }
 
         with (
             patch(
                 "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
-            ) as mock_team_scores,
+            ) as mock_team,
             patch(
                 "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
-            ) as mock_pitcher_scores,
-            patch(
-                "mlb_watchability.game_scores.get_team_abbreviation"
-            ) as mock_get_abbr,
+            ) as mock_pitcher,
         ):
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
 
-            # Mock return values
-            mock_team_scores.return_value = {}
-            mock_pitcher_scores.return_value = {}
-            mock_get_abbr.side_effect = lambda x: x[:3].upper()
-
-            game_scores = GameScore.from_games(games)
+            # Test with LLM source, limit of 1, and MODEL_STRING_CHEAP
+            game_scores = GameScore.from_games(
+                games,
+                2025,
+                game_desc_source="llm",
+                game_desc_limit=1,
+                model=MODEL_STRING_CHEAP,
+            )
 
             assert len(game_scores) == 1
-            assert game_scores[0].game_date == "2025-07-27"
+            game_score = game_scores[0]
+
+            # Verify the game has a description from the LLM
+            assert game_score.game_description is not None
+            assert isinstance(game_score.game_description, str)
+            assert len(game_score.game_description) > 10  # Should have some content
+
+            # Verify web sources (could be empty or populated)
+            assert game_score.game_description_sources is not None
+            assert isinstance(game_score.game_description_sources, list)
+
+            # Should not contain template variables (basic sanity check)
+            assert "{" not in game_score.game_description
+            assert "}" not in game_score.game_description
+
+            # Verify web sources structure if present
+            for source in game_score.game_description_sources:
+                assert isinstance(source, dict)
+                if "url" in source:
+                    assert isinstance(source["url"], str)
+                if "title" in source:
+                    assert isinstance(source["title"], str)

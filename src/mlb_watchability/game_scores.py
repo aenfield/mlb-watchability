@@ -73,13 +73,22 @@ class GameScore:
     away_pitcher_nerd_stats: PitcherNerdStats | None
     home_pitcher_nerd_stats: PitcherNerdStats | None
 
+    # Game description and sources
+    game_description: str | None = None
+    game_description_sources: list[dict[str, Any]] | None = None
+
     # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
     # pitcher code figure out and make their own game score contributions (while the spec says average of
     # each of team and game and then added together, that really just boils down to 1/4 of each value)
 
     @classmethod
     def from_games(
-        cls, games: list[dict[str, Any]], season: int = 2025
+        cls,
+        games: list[dict[str, Any]],
+        season: int = 2025,
+        game_desc_source: str | None = None,
+        game_desc_limit: int = 1,
+        model: str = MODEL_STRING_FULL,
     ) -> list["GameScore"]:
         """
         Calculate gNERD scores for a list of games.
@@ -87,6 +96,9 @@ class GameScore:
         Args:
             games: List of game dictionaries with team and pitcher information
             season: Season year for statistics calculation
+            game_desc_source: Source for game descriptions - None, "canned", or "llm"
+            game_desc_limit: Number of top games to generate descriptions for (default 1)
+            model: Model to use for LLM descriptions (default MODEL_STRING_FULL)
 
         Returns:
             List of GameScore objects sorted by gNERD score (highest first)
@@ -186,6 +198,19 @@ class GameScore:
 
         # Sort by gNERD score (highest first)
         game_scores.sort(key=lambda x: x.gnerd_score, reverse=True)
+
+        # Set game descriptions for top games based on game_desc_source parameter
+        if game_desc_source is not None:
+            canned_description = "A concise summary of this compelling matchup, featuring two teams with distinct strengths and strategic approaches. The visiting team brings their road experience and adaptability, while the home team looks to leverage familiar surroundings and fan support. Both squads showcase interesting statistical profiles across pitching, hitting, and defensive metrics. Key storylines include starting pitcher matchups, offensive production potential, and bullpen depth. Recent team performance suggests this could be a competitive contest with multiple momentum shifts. Strategic decisions from both managers will likely play crucial roles in determining the outcome. Individual player performances could significantly impact team standings and future positioning. This game represents quality baseball with engaging narratives for viewers."
+
+            for _i, game_score in enumerate(game_scores[:game_desc_limit]):
+                if game_desc_source == "canned":
+                    game_score.game_description = canned_description
+                    game_score.game_description_sources = []
+                elif game_desc_source == "llm":
+                    description, sources = game_score.generate_description(model=model)
+                    game_score.game_description = description
+                    game_score.game_description_sources = sources
 
         return game_scores
 
@@ -327,20 +352,25 @@ class GameScore:
         return self._render_prompt_template(template_data)
 
     def get_description_from_llm_using_prompt(
-        self, completed_prompt: str
+        self, completed_prompt: str, model: str = MODEL_STRING_FULL
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate description from LLM using the provided completed prompt."""
         description, web_sources = generate_text_from_llm(
             prompt=completed_prompt,
-            model=MODEL_STRING_FULL,
+            model=model,
             temperature=0.7,
             include_web_search=True,
         )
         return description, web_sources
 
-    def generate_description(self) -> tuple[str, list[dict[str, Any]]]:
+    def generate_description(
+        self, model: str = MODEL_STRING_FULL
+    ) -> tuple[str, list[dict[str, Any]]]:
         """
         Generate an AI-powered description of the game using team and pitcher details.
+
+        Args:
+            model: The model to use for description generation (default: MODEL_STRING_FULL)
 
         Returns:
             Tuple of (generated description string, list of web sources)
@@ -353,7 +383,7 @@ class GameScore:
         formatted_prompt = self.generate_formatted_prompt()
 
         description, web_sources = self.get_description_from_llm_using_prompt(
-            formatted_prompt
+            formatted_prompt, model
         )
 
         # description, web_sources = generate_text_from_llm(
