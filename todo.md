@@ -138,9 +138,9 @@ The example section ends here. There should be a section like the above for each
 
 ~~Canned description text: "A concise summary of this compelling matchup, featuring two teams with distinct strengths and strategic approaches. The visiting team brings their road experience and adaptability, while the home team looks to leverage familiar surroundings and fan support. Both squads showcase interesting statistical profiles across pitching, hitting, and defensive metrics. Key storylines include starting pitcher matchups, offensive production potential, and bullpen depth. Recent team performance suggests this could be a competitive contest with multiple momentum shifts. Strategic decisions from both managers will likely play crucial roles in determining the outcome. Individual player performances could significantly impact team standings and future positioning. This game represents quality baseball with engaging narratives for viewers."~~
 
-35.
+35. ~~Update mlbw-markdown to remove --game_descriptions and replace with --game_desc_source which maps to the from_games parameter game_desc_source and so can be either "canned" or "llm", and --game_desc_limit which maps to from_games game_desc_limit and so is an integer. If --game_desc_source is provided but --game_desc_limit is not, then --game_desc_limit is assumed to be 1. If --game_desc_limit is provided but --game_desc_source is not, then --game_desc_source is assumed to be "canned". Pass these values through to from_games and let it do its thing. If neither of these two new args is provided, then mlbw-markdown should not include description fields in the output.~~
 
-36. TODO add links from the search to the description UI. This item is prep to tie the game description plumbing to the mlbw-markdown tool.
+36. ~~Do first cut at adding links from the search to the description UI. I can iterate on the UI if I care to, later.~~
 
 ## Notes for possible integration and enhancement
 

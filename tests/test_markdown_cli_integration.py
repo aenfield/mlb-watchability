@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
-from mlb_watchability.game_scores import GameScore
+from mlb_watchability.game_scores import CANNED_GAME_DESCRIPTION, GameScore
 from mlb_watchability.markdown_cli import app as markdown_app
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
 from mlb_watchability.team_stats import TeamNerdStats, TeamStats
@@ -236,6 +236,8 @@ class TestMarkdownCliIntegration:
                 home_team_nerd_stats=None,
                 away_pitcher_nerd_stats=None,
                 home_pitcher_nerd_stats=None,
+                game_description=CANNED_GAME_DESCRIPTION,
+                game_description_sources=[],
             ),
             GameScore(
                 away_team="Boston Red Sox",
@@ -255,6 +257,8 @@ class TestMarkdownCliIntegration:
                 home_team_nerd_stats=None,
                 away_pitcher_nerd_stats=None,
                 home_pitcher_nerd_stats=None,
+                game_description=None,
+                game_description_sources=None,
             ),
         ]
 
@@ -471,7 +475,7 @@ class TestMarkdownCliIntegration:
             }
         ]
 
-        # Create a game with Mariners to test the special description
+        # Create a game with canned description to test new functionality
         mariners_game = GameScore(
             away_team="Seattle Mariners",
             home_team="Los Angeles Dodgers",
@@ -490,6 +494,8 @@ class TestMarkdownCliIntegration:
             home_team_nerd_stats=None,
             away_pitcher_nerd_stats=None,
             home_pitcher_nerd_stats=None,
+            game_description=CANNED_GAME_DESCRIPTION,
+            game_description_sources=[],
         )
         mock_calculate_scores.return_value = [mariners_game]
 
@@ -498,9 +504,9 @@ class TestMarkdownCliIntegration:
             try:
                 os.chdir(temp_dir)
 
-                # Run the CLI command with --game-descriptions flag
+                # Run the CLI command with --game-desc-source canned
                 result = self.runner.invoke(
-                    markdown_app, ["2025-07-20", "--game-descriptions"]
+                    markdown_app, ["2025-07-20", "--game-desc-source", "canned"]
                 )
 
                 # Check that command succeeded
@@ -520,12 +526,9 @@ class TestMarkdownCliIntegration:
                 # Should contain Description sections
                 assert "### Summary" in content
 
-                # Should contain Mariners-specific description text
-                assert (
-                    "Seattle Mariners continue their pursuit of playoff contention"
-                    in content
-                )
-                assert "characteristic strong pitching staff" in content
+                # Should contain canned description text
+                assert "A concise summary of this compelling matchup" in content
+                assert "distinct strengths and strategic approaches" in content
 
             finally:
                 os.chdir(original_cwd)
@@ -614,9 +617,9 @@ class TestMarkdownCliIntegration:
             try:
                 os.chdir(temp_dir)
 
-                # Run the CLI command with --game-descriptions flag
+                # Run the CLI command with --game-desc-source canned
                 result = self.runner.invoke(
-                    markdown_app, ["2025-07-20", "--game-descriptions"]
+                    markdown_app, ["2025-07-20", "--game-desc-source", "canned"]
                 )
 
                 # Check that command succeeded
@@ -638,6 +641,43 @@ class TestMarkdownCliIntegration:
 
                 # Should NOT contain Mariners-specific text
                 assert "Seattle Mariners continue their pursuit" not in content
+
+            finally:
+                os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    @patch("mlb_watchability.markdown_cli.load_dotenv")
+    def test_env_loading_is_called(
+        self,
+        mock_load_dotenv: MagicMock,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test that load_dotenv is called when the CLI runs."""
+        # Mock return value to simulate .env file found
+        mock_load_dotenv.return_value = True
+
+        # Setup other mocks for minimal functionality
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = []  # No games to avoid complex mocking
+        mock_calculate_scores.return_value = []
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command (this will trigger main function)
+                result = self.runner.invoke(markdown_app, ["2025-07-28"])
+
+                # Check that the command succeeds (even with no games)
+                assert result.exit_code == 0
+
+                # Verify that load_dotenv was called
+                mock_load_dotenv.assert_called_once()
 
             finally:
                 os.chdir(original_cwd)

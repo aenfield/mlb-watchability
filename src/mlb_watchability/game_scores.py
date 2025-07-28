@@ -1,5 +1,6 @@
 """Game score calculator that orchestrates pNERD and tNERD calculations to produce gNERD scores."""
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -14,6 +15,8 @@ from .pitcher_stats import (
 )
 from .team_mappings import get_team_abbreviation
 from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
+
+logger = logging.getLogger(__name__)
 
 # Field mappings for stats dictionaries
 # Format: (field_name, z_score_field_name)
@@ -37,6 +40,20 @@ PITCHER_STAT_FIELDS: list[tuple[str, str | None]] = [
     ("luck", None),  # No z-score for luck
     ("knuckleball_rate", None),  # No z-score for knuckleball rate
 ]
+
+# Standard canned description text used for game summaries
+CANNED_GAME_DESCRIPTION = (
+    "A concise summary of this compelling matchup, featuring two teams with distinct strengths "
+    "and strategic approaches. The visiting team brings their road experience and adaptability, "
+    "while the home team looks to leverage familiar surroundings and fan support. Both squads "
+    "showcase interesting statistical profiles across pitching, hitting, and defensive metrics. "
+    "Key storylines include starting pitcher matchups, offensive production potential, and bullpen "
+    "depth. Recent team performance suggests this could be a competitive contest with multiple "
+    "momentum shifts. Strategic decisions from both managers will likely play crucial roles in "
+    "determining the outcome. Individual player performances could significantly impact team "
+    "standings and future positioning. This game represents quality baseball with engaging "
+    "narratives for viewers."
+)
 
 
 @dataclass
@@ -201,11 +218,9 @@ class GameScore:
 
         # Set game descriptions for top games based on game_desc_source parameter
         if game_desc_source is not None:
-            canned_description = "A concise summary of this compelling matchup, featuring two teams with distinct strengths and strategic approaches. The visiting team brings their road experience and adaptability, while the home team looks to leverage familiar surroundings and fan support. Both squads showcase interesting statistical profiles across pitching, hitting, and defensive metrics. Key storylines include starting pitcher matchups, offensive production potential, and bullpen depth. Recent team performance suggests this could be a competitive contest with multiple momentum shifts. Strategic decisions from both managers will likely play crucial roles in determining the outcome. Individual player performances could significantly impact team standings and future positioning. This game represents quality baseball with engaging narratives for viewers."
-
             for _i, game_score in enumerate(game_scores[:game_desc_limit]):
                 if game_desc_source == "canned":
-                    game_score.game_description = canned_description
+                    game_score.game_description = CANNED_GAME_DESCRIPTION
                     game_score.game_description_sources = []
                 elif game_desc_source == "llm":
                     description, sources = game_score.generate_description(model=model)
@@ -355,6 +370,7 @@ class GameScore:
         self, completed_prompt: str, model: str = MODEL_STRING_FULL
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate description from LLM using the provided completed prompt."""
+        logger.info(f"Retrieving summary for {self.away_team} @ {self.home_team}")
         description, web_sources = generate_text_from_llm(
             prompt=completed_prompt,
             model=model,

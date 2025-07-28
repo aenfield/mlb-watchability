@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import typer
+from dotenv import load_dotenv
 
 from .data_retrieval import get_game_schedule
 from .game_scores import GameScore
@@ -28,16 +29,52 @@ def main(
         default=None,
         help="Date to generate markdown for (YYYY-MM-DD format). Defaults to today.",
     ),
-    game_descriptions: bool = typer.Option(
-        default=False,
-        help="Include game descriptions in the detail output.",
+    game_desc_source: str | None = typer.Option(
+        default=None,
+        help="Source for game descriptions: 'canned' or 'llm'. If not provided, no descriptions are included.",
+    ),
+    game_desc_limit: int | None = typer.Option(
+        default=None,
+        help="Number of top games to generate descriptions for. Defaults to 1 if --game_desc_source is provided.",
     ),
 ) -> None:
     """Generate a markdown file with MLB game watchability scores for a given date."""
 
+    # Load environment variables from .env file
+    env_file_loaded = load_dotenv()
+    if env_file_loaded:
+        logger.info("Loaded environment variables from .env file")
+    else:
+        logger.debug("No .env file found or loaded")
+
+    # Handle parameter defaults and validation
+    if game_desc_source is not None and game_desc_limit is None:
+        game_desc_limit = 1
+    elif game_desc_limit is not None and game_desc_source is None:
+        game_desc_source = "canned"
+
+    # Validate game_desc_source if provided
+    if game_desc_source is not None and game_desc_source not in ["canned", "llm"]:
+        logger.error(
+            f"Invalid game_desc_source: {game_desc_source}. Must be 'canned' or 'llm'."
+        )
+        typer.echo(
+            f"Error: game_desc_source must be 'canned' or 'llm', not '{game_desc_source}'",
+            err=True,
+        )
+        raise typer.Exit(1)
+
     # Determine the date to use
     target_date = date if date is not None else get_today()
     logger.info(f"Generating markdown file for date: {target_date}")
+
+    # Log game description settings
+    if game_desc_source is not None:
+        logger.info(
+            f"Game descriptions enabled: source={game_desc_source}, limit={game_desc_limit}"
+        )
+    else:
+        logger.info("Game descriptions disabled")
 
     try:
         # Extract season year from date
@@ -56,7 +93,12 @@ def main(
 
         # Calculate game scores (pNERD, tNERD, gNERD)
         logger.info("Calculating game scores (pNERD, tNERD, gNERD)")
-        game_scores = GameScore.from_games(games, season)
+        game_scores = GameScore.from_games(
+            games,
+            season,
+            game_desc_source=game_desc_source,
+            game_desc_limit=game_desc_limit or 1,
+        )
         logger.info(f"Successfully calculated scores for {len(game_scores)} games")
 
         if not game_scores:
@@ -73,8 +115,9 @@ def main(
 
         # Generate markdown content
         logger.info("Generating markdown content")
+        include_descriptions = game_desc_source is not None
         markdown_content = generate_complete_markdown_content(
-            target_date, game_scores, game_descriptions
+            target_date, game_scores, include_descriptions
         )
 
         # Generate filename
