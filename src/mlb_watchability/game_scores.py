@@ -41,6 +41,30 @@ PITCHER_STAT_FIELDS: list[tuple[str, str | None]] = [
     ("knuckleball_rate", None),  # No z-score for knuckleball rate
 ]
 
+# Component field mappings for template data
+TEAM_COMPONENT_FIELDS: list[str] = [
+    "batting_component",
+    "barrel_component",
+    "baserunning_component",
+    "fielding_component",
+    "payroll_component",
+    "age_component",
+    "luck_component",
+    "constant_component",
+]
+
+PITCHER_COMPONENT_FIELDS: list[str] = [
+    "xfip_component",
+    "swinging_strike_component",
+    "strike_component",
+    "velocity_component",
+    "age_component",
+    "pace_component",
+    "luck_component",
+    "knuckleball_component",
+    "constant_component",
+]
+
 # Standard canned description text used for game summaries
 CANNED_GAME_DESCRIPTION = (
     "A concise summary of this compelling matchup, featuring two teams with distinct strengths "
@@ -303,6 +327,7 @@ class GameScore:
             prefix: str,
             field_list: list[tuple[str, str | None]],
             stats_attr: str,
+            component_fields: list[str] | None = None,
             extra_fields: dict[str, Any] | None = None,
         ) -> dict[str, Any]:
             """Create a dictionary of stats with appropriate prefix."""
@@ -324,6 +349,15 @@ class GameScore:
                     if z_field_name:
                         result[f"{prefix}_{z_field_name}"] = 0.0
 
+            # Add component fields if available
+            if component_fields and stats_obj:
+                for component_field in component_fields:
+                    result[f"{prefix}_{component_field}"] = getattr(stats_obj, component_field)
+            elif component_fields:
+                # Use default values when no stats available
+                for component_field in component_fields:
+                    result[f"{prefix}_{component_field}"] = 0.0
+
             return result
 
         # Helper function to create team stats dictionary
@@ -331,7 +365,7 @@ class GameScore:
             team_stats: TeamNerdStats | None, prefix: str
         ) -> dict[str, Any]:
             """Create a dictionary of team stats with appropriate prefix."""
-            return create_stats_dict(team_stats, prefix, TEAM_STAT_FIELDS, "team_stats")
+            return create_stats_dict(team_stats, prefix, TEAM_STAT_FIELDS, "team_stats", TEAM_COMPONENT_FIELDS)
 
         # Helper function to create pitcher stats dictionary
         def create_pitcher_stats_dict(
@@ -344,6 +378,7 @@ class GameScore:
                 prefix,
                 PITCHER_STAT_FIELDS,
                 "pitcher_stats",
+                PITCHER_COMPONENT_FIELDS,
                 extra_fields,
             )
 
