@@ -57,6 +57,21 @@ CANNED_GAME_DESCRIPTION = (
 
 
 @dataclass
+class AllGamesNerdStats:
+    """Statistics about NERD scores across all games."""
+
+    min_gnerd: float
+    max_gnerd: float
+    avg_gnerd: float
+    min_team_nerd: float
+    max_team_nerd: float
+    avg_team_nerd: float
+    min_pitcher_nerd: float
+    max_pitcher_nerd: float
+    avg_pitcher_nerd: float
+
+
+@dataclass
 class GameScore:
     """
     Data structure for a complete game score calculation.
@@ -93,6 +108,9 @@ class GameScore:
     # Game description and sources
     game_description: str | None = None
     game_description_sources: list[dict[str, Any]] | None = None
+
+    # Statistics about all games in this set
+    all_games_nerd_stats: AllGamesNerdStats | None = None
 
     # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
     # pitcher code figure out and make their own game score contributions (while the spec says average of
@@ -216,6 +234,43 @@ class GameScore:
         # Sort by gNERD score (highest first)
         game_scores.sort(key=lambda x: x.gnerd_score, reverse=True)
 
+        # Calculate aggregate statistics across all games
+        if game_scores:
+            gnerd_scores = [gs.gnerd_score for gs in game_scores]
+            team_nerd_scores = [gs.away_team_nerd_score for gs in game_scores] + [
+                gs.home_team_nerd_score for gs in game_scores
+            ]
+            pitcher_nerd_scores = [
+                score
+                for gs in game_scores
+                for score in [gs.away_pitcher_nerd_score, gs.home_pitcher_nerd_score]
+                if score is not None
+            ]
+
+            all_games_stats = AllGamesNerdStats(
+                min_gnerd=min(gnerd_scores),
+                max_gnerd=max(gnerd_scores),
+                avg_gnerd=sum(gnerd_scores) / len(gnerd_scores),
+                min_team_nerd=min(team_nerd_scores),
+                max_team_nerd=max(team_nerd_scores),
+                avg_team_nerd=sum(team_nerd_scores) / len(team_nerd_scores),
+                min_pitcher_nerd=(
+                    min(pitcher_nerd_scores) if pitcher_nerd_scores else 0.0
+                ),
+                max_pitcher_nerd=(
+                    max(pitcher_nerd_scores) if pitcher_nerd_scores else 0.0
+                ),
+                avg_pitcher_nerd=(
+                    sum(pitcher_nerd_scores) / len(pitcher_nerd_scores)
+                    if pitcher_nerd_scores
+                    else 0.0
+                ),
+            )
+
+            # Add the aggregate stats to all game score objects
+            for game_score in game_scores:
+                game_score.all_games_nerd_stats = all_games_stats
+
         # Set game descriptions for top games based on game_desc_source parameter
         if game_desc_source is not None:
             for _i, game_score in enumerate(game_scores[:game_desc_limit]):
@@ -326,6 +381,22 @@ class GameScore:
         template_data.update(home_team_data)
         template_data.update(away_pitcher_data)
         template_data.update(home_pitcher_data)
+
+        # Add aggregate statistics across all games if available
+        if self.all_games_nerd_stats:
+            template_data.update(
+                {
+                    "min_gnerd": self.all_games_nerd_stats.min_gnerd,
+                    "max_gnerd": self.all_games_nerd_stats.max_gnerd,
+                    "avg_gnerd": self.all_games_nerd_stats.avg_gnerd,
+                    "min_team_nerd": self.all_games_nerd_stats.min_team_nerd,
+                    "max_team_nerd": self.all_games_nerd_stats.max_team_nerd,
+                    "avg_team_nerd": self.all_games_nerd_stats.avg_team_nerd,
+                    "min_pitcher_nerd": self.all_games_nerd_stats.min_pitcher_nerd,
+                    "max_pitcher_nerd": self.all_games_nerd_stats.max_pitcher_nerd,
+                    "avg_pitcher_nerd": self.all_games_nerd_stats.avg_pitcher_nerd,
+                }
+            )
 
         return template_data
 

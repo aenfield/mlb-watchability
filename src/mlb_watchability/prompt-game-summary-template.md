@@ -19,6 +19,15 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
   - {{ away_starter }} pNERD: {{ "%.2f"|format(away_pitcher_nerd) }}
   - {{ home_starter }} pNERD: {{ "%.2f"|format(home_pitcher_nerd) }}
 
+## Context: All Games Today
+
+{% if min_gnerd is defined -%}
+
+- **Game NERD scores today** range from {{ "%.2f"|format(min_gnerd) }} to {{ "%.2f"|format(max_gnerd) }} (average: {{ "%.2f"|format(avg_gnerd) }})
+- **Team NERD scores today** range from {{ "%.2f"|format(min_team_nerd) }} to {{ "%.2f"|format(max_team_nerd) }} (average: {{ "%.2f"|format(avg_team_nerd) }})
+- **Pitcher NERD scores today** range from {{ "%.2f"|format(min_pitcher_nerd) }} to {{ "%.2f"|format(max_pitcher_nerd) }} (average: {{ "%.2f"|format(avg_pitcher_nerd) }})
+  {% endif %}
+
 ## Supporting Statistics
 
 ### {{ away_team }} Team Stats (tNERD: {{ "%.2f"|format(away_team_nerd) }})
@@ -76,8 +85,9 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
 ## Instructions
 
 - Before writing your summary, search the web for the latest news, injury reports, recent performance, and storylines related to this specific game, both teams, and starting pitchers. Query for the game with the date and time specified above, to avoid getting information about other games that have similar teams and/or pitchers.
+- Use the "Context: All Games Today" section to understand where this game's NERD scores rank relative to other games today. This context should inform your assessment of watchability - a game with scores near the maximum ranges is more compelling than one near the minimums. (Further, this implementation of NERD scores doesn't have scores that always range from 0-10; it doesn't follow the original Cistulli scores.)
 - Start your summary with one or two bold sentences that capture the essence of why this game is worth watching (or not). This should summarize your overall assessment before diving into details. If necessary, generate a draft summary so you know what you'll say, and then go back and add the summary at the top.
-- Overall, explain why this game is more or less watchable based on the specific NERD components, supplemented by what you learned in your web searches.
+- Overall, explain why this game is more or less watchable based on the specific NERD components and how they compare to today's range, supplemented by what you learned in your web searches.
 - Don't use bullets or emojis or different sections: just keep it to sentences.
 - Write in a witty and wry but still engaging tone that helps viewers understand why they should (or shouldn't) prioritize this game. Avoid hyperbolic language - not every game is 'exceptional', 'fascinating', 'remarkable', 'jaw-dropping', 'intriguing', or 'classic'. Instead, leave out unnecessary adjectives unless something is truly noteworthy and generally use more measured language.
 - Highlight pitcher performances for pitchers with high pNERD scores and particular points of novelty (like rookies making debuts, long-time pitchers returning from injuries), etc. Note that pNERD scores of 0 indicate we don't have statistical data available for that pitcher.
