@@ -38,10 +38,10 @@ jobs:
         run: |
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
-            uv run mlbw-markdown "${{ github.event.inputs.date }}" --game-desc-source llm --game-desc-limit 15
+            uv run mlbw-markdown "${{ github.event.inputs.date }}" --game-desc-source llm --game-desc-limit 30
           else
             echo "Running mlbw-markdown with today's date"
-            uv run mlbw-markdown --game-desc-source llm --game-desc-limit 15
+            uv run mlbw-markdown --game-desc-source llm --game-desc-limit 30
           fi
 
       - name: Upload markdown artifact
