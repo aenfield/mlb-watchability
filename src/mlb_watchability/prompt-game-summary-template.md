@@ -19,7 +19,9 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
   - {{ away_starter }} pNERD: {{ "%.2f"|format(away_pitcher_nerd) }}
   - {{ home_starter }} pNERD: {{ "%.2f"|format(home_pitcher_nerd) }}
 
-## Context: All Games Today
+## Historic and today's games context
+
+Historically, gNERD scores range approxiately between 3 and 17, tNERD scores between 0 and 10, and pNERD between -2 and 15.
 
 {% if min_gnerd is defined -%}
 
@@ -85,7 +87,7 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
 ## Instructions
 
 - Before writing your summary, search the web for the latest news, injury reports, recent performance, and storylines related to this specific game, both teams, and starting pitchers. Query for the game with the date and time specified above, to avoid getting information about other games that have similar teams and/or pitchers.
-- Use the "Context: All Games Today" section to understand where this game's NERD scores rank relative to other games today. This context should inform your assessment of watchability - a game with scores near the maximum ranges is more compelling than one near the minimums. (Further, this implementation of NERD scores doesn't have scores that always range from 0-10; it doesn't follow the original Cistulli scores.)
+- Use the "Historic and today's games context" section to understand where this game's NERD scores rank relative to other games historically and to today. This context should inform your assessment of watchability - a game with scores near the maximum ranges is more compelling than one near the minimums. (Further, this implementation of NERD scores doesn't have scores that always range from 0-10; it doesn't follow the original Cistulli scores.)
 - Start your summary with one or two bold sentences that capture the essence of why this game is worth watching (or not). This should summarize your overall assessment before diving into details. If necessary, generate a draft summary so you know what you'll say, and then go back and add the summary at the top.
 - Overall, explain why this game is more or less watchable based on the specific NERD components and how they compare to today's range, supplemented by what you learned in your web searches.
 - Don't use bullets or emojis or different sections: just keep it to sentences.
