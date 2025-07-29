@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Andrew Enfield", email = "andrewenfield@gmail.com"},
+    {name = "Andrew Enfield", email = "aenfield@gmail.com"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -49,8 +49,8 @@ mlbw-markdown = "mlb_watchability.markdown_cli:app"
 mlbw-prompt = "mlb_watchability.prompt_cli:app"
 
 [project.urls]
-Homepage = "https://github.com/andrewenfield/mlb-watchability"
-Issues = "https://github.com/andrewenfield/mlb-watchability/issues"
+Homepage = "https://github.com/aenfield/mlb-watchability"
+Issues = "https://github.com/aenfield/mlb-watchability/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlb_watchability"]
