@@ -75,19 +75,20 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
 
 ## Instructions
 
-- Before writing your summary, search the web for the latest news, injury reports, recent performance, and storylines related to this specific game, both teams, and starting pitchers. Be sure to query for the game with the date and time specified above, to avoid getting information about other games that have similar teams and/or pitchers.
+- Before writing your summary, search the web for the latest news, injury reports, recent performance, and storylines related to this specific game, both teams, and starting pitchers. Query for the game with the date and time specified above, to avoid getting information about other games that have similar teams and/or pitchers.
+- Start your summary with one or two bold sentences that capture the essence of why this game is worth watching (or not). This should summarize your overall assessment before diving into details. If necessary, generate a draft summary so you know what you'll say, and then go back and add the summary at the top.
 - Overall, explain why this game is more or less watchable based on the specific NERD components, supplemented by what you learned in your web searches.
 - Don't use bullets or emojis or different sections: just keep it to sentences.
-- Write in a witty and wry but still engaging tone that helps viewers understand why they should (or shouldn't) prioritize this game.
-- Highlight pitcher performances for pitchers with high pNERD scores and particular points of novelty (like rookies making debuts, long-time pitchers returning from injuries), etc.
+- Write in a witty and wry but still engaging tone that helps viewers understand why they should (or shouldn't) prioritize this game. Avoid hyperbolic language - not every game is 'exceptional', 'fascinating', 'remarkable', 'jaw-dropping', 'intriguing', or 'classic'. Instead, leave out unnecessary adjectives unless something is truly noteworthy and generally use more measured language.
+- Highlight pitcher performances for pitchers with high pNERD scores and particular points of novelty (like rookies making debuts, long-time pitchers returning from injuries), etc. Note that pNERD scores of 0 indicate we don't have statistical data available for that pitcher.
 - **Only** if there are particularly interesting things, consider including one or at most a few of the following possibilties, while erring on the side of leaving something out unless it's interesting:
-  - Exceptional team metrics that contribute to entertainment value.
+  - Notable team metrics that contribute to entertainment value.
   - Interesting matchups or statistical contrasts.
   - Interesting current storylines that add to watchability.
   - Items of interesting historical significance, rivalries, and the like.
-- Prefer more analytically-minded statistics while also not short-changing useful standard statistics. For example, IP, strikeouts, HRs, xFIP and xFIP, WAR are all good, while RBI, ERA, etc. generally aren't.
-- Don't discuss the time or date of the game - don't say 'this afternoon's game', etc.
+- Prefer more analytically-minded statistics while also not short-changing useful standard statistics. For example, IP, strikeouts, walks, HRs, xFIP, FIP, and WAR are all good, while RBI and ERA generally aren't. Use xFIP or FIP instead of ERA when discussing pitching effectiveness.
+- The "Luck" component for both tNERD and pNERD will be positive when a team or pitcher is underperforming their skill-based statistics, and so is likely to regress positively to better performance. For example, for pNERD, "Luck" is ERA- minus xFIP-, and pitchers that have been unlucky in the sense that their ERA is higher than the corresponding defense-independent stat can be expected regress positively, which is a good thing to watch. That is, a pitcher with an ERA- of 110 (10% worse than average) with an xFIP- of 95 (5% better than average) would be expected to have a better ERA- (and ERA) in the future, so if this value is positive it's a good thing. For tNERD, it's calculated as wRC minus Runs - expected runs minus actual runs, so teams that have been unlucky by scoring fewer runs than expected get a positive luck boost, as they can be expected to regress positively.
+- Don't discuss the time or date of the game - don't say 'this afternoon's game', etc. You don't know when someone will read the summary.
 - If there's not much to say for a particular instruction, leave it out - prefer being concise and only saying things when they're worthwhile.
-- When you output the overall one or two sentences that summarize everything you're saying, which you usually do at the end of the summary, emphasize them by making them bold.
 
-Now, following the above instructions, create a **concise** summary. Don't preface or follow your summary with text that's not part of the summary. The summary should have approximately 150-175 words.
+Now, following the above instructions, create a **concise** summary. Don't preface or follow your summary with text that's not part of the summary. The summary should have approximately 150-175 words. After you've finished the summary, check to make sure it's not too long, and shorten it - still following the instructions above - if needed.
