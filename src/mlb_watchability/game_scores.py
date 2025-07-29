@@ -352,7 +352,9 @@ class GameScore:
             # Add component fields if available
             if component_fields and stats_obj:
                 for component_field in component_fields:
-                    result[f"{prefix}_{component_field}"] = getattr(stats_obj, component_field)
+                    result[f"{prefix}_{component_field}"] = getattr(
+                        stats_obj, component_field
+                    )
             elif component_fields:
                 # Use default values when no stats available
                 for component_field in component_fields:
@@ -365,7 +367,13 @@ class GameScore:
             team_stats: TeamNerdStats | None, prefix: str
         ) -> dict[str, Any]:
             """Create a dictionary of team stats with appropriate prefix."""
-            return create_stats_dict(team_stats, prefix, TEAM_STAT_FIELDS, "team_stats", TEAM_COMPONENT_FIELDS)
+            return create_stats_dict(
+                team_stats,
+                prefix,
+                TEAM_STAT_FIELDS,
+                "team_stats",
+                TEAM_COMPONENT_FIELDS,
+            )
 
         # Helper function to create pitcher stats dictionary
         def create_pitcher_stats_dict(

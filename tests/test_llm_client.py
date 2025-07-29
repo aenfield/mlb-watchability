@@ -32,7 +32,7 @@ class TestLLMResponse:
         response = LLMResponse(content="test content", model=MODEL_STRING_CHEAP)
         assert response.content == "test content"
         assert response.model == MODEL_STRING_CHEAP
-        assert response.usage_tokens is None
+        assert response.usage is None
         assert response.cost_estimate is None
 
     def test_response_with_metadata(self) -> None:
@@ -40,10 +40,14 @@ class TestLLMResponse:
         response = LLMResponse(
             content="test content",
             model=MODEL_STRING_CHEAP,
-            usage_tokens=150,
+            usage={"input_tokens": 75, "output_tokens": 75, "web_search_requests": 0},
             cost_estimate=0.003,
         )
-        assert response.usage_tokens == 150
+        assert response.usage == {
+            "input_tokens": 75,
+            "output_tokens": 75,
+            "web_search_requests": 0,
+        }
         assert response.cost_estimate == 0.003
         assert response.web_sources is None
 
@@ -113,6 +117,7 @@ class TestAnthropicClient:
         mock_usage = Mock()
         mock_usage.input_tokens = 50
         mock_usage.output_tokens = 50
+        mock_usage.server_tool_use = None
 
         mock_response = Mock()
         mock_response.content = [mock_content_block]
@@ -133,7 +138,11 @@ class TestAnthropicClient:
             assert isinstance(response, LLMResponse)
             assert response.content == "Generated response text"
             assert response.model == MODEL_STRING_CHEAP
-            assert response.usage_tokens == 100
+            assert response.usage == {
+                "input_tokens": 50,
+                "output_tokens": 50,
+                "web_search_requests": 0,
+            }
 
             # Verify the API call
             mock_client.messages.create.assert_called_once_with(
@@ -161,7 +170,7 @@ class TestAnthropicClient:
             response = client.generate_text("Test prompt", model=MODEL_STRING_CHEAP)
 
             assert response.model == MODEL_STRING_CHEAP
-            assert response.usage_tokens is None
+            assert response.usage is None
 
             mock_client.messages.create.assert_called_once_with(
                 model=MODEL_STRING_CHEAP,
@@ -299,6 +308,39 @@ class TestAnthropicClient:
 
             assert response.content == "Generated response"
             assert response.web_sources == []  # Error results filtered out
+
+    def test_generate_text_web_search_requests_tracking(self) -> None:
+        """Test that web_search_requests are properly tracked from server_tool_use."""
+        mock_text_block = Mock()
+        mock_text_block.text = "Generated response with web search"
+
+        # Mock usage with server_tool_use containing web_search_requests
+        mock_server_tool_use = Mock()
+        mock_server_tool_use.web_search_requests = 2
+
+        mock_usage = Mock()
+        mock_usage.input_tokens = 100
+        mock_usage.output_tokens = 50
+        mock_usage.server_tool_use = mock_server_tool_use
+
+        mock_response = Mock()
+        mock_response.content = [mock_text_block]
+        mock_response.usage = mock_usage
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(api_key="test-key")
+            response = client.generate_text("Test prompt", include_web_search=True)
+
+            assert response.content == "Generated response with web search"
+            assert response.usage == {
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "web_search_requests": 2,
+            }
 
 
 class TestCreateLLMClient:
@@ -450,6 +492,7 @@ class TestIntegrationScenarios:
         mock_usage = Mock()
         mock_usage.input_tokens = 25
         mock_usage.output_tokens = 50
+        mock_usage.server_tool_use = None
 
         mock_response = Mock()
         mock_response.content = [mock_content_block]
@@ -472,7 +515,11 @@ class TestIntegrationScenarios:
                     == "This is a comprehensive game summary with analysis."
                 )
                 assert response.model == MODEL_STRING_CHEAP
-                assert response.usage_tokens == 75
+                assert response.usage == {
+                    "input_tokens": 25,
+                    "output_tokens": 50,
+                    "web_search_requests": 0,
+                }
 
                 # Verify the API was called correctly
                 expected_call = {
@@ -532,8 +579,8 @@ class TestCallActualAPI:
     #     # Basic validation - don't test specific content as it's brittle
     #     assert isinstance(response, LLMResponse)
     #     assert response.model == MODEL_STRING_CHEAP
-    #     assert response.usage_tokens is not None
-    #     assert response.usage_tokens > 0
+    #     assert response.usage is not None
+    #     assert response.usage["input_tokens"] > 0
     #     assert len(response.content) > 0
     #     assert response.web_sources == []
 
@@ -552,8 +599,8 @@ class TestCallActualAPI:
     #     # Basic validation - don't test specific content as it's brittle
     #     assert isinstance(response, LLMResponse)
     #     assert response.model == MODEL_STRING_CHEAP
-    #     assert response.usage_tokens is not None
-    #     assert response.usage_tokens > 0
+    #     assert response.usage is not None
+    #     assert response.usage["input_tokens"] > 0
     #     assert len(response.content) > 0
     #     # I'm going to test for web results even though I don't know 100% since the model decides when to search
     #     assert isinstance(response.web_sources, list) and len(response.web_sources) > 0

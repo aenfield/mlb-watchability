@@ -34,7 +34,9 @@ class LLMResponse:
 
     content: str
     model: str
-    usage_tokens: int | None = None
+    usage: dict[str, int] | None = (
+        None  # Contains input_tokens, output_tokens, web_search_requests
+    )
     cost_estimate: float | None = None
     web_sources: list[dict[str, Any]] | None = None
 
@@ -147,11 +149,23 @@ class AnthropicClient(LLMClient):
                 _raise_empty_response_error()
 
             # Extract usage information if available
-            usage_tokens = None
+            usage = None
             if hasattr(response, "usage") and response.usage is not None:
-                usage_tokens = (
-                    response.usage.input_tokens + response.usage.output_tokens
-                )
+                # Extract web search requests from server_tool_use if available
+                web_search_requests = 0
+                if (
+                    hasattr(response.usage, "server_tool_use")
+                    and response.usage.server_tool_use is not None
+                ):
+                    web_search_requests = getattr(
+                        response.usage.server_tool_use, "web_search_requests", 0
+                    )
+
+                usage = {
+                    "input_tokens": response.usage.input_tokens,
+                    "output_tokens": response.usage.output_tokens,
+                    "web_search_requests": web_search_requests,
+                }
 
             # Extract web search sources if available
             web_sources = []
@@ -185,15 +199,23 @@ class AnthropicClient(LLMClient):
                                         }
                                     )
 
-            logger.info(
-                f"Generated {len(content)} characters using {model_to_use}, "
-                f"tokens: {usage_tokens}, web_sources: {len(web_sources)}"
-            )
+            # Log usage details
+            if usage:
+                logger.info(
+                    f"Generated {len(content)} characters using {model_to_use}, "
+                    f"input_tokens: {usage['input_tokens']}, output_tokens: {usage['output_tokens']}, "
+                    f"web_search_requests: {usage['web_search_requests']}, web_sources: {len(web_sources)}"
+                )
+            else:
+                logger.info(
+                    f"Generated {len(content)} characters using {model_to_use}, "
+                    f"usage: unavailable, web_sources: {len(web_sources)}"
+                )
 
             return LLMResponse(
                 content=content,
                 model=model_to_use,
-                usage_tokens=usage_tokens,
+                usage=usage,
                 web_sources=web_sources,
             )
 
