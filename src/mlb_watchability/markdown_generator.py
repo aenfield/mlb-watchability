@@ -296,7 +296,7 @@ def generate_team_breakdown_table(
         "",
         "{% wideTable %}",
         "",
-        "|              | Batting Runs | Barrel % | Baserunning | Fielding | Payroll | Age   | Luck | Constant | TOTAL |",
+        "|              | Batting Runs | Barrel % | Baserunning Runs | Fielding Runs | Payroll | Age   | Luck | Constant | TOTAL |",
         "| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |",
         raw_row,
         z_row,
