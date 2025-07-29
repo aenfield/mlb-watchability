@@ -9,9 +9,22 @@ on:
   workflow_dispatch:
     inputs:
       date:
-        description: "Date for markdown generation (YYYY-MM-DD format, optional)"
+        description: "Game date (YYYY-MM-DD, defaults to today's date)"
         required: false
         type: string
+      game-desc-source:
+        description: "Game description source ('llm' or 'canned', defaults to 'canned')"
+        required: false
+        type: choice
+        options:
+          - llm
+          - canned
+        default: canned
+      game-desc-limit:
+        description: "Maximum number of games to generate descriptions for (defaults to 1)"
+        required: false
+        type: string
+        default: "1"
 
 jobs:
   generate-markdown:
@@ -36,12 +49,18 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DAILYGEN }}
         run: |
+          # Set defaults for scheduled runs or use inputs for manual runs
+          GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'canned' }}"
+          GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '1' }}"
+
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
-            uv run mlbw-markdown "${{ github.event.inputs.date }}" --game-desc-source llm --game-desc-limit 30
+            echo "Using game-desc-source: $GAME_DESC_SOURCE, game-desc-limit: $GAME_DESC_LIMIT"
+            uv run mlbw-markdown "${{ github.event.inputs.date }}" --game-desc-source "$GAME_DESC_SOURCE" --game-desc-limit "$GAME_DESC_LIMIT"
           else
             echo "Running mlbw-markdown with today's date"
-            uv run mlbw-markdown --game-desc-source llm --game-desc-limit 30
+            echo "Using game-desc-source: $GAME_DESC_SOURCE, game-desc-limit: $GAME_DESC_LIMIT"
+            uv run mlbw-markdown --game-desc-source "$GAME_DESC_SOURCE" --game-desc-limit "$GAME_DESC_LIMIT"
           fi
 
       - name: Upload markdown artifact
