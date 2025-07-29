@@ -5,7 +5,7 @@ on:
     # Run every day at 8:00 AM Pacific Time (1500 PM UTC during PDT)
     - cron: "0 15 * * *"
 
-  # Allow manual triggering
+  # Allow manual triggering, with particular defaults suitable for manually triggered jobs
   workflow_dispatch:
     inputs:
       date:
@@ -49,9 +49,9 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DAILYGEN }}
         run: |
-          # Set defaults for scheduled runs or use inputs for manual runs
-          GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'canned' }}"
-          GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '1' }}"
+          # Use defaults for scheduled runs (where the first parts will be empty 
+          GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
+          GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '30' }}"
 
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
