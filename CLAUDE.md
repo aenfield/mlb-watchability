@@ -44,3 +44,7 @@ Additional testing information is in architecture.md.
 - For testing numbers and in the implementation being tested, there's no need to do numeric validation of data from external sources - for example, if a snapshot of data from pybaseball has 'fielding runs' between -35 and 35, there's no need to add a test that checks that this is the case in current or future data and there's no need to add actual implementation code - like in the team_stats impl - to validate that fielding runs data is in this range. At the same time, do validate our own calculations - if we calculate a new field based on existing data, we should have a test or tests to make sure that the new calculation we've implemented is correct.
 - There's also no need to validate that z-scores are within a particular range, as long as we validate that the z-score calculation we implement itself is correct.
 - We don't need this to work with historical data before this year, so you don't need to test with 2024 or earlier - just use 2025 or later if it's no longer 2025. This is specifically and also the case when double-checking with the mlbw command line tool - i.e., do not run 'uv run mlbw 2024-10-10' - instead, asssuming it's 2025, run something like 'uv run mlbw 2025-05-15'.
+
+## Code Principles
+
+- Keep the code DRY ('don't repeat yourself'). Do this when you create new code. Also, when you see duplicated code in your reviews, add a TODO to your internal list and then propose change(s) to reduce/remove the duplication and ask if you should make those change(s).
