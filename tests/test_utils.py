@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from mlb_watchability.utils import (
     extract_year_from_date,
     format_time_12_hour,
+    format_time_24_hour,
     get_today,
     get_tomorrow,
 )
@@ -97,3 +98,31 @@ class TestUtils:
         assert extract_year_from_date("invalid-date") == 2025
         assert extract_year_from_date("") == 2025
         assert extract_year_from_date("2025") == 2025  # Missing dashes
+
+    def test_format_time_24_hour_valid_times(self) -> None:
+        """Test 24-hour time formatting with valid times."""
+        assert format_time_24_hour("22:10") == "2210"
+        assert format_time_24_hour("19:15") == "1915"
+        assert format_time_24_hour("15:40") == "1540"
+        assert format_time_24_hour("13:05") == "1305"
+        assert format_time_24_hour("00:30") == "0030"
+        assert format_time_24_hour("01:00") == "0100"
+        assert format_time_24_hour("09:45") == "0945"
+
+    def test_format_time_24_hour_edge_cases(self) -> None:
+        """Test 24-hour time formatting with edge cases."""
+        assert format_time_24_hour(None) == "TBD"
+        assert format_time_24_hour("") == "TBD"
+        assert format_time_24_hour("TBD") == "TBD"
+        assert format_time_24_hour("invalid") == "invalid"
+        assert (
+            format_time_24_hour("25:00") == "25:00"
+        )  # Invalid hour - should pass through
+        assert format_time_24_hour("12") == "12"  # Missing colon - should pass through
+
+    def test_format_time_24_hour_maintains_format(self) -> None:
+        """Test that 24-hour format is maintained with proper zero padding."""
+        # Test that zero padding is maintained
+        assert format_time_24_hour("00:00") == "0000"
+        assert format_time_24_hour("06:30") == "0630"
+        assert format_time_24_hour("23:59") == "2359"

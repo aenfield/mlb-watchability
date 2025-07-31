@@ -223,7 +223,7 @@ class TestMarkdownCliIntegration:
                 home_team="Los Angeles Dodgers",
                 away_starter="Gerrit Cole",
                 home_starter="Walker Buehler",
-                game_time="22:10",
+                game_time="19:10",
                 game_date="2025-07-27",
                 away_team_nerd_score=8.2,
                 home_team_nerd_score=7.9,
@@ -244,7 +244,7 @@ class TestMarkdownCliIntegration:
                 home_team="Chicago Cubs",
                 away_starter="Brayan Bello",
                 home_starter="Shota Imanaga",
-                game_time="19:15",
+                game_time="16:15",
                 game_date="2025-07-27",
                 away_team_nerd_score=6.8,
                 home_team_nerd_score=9.5,
@@ -280,7 +280,7 @@ class TestMarkdownCliIntegration:
                 "home_team": "Los Angeles Dodgers",
                 "away_starter": "Gerrit Cole",
                 "home_starter": "Walker Buehler",
-                "time": "22:10",
+                "time": "19:10",
             }
         ]
         mock_calculate_scores.return_value = self.create_sample_game_scores()
@@ -317,8 +317,8 @@ class TestMarkdownCliIntegration:
                 # Check intro and footer text
                 # no longer needed, at least for now
 
-                # Check table header with EDT timezone
-                assert "| Score | Time (EDT) |" in content
+                # Check table header with PT timezone
+                assert "| Score | Time (PT) |" in content
 
                 # Check game data
                 assert "New York Yankees" in content
@@ -349,7 +349,7 @@ class TestMarkdownCliIntegration:
                 "home_team": "Chicago Cubs",
                 "away_starter": "Brayan Bello",
                 "home_starter": "Shota Imanaga",
-                "time": "19:15",
+                "time": "16:15",
             }
         ]
         mock_calculate_scores.return_value = self.create_sample_game_scores()
@@ -471,7 +471,7 @@ class TestMarkdownCliIntegration:
                 "home_team": "Los Angeles Dodgers",
                 "away_starter": "Logan Gilbert",
                 "home_starter": "Walker Buehler",
-                "time": "22:10",
+                "time": "19:10",
             }
         ]
 
@@ -481,7 +481,7 @@ class TestMarkdownCliIntegration:
             home_team="Los Angeles Dodgers",
             away_starter="Logan Gilbert",
             home_starter="Walker Buehler",
-            game_time="22:10",
+            game_time="19:10",
             game_date="2025-07-27",
             away_team_nerd_score=7.5,
             home_team_nerd_score=8.9,
@@ -551,7 +551,7 @@ class TestMarkdownCliIntegration:
                 "home_team": "Los Angeles Dodgers",
                 "away_starter": "Gerrit Cole",
                 "home_starter": "Walker Buehler",
-                "time": "22:10",
+                "time": "19:10",
             }
         ]
         mock_calculate_scores.return_value = self.create_sample_game_scores()
@@ -607,7 +607,7 @@ class TestMarkdownCliIntegration:
                 "home_team": "Boston Red Sox",
                 "away_starter": "Gerrit Cole",
                 "home_starter": "Brayan Bello",
-                "time": "19:15",
+                "time": "16:15",
             }
         ]
         mock_calculate_scores.return_value = self.create_sample_game_scores()

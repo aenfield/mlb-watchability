@@ -45,7 +45,7 @@ class TestGetGameSchedule:
                 "date": "2024-07-15",
                 "away_team": "Los Angeles Angels",
                 "home_team": "Texas Rangers",
-                "time": "16:05",  # 20:05 UTC -> 16:05 Eastern (July, EDT)
+                "time": "13:05",  # 20:05 UTC -> 13:05 Pacific (July, PDT)
                 "away_starter": "Tyler Anderson",
                 "home_starter": "Nathan Eovaldi",
             },
@@ -53,7 +53,7 @@ class TestGetGameSchedule:
                 "date": "2024-07-15",
                 "away_team": "New York Yankees",
                 "home_team": "Boston Red Sox",
-                "time": "15:10",  # 19:10 UTC -> 15:10 Eastern (July, EDT)
+                "time": "12:10",  # 19:10 UTC -> 12:10 Pacific (July, PDT)
                 "away_starter": "Gerrit Cole",
                 "home_starter": "Brayan Bello",
             },
@@ -103,7 +103,7 @@ class TestGetGameSchedule:
                 "date": "2024-07-15",
                 "away_team": "Los Angeles Angels",
                 "home_team": "Texas Rangers",
-                "time": "16:05",  # 20:05 UTC -> 16:05 Eastern (July, EDT)
+                "time": "13:05",  # 20:05 UTC -> 13:05 Pacific (July, PDT)
                 "away_starter": "Tyler Anderson",
                 "home_starter": None,
             },

@@ -191,7 +191,7 @@ tags: mlbw
                 home_team="Los Angeles Dodgers",
                 away_starter="Gerrit Cole",
                 home_starter="Walker Buehler",
-                game_time="22:10",
+                game_time="19:10",
                 game_date="2025-07-27",
                 away_team_nerd_score=8.2,
                 home_team_nerd_score=7.9,
@@ -210,7 +210,7 @@ tags: mlbw
                 home_team="Chicago Cubs",
                 away_starter="Brayan Bello",
                 home_starter="Shota Imanaga",
-                game_time="19:15",
+                game_time="16:15",
                 game_date="2025-07-27",
                 away_team_nerd_score=6.8,
                 home_team_nerd_score=9.5,
@@ -234,7 +234,7 @@ tags: mlbw
 
         # Check that the table header is present with correct format
         assert (
-            "| Score | Time (EDT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
+            "| Score | Time (PT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
             in result
         )
         assert (
@@ -251,6 +251,10 @@ tags: mlbw
         assert "Los Angeles Dodgers" in result
         assert "Boston Red Sox" in result
         assert "Chicago Cubs" in result
+
+        # Check that markdown-it-attrs syntax is used for time values (now PT times)
+        assert "7:10p {data-sort='1910'}" in result
+        assert "4:15p {data-sort='1615'}" in result
 
         # Check pitcher names are present
         assert "Gerrit Cole" in result
@@ -394,7 +398,7 @@ tags: mlbw
         assert 'title: "MLB: What to watch on July 20, 2025"' in result
         assert "date: 2025-07-20" in result
         assert "tags: mlbw" in result
-        assert "| Score | Time (EDT)" in result  # Table header
+        assert "| Score | Time (PT)" in result  # Table header
         assert "Test Team A" in result
 
         # Check structure - metadata should be at top, footer at bottom
@@ -660,7 +664,7 @@ tags: mlbw
             home_team="Los Angeles Dodgers",
             away_starter="Gerrit Cole",
             home_starter="Walker Buehler",
-            game_time="22:10",
+            game_time="19:10",
             game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=7.9,
@@ -678,7 +682,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score)
 
         # Check section header
-        assert "## New York Yankees @ Los Angeles Dodgers, 10:10p" in result
+        assert "## New York Yankees @ Los Angeles Dodgers, 7:10p" in result
 
         # Check that team and pitcher names appear in the result
         assert "New York Yankees" in result
@@ -917,7 +921,7 @@ tags: mlbw
             home_team="Los Angeles Dodgers",
             away_starter="Gerrit Cole",
             home_starter="Walker Buehler",
-            game_time="22:10",
+            game_time="19:10",
             game_date="2025-07-27",
             away_team_nerd_score=8.2,
             home_team_nerd_score=7.9,

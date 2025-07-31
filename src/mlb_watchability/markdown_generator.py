@@ -11,7 +11,7 @@ from .pitcher_stats import (
 )
 from .team_mappings import format_team_with_fangraphs_link, get_team_abbreviation
 from .team_stats import TeamNerdStats
-from .utils import format_time_12_hour
+from .utils import format_time_12_hour, format_time_24_hour
 
 
 def generate_automatic_anchor_id(heading_text: str) -> str:
@@ -88,7 +88,7 @@ FOOTER_TEXT = """Notes:
 - **Pitcher 'no data'**: Pitchers only have a pNERD score once they've started at least one game and have at least 20 innings pitched. I might also show 'no data' when I'm not correctly linking the schedule information with a pitcher's stats, like if the names don't match (I have an open issue to improve this).
 """
 
-TABLE_HEADER = "| Score | Time (EDT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
+TABLE_HEADER = "| Score | Time (PT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
 TABLE_SEPARATOR = "|-------|------------|----------|-------|------|-------|-------------|-------|-------------|-------|"
 
 
@@ -129,8 +129,9 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
     lines = ["{% wideTable %}", "", TABLE_HEADER, TABLE_SEPARATOR]
 
     for game_score in game_scores:
-        # Format time with EDT specification
+        # Format time for display and sorting
         time_str = format_time_12_hour(game_score.game_time)
+        time_24h = format_time_24_hour(game_score.game_time)
 
         # Format team names with Fangraphs links
         visitors_team = format_team_with_fangraphs_link(game_score.away_team)
@@ -187,8 +188,13 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
         else:
             home_pitcher_score = "No data"
 
+        # Create sortable time using markdown-it-attrs
+        sortable_time = (
+            f"{time_str} {{data-sort='{time_24h}'}}" if time_24h != "TBD" else time_str
+        )
+
         # Add table row
-        row = f"| {game_score_link} | {time_str} | {visitors_team} | {away_team_score_link} | {home_team} | {home_team_score_link} | {away_pitcher} | {away_pitcher_score} | {home_pitcher} | {home_pitcher_score} |"
+        row = f"| {game_score_link} | {sortable_time} | {visitors_team} | {away_team_score_link} | {home_team} | {home_team_score_link} | {away_pitcher} | {away_pitcher_score} | {home_pitcher} | {home_pitcher_score} |"
         lines.append(row)
 
     lines.append("{% endwideTable %}")

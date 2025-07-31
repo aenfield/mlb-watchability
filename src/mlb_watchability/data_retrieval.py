@@ -53,7 +53,7 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
             away_starter = game.get("away_probable_pitcher") or None
             home_starter = game.get("home_probable_pitcher") or None
 
-            # Format game time if available, convert to Eastern time
+            # Format game time if available, convert to Pacific time
             game_time = None
             if "game_datetime" in game:
                 try:
@@ -69,10 +69,10 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
                             game_datetime.replace("Z", "+00:00")
                         )
 
-                    # Convert to Eastern time
-                    eastern_tz = zoneinfo.ZoneInfo("America/New_York")
-                    eastern_dt = utc_dt.astimezone(eastern_tz)
-                    game_time = eastern_dt.strftime("%H:%M")
+                    # Convert to Pacific time
+                    pacific_tz = zoneinfo.ZoneInfo("America/Los_Angeles")
+                    pacific_dt = utc_dt.astimezone(pacific_tz)
+                    game_time = pacific_dt.strftime("%H:%M")
                 except (ValueError, TypeError):
                     game_time = None
 
