@@ -234,59 +234,52 @@ def calculate_detailed_pitcher_nerd_scores(
     season: int = 2025,
 ) -> dict[str, PitcherNerdStats]:
     """Calculate detailed pitcher NERD scores for all pitchers."""
-    try:
-        # Get all pitcher stats
-        pitcher_stats_dict = get_all_pitcher_stats_objects(season)
+    # Get all pitcher stats
+    pitcher_stats_dict = get_all_pitcher_stats_objects(season)
 
-        # Calculate league means and standard deviations
-        all_pitchers = list(pitcher_stats_dict.values())
+    # Calculate league means and standard deviations
+    all_pitchers = list(pitcher_stats_dict.values())
 
-        # Extract values for each stat
-        xfip_minus_values = [pitcher.xfip_minus for pitcher in all_pitchers]
-        swinging_strike_rates = [
-            pitcher.swinging_strike_rate for pitcher in all_pitchers
-        ]
-        strike_rates = [pitcher.strike_rate for pitcher in all_pitchers]
-        velocities = [pitcher.velocity for pitcher in all_pitchers]
-        ages = [pitcher.age for pitcher in all_pitchers]
-        paces = [pitcher.pace for pitcher in all_pitchers]
+    # Extract values for each stat
+    xfip_minus_values = [pitcher.xfip_minus for pitcher in all_pitchers]
+    swinging_strike_rates = [pitcher.swinging_strike_rate for pitcher in all_pitchers]
+    strike_rates = [pitcher.strike_rate for pitcher in all_pitchers]
+    velocities = [pitcher.velocity for pitcher in all_pitchers]
+    ages = [pitcher.age for pitcher in all_pitchers]
+    paces = [pitcher.pace for pitcher in all_pitchers]
 
-        # Calculate means and standard deviations
-        league_means = {
-            "xfip_minus": stats.tmean(xfip_minus_values),
-            "swinging_strike_rate": stats.tmean(swinging_strike_rates),
-            "strike_rate": stats.tmean(strike_rates),
-            "velocity": stats.tmean(velocities),
-            "age": stats.tmean(ages),
-            "pace": stats.tmean(paces),
-        }
+    # Calculate means and standard deviations
+    league_means = {
+        "xfip_minus": stats.tmean(xfip_minus_values),
+        "swinging_strike_rate": stats.tmean(swinging_strike_rates),
+        "strike_rate": stats.tmean(strike_rates),
+        "velocity": stats.tmean(velocities),
+        "age": stats.tmean(ages),
+        "pace": stats.tmean(paces),
+    }
 
-        league_std_devs = {
-            "xfip_minus": stats.tstd(xfip_minus_values),
-            "swinging_strike_rate": stats.tstd(swinging_strike_rates),
-            "strike_rate": stats.tstd(strike_rates),
-            "velocity": stats.tstd(velocities),
-            "age": stats.tstd(ages),
-            "pace": stats.tstd(paces),
-        }
+    league_std_devs = {
+        "xfip_minus": stats.tstd(xfip_minus_values),
+        "swinging_strike_rate": stats.tstd(swinging_strike_rates),
+        "strike_rate": stats.tstd(strike_rates),
+        "velocity": stats.tstd(velocities),
+        "age": stats.tstd(ages),
+        "pace": stats.tstd(paces),
+    }
 
-        # Calculate pNERD for each pitcher
-        pitcher_nerd_details = {}
-        for pitcher_name, pitcher_stats in pitcher_stats_dict.items():
-            try:
-                pitcher_nerd_stats = PitcherNerdStats.from_stats_and_means(
-                    pitcher_stats, league_means, league_std_devs
-                )
-                pitcher_nerd_details[pitcher_name] = pitcher_nerd_stats
-            except ValueError:
-                # Skip pitchers with invalid pNERD scores (negative values)
-                continue
+    # Calculate pNERD for each pitcher
+    pitcher_nerd_details = {}
+    for pitcher_name, pitcher_stats in pitcher_stats_dict.items():
+        try:
+            pitcher_nerd_stats = PitcherNerdStats.from_stats_and_means(
+                pitcher_stats, league_means, league_std_devs
+            )
+            pitcher_nerd_details[pitcher_name] = pitcher_nerd_stats
+        except ValueError:
+            # Skip pitchers with invalid pNERD scores (negative values)
+            continue
 
-    except Exception:
-        # If calculation fails, return empty dict
-        return {}
-    else:
-        return pitcher_nerd_details
+    return pitcher_nerd_details
 
 
 def remove_accented_characters(name: str) -> str:

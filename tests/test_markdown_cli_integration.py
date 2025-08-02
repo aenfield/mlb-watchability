@@ -5,6 +5,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
+import requests
 from typer.testing import CliRunner
 
 from mlb_watchability.game_scores import CANNED_GAME_DESCRIPTION, GameScore
@@ -681,3 +683,179 @@ class TestMarkdownCliIntegration:
 
             finally:
                 os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    def test_markdown_cli_fails_when_pitcher_stats_raises_exception(
+        self, mock_schedule: MagicMock
+    ) -> None:
+        """Test that markdown CLI fails fast when pitcher stats API returns 403 error."""
+        # Mock get_game_schedule to return valid games
+        mock_schedule.return_value = [
+            {
+                "date": "2025-07-31",
+                "away_team": "Tampa Bay Rays",
+                "home_team": "New York Yankees",
+                "time": "19:05",
+                "away_starter": "Ryan Pepiot",
+                "home_starter": "Marcus Stroman",
+            }
+        ]
+
+        # Mock the pybaseball pitcher stats call to raise HTTPError 403
+        with (
+            patch(
+                "mlb_watchability.data_retrieval.pb.pitching_stats"
+            ) as mock_pb_pitching,
+            patch("mlb_watchability.data_retrieval.pb.team_batting") as mock_pb_team,
+            patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_read_csv,
+        ):
+            mock_pb_pitching.side_effect = requests.exceptions.HTTPError(
+                "Error accessing 'https://www.fangraphs.com/leaders-legacy.aspx'. Received status code 403"
+            )
+            # Mock team batting to succeed so we test the pitcher stats failure
+            mock_pb_team.return_value = pd.DataFrame(
+                {
+                    "Team": ["NYY"],
+                    "Bat": [10.0],
+                    "Barrel%": [0.08],
+                    "BsR": [5.0],
+                    "Fld": [15.0],
+                    "wRC": [100],
+                    "R": [90],
+                }
+            )
+            mock_read_csv.return_value = pd.DataFrame(
+                {"Team": ["NYY"], "Payroll": [200000000], "Age": [28.5]}
+            )
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                original_cwd = os.getcwd()
+                try:
+                    os.chdir(temp_dir)
+
+                    # Run the CLI and expect it to exit with error code 1
+                    result = self.runner.invoke(markdown_app, ["2025-07-31"])
+
+                    assert result.exit_code == 1
+                    assert "Error generating markdown file" in result.output
+                    assert "403" in result.output
+                    # Verify no markdown file was created
+                    assert not Path("mlb_what_to_watch_2025_07_31.md").exists()
+
+                finally:
+                    os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    def test_markdown_cli_fails_when_team_stats_raises_exception(
+        self, mock_schedule: MagicMock
+    ) -> None:
+        """Test that markdown CLI fails fast when team stats API returns 403 error."""
+        # Mock get_game_schedule to return valid games
+        mock_schedule.return_value = [
+            {
+                "date": "2025-07-31",
+                "away_team": "Atlanta Braves",
+                "home_team": "Cincinnati Reds",
+                "time": "19:10",
+                "away_starter": "Carlos Carrasco",
+                "home_starter": "Andrew Abbott",
+            }
+        ]
+
+        # Mock the pybaseball team batting call to raise HTTPError 403
+        with (
+            patch("mlb_watchability.data_retrieval.pb.team_batting") as mock_pb_team,
+            patch(
+                "mlb_watchability.data_retrieval.pb.pitching_stats"
+            ) as mock_pb_pitching,
+            patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_read_csv,
+        ):
+            mock_pb_team.side_effect = requests.exceptions.HTTPError(
+                "Error accessing 'https://www.fangraphs.com/leaders-legacy.aspx'. Received status code 403"
+            )
+            # Mock pitcher stats to succeed so we test the team stats failure
+            mock_pb_pitching.return_value = pd.DataFrame(
+                {
+                    "Name": ["Test Pitcher"],
+                    "Team": ["ATL"],
+                    "GS": [25],
+                    "xFIP-": [100],
+                    "SwStr%": [0.10],
+                    "Strikes": [1000],
+                    "Pitches": [1800],
+                    "FBv": [92.0],
+                    "Age": [28],
+                    "Pace": [23.0],
+                    "ERA-": [95],
+                    "KN%": [0.0],
+                }
+            )
+            mock_read_csv.return_value = pd.DataFrame(
+                {"Team": ["ATL"], "Payroll": [200000000], "Age": [28.5]}
+            )
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                original_cwd = os.getcwd()
+                try:
+                    os.chdir(temp_dir)
+
+                    # Run the CLI and expect it to exit with error code 1
+                    result = self.runner.invoke(markdown_app, ["2025-07-31"])
+
+                    assert result.exit_code == 1
+                    assert "Error generating markdown file" in result.output
+                    assert "403" in result.output
+                    # Verify no markdown file was created
+                    assert not Path("mlb_what_to_watch_2025_07_31.md").exists()
+
+                finally:
+                    os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    def test_markdown_cli_with_simulated_api_failure(
+        self, mock_schedule: MagicMock
+    ) -> None:
+        """Integration test simulating API 403 failures using mocks."""
+        # Mock get_game_schedule to return valid games
+        mock_schedule.return_value = [
+            {
+                "date": "2025-07-31",
+                "away_team": "Texas Rangers",
+                "home_team": "Seattle Mariners",
+                "time": "22:40",
+                "away_starter": "Kumar Rocker",
+                "home_starter": "George Kirby",
+            }
+        ]
+
+        # Patch both pybaseball functions to simulate current 403 state
+        with (
+            patch("mlb_watchability.data_retrieval.pb.pitching_stats") as mock_pitching,
+            patch("mlb_watchability.data_retrieval.pb.team_batting") as mock_batting,
+            patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_read_csv,
+        ):
+
+            # Both raise the actual 403 error we're seeing
+            error_403 = requests.exceptions.HTTPError(
+                "Error accessing 'https://www.fangraphs.com/leaders-legacy.aspx'. Received status code 403"
+            )
+            mock_pitching.side_effect = error_403
+            mock_batting.side_effect = error_403
+            mock_read_csv.return_value = pd.DataFrame(
+                {"Team": ["TEX"], "Payroll": [200000000], "Age": [28.5]}
+            )
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                original_cwd = os.getcwd()
+                try:
+                    os.chdir(temp_dir)
+
+                    # Test that CLI fails fast
+                    result = self.runner.invoke(markdown_app, ["2025-07-31"])
+                    assert result.exit_code == 1
+                    assert "403" in result.output
+                    # Verify no markdown file was created
+                    assert not Path("mlb_what_to_watch_2025_07_31.md").exists()
+
+                finally:
+                    os.chdir(original_cwd)
