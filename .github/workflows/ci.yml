@@ -34,7 +34,7 @@ jobs:
         run: uv run mypy .
 
       - name: Run tests
-        run: uv run pytest -m "" --cov=mlb_watchability --cov-report=xml
+        run: uv run pytest --cov=mlb_watchability --cov-report=xml
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_CI }}
 

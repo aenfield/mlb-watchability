@@ -9,6 +9,7 @@ import pytest
 
 from mlb_watchability.data_retrieval import (
     get_all_pitcher_stats,
+    get_all_team_stats,
     get_game_schedule,
 )
 
@@ -168,7 +169,7 @@ class TestGetGameSchedule:
                 get_game_schedule(invalid_date)
 
 
-# @pytest.mark.skip(reason="Disabled until I do a new non-pybaseball impl")
+@pytest.mark.costly
 class TestGetGameScheduleIntegration:
     """Integration tests that call the real pybaseball API."""
 
@@ -438,6 +439,7 @@ class TestGetAllPitcherStats:
             mock_pitching_stats.assert_called_once_with(2023, qual=20)
 
 
+@pytest.mark.costly
 class TestGetAllPitcherStatsIntegration:
     """Integration tests that call the real pybaseball API."""
 
@@ -445,7 +447,7 @@ class TestGetAllPitcherStatsIntegration:
         """Test that get_all_pitcher_stats works with real API data."""
 
         # Call the real API
-        result = get_all_pitcher_stats(season=2024)
+        result = get_all_pitcher_stats(season=2025)
 
         # Basic validation that we got reasonable data
         assert isinstance(result, dict)
@@ -480,3 +482,61 @@ class TestGetAllPitcherStatsIntegration:
 
                 assert isinstance(pitcher_stats["Age"], int | np.integer)
                 assert 18 <= pitcher_stats["Age"] <= 50
+
+
+@pytest.mark.costly
+class TestGetAllTeamStatsIntegration:
+    """Integration tests that call the real pybaseball API."""
+
+    def test_get_all_team_stats_integration_with_real_data(self) -> None:
+        """Test that get_all_team_stats works with real API data."""
+
+        # Call the real API
+        result = get_all_team_stats(season=2025)
+
+        # Basic validation that we got reasonable data
+        assert isinstance(result, dict)
+
+        # We should get multiple teams (30 MLB teams)
+        if result:
+            # Should have multiple teams
+            assert len(result) >= 10  # At least 10 teams in a season
+
+            # Check a few random teams
+            for _, team_stats in list(result.items())[:5]:
+                assert isinstance(team_stats, dict)
+                assert team_stats["Team"]
+
+                # Validate data types and reasonable ranges
+                assert isinstance(
+                    team_stats["Bat"], int | float | np.integer | np.floating
+                )
+                assert -200 <= team_stats["Bat"] <= 200  # Batting runs
+
+                assert isinstance(team_stats["Barrel%"], float | np.floating)
+                assert 0.0 <= team_stats["Barrel%"] <= 1.0  # Barrel rate as decimal
+
+                assert isinstance(
+                    team_stats["BsR"], int | float | np.integer | np.floating
+                )
+                assert -50 <= team_stats["BsR"] <= 50  # Baserunning runs
+
+                assert isinstance(
+                    team_stats["Fld"], int | float | np.integer | np.floating
+                )
+                assert -100 <= team_stats["Fld"] <= 100  # Fielding runs
+
+                assert isinstance(
+                    team_stats["Payroll"], int | float | np.integer | np.floating
+                )
+                assert 50 <= team_stats["Payroll"] <= 400  # Payroll in millions
+
+                assert isinstance(
+                    team_stats["Payroll_Age"], int | float | np.integer | np.floating
+                )
+                assert 20 <= team_stats["Payroll_Age"] <= 40  # Team age
+
+                assert isinstance(
+                    team_stats["Luck"], int | float | np.integer | np.floating
+                )
+                assert -100 <= team_stats["Luck"] <= 100  # Luck value
