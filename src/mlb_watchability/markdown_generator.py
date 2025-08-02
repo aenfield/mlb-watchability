@@ -105,7 +105,7 @@ def generate_metadata_block(date_str: str) -> str:
     # Parse date to get formatted version for title
     try:
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-        formatted_date = date_obj.strftime("%B %d, %Y")
+        formatted_date = date_obj.strftime("%B %-d, %Y")
     except ValueError:
         # Fallback to original string if parsing fails
         formatted_date = date_str
@@ -169,8 +169,8 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
 
         # Format pitcher scores with anchor links
         if game_score.away_pitcher_nerd_score is not None and game_score.away_starter:
-            # Pitcher heading: "### Visiting starter: Pitcher Name"
-            away_pitcher_heading = f"Visiting starter: {game_score.away_starter}"
+            # Pitcher heading: "### Pitcher Name, Team Name"
+            away_pitcher_heading = f"{game_score.away_starter}, {game_score.away_team}"
             away_pitcher_anchor_id = generate_automatic_anchor_id(away_pitcher_heading)
             away_pitcher_score = (
                 f"[{game_score.away_pitcher_nerd_score:.1f}](#{away_pitcher_anchor_id})"
@@ -179,8 +179,8 @@ def generate_markdown_table(game_scores: list[GameScore]) -> str:
             away_pitcher_score = "No data"
 
         if game_score.home_pitcher_nerd_score is not None and game_score.home_starter:
-            # Pitcher heading: "### Home starter: Pitcher Name"
-            home_pitcher_heading = f"Home starter: {game_score.home_starter}"
+            # Pitcher heading: "### Pitcher Name, Team Name"
+            home_pitcher_heading = f"{game_score.home_starter}, {game_score.home_team}"
             home_pitcher_anchor_id = generate_automatic_anchor_id(home_pitcher_heading)
             home_pitcher_score = (
                 f"[{game_score.home_pitcher_nerd_score:.1f}](#{home_pitcher_anchor_id})"
@@ -259,7 +259,7 @@ def generate_team_breakdown_table(
 
     # Create table rows
     raw_row = (
-        f"| **Raw Stat** "
+        f"| **Raw stat** "
         f"| {team_stats.batting_runs:.1f} "
         f"| {team_stats.barrel_rate:.1%} "
         f"| {team_stats.baserunning_runs:.1f} "
@@ -272,7 +272,7 @@ def generate_team_breakdown_table(
     )
 
     z_row = (
-        f"| **Z-Score** "
+        f"| **Z-score** "
         f"| {team_nerd_stats.z_batting_runs:.2f} "
         f"| {team_nerd_stats.z_barrel_rate:.2f} "
         f"| {team_nerd_stats.z_baserunning_runs:.2f} "
@@ -302,7 +302,7 @@ def generate_team_breakdown_table(
         "",
         "{% wideTable %}",
         "",
-        "|              | Batting Runs | Barrel % | Baserunning Runs | Fielding Runs | Payroll | Age   | Luck | Constant | TOTAL |",
+        "|              | Batting runs | Barrel % | Baserunning runs | Fielding runs | Payroll | Age   | Luck | Constant | Total |",
         "| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |",
         raw_row,
         z_row,
@@ -316,22 +316,20 @@ def generate_team_breakdown_table(
 
 def generate_pitcher_no_data_section(
     pitcher_name: str,
-    is_home: bool = False,
+    team_name: str,
 ) -> str:
     """
     Generate a section for a pitcher with no detailed stats available.
 
     Args:
         pitcher_name: Pitcher name
-        is_home: Whether this is the home team pitcher
+        team_name: Team name
 
     Returns:
         Formatted markdown section indicating no detailed stats available
     """
-    starter_type = "Home starter" if is_home else "Visiting starter"
-
     lines = [
-        f"### {starter_type}: {pitcher_name}",
+        f"### {pitcher_name}, {team_name}",
         "",
         "No detailed stats available",
         "",
@@ -343,7 +341,7 @@ def generate_pitcher_no_data_section(
 def generate_pitcher_breakdown_table(
     pitcher_name: str,
     pitcher_nerd_stats: PitcherNerdStats,
-    is_home: bool = False,
+    team_name: str,
 ) -> str:
     """
     Generate detailed breakdown table for a pitcher.
@@ -351,14 +349,12 @@ def generate_pitcher_breakdown_table(
     Args:
         pitcher_name: Pitcher name
         pitcher_nerd_stats: PitcherNerdStats object
-        is_home: Whether this is the home team pitcher
+        team_name: Team name
 
     Returns:
         Formatted markdown table showing raw stats, z-scores, and pNERD components
     """
     pitcher_stats = pitcher_nerd_stats.pitcher_stats
-
-    starter_type = "Home starter" if is_home else "Visiting starter"
 
     # Format velocity with mph suffix
     velocity_str = f"{pitcher_stats.velocity:.1f} mph"
@@ -368,7 +364,7 @@ def generate_pitcher_breakdown_table(
 
     # Create table rows
     raw_row = (
-        f"| **Raw Stat** "
+        f"| **Raw stat** "
         f"| {pitcher_stats.xfip_minus:.0f} "
         f"| {pitcher_stats.swinging_strike_rate:.1%} "
         f"| {pitcher_stats.strike_rate:.1%} "
@@ -382,7 +378,7 @@ def generate_pitcher_breakdown_table(
     )
 
     z_row = (
-        f"| **Z-Score** "
+        f"| **Z-score** "
         f"| {pitcher_nerd_stats.z_xfip_minus:.2f} "
         f"| {pitcher_nerd_stats.z_swinging_strike_rate:.2f} "
         f"| {pitcher_nerd_stats.z_strike_rate:.2f} "
@@ -410,11 +406,11 @@ def generate_pitcher_breakdown_table(
     )
 
     lines = [
-        f"### {starter_type}: {pitcher_name}",
+        f"### {pitcher_name}, {team_name}",
         "",
         "{% wideTable %}",
         "",
-        "|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | TOTAL |",
+        "|              | xFIP- | SwStr% | Strike % | Velocity | Age   | Pace  | Luck | KN%  | Constant | Total |",
         "| ------------ | ----- | ------ | -------- | -------- | ----- | ----- | ---- | ---- | -------- | ----- |",
         raw_row,
         z_row,
@@ -511,12 +507,14 @@ def generate_game_detail_section(
                 generate_pitcher_breakdown_table(
                     game_score.away_starter,
                     game_score.away_pitcher_nerd_stats,
-                    is_home=False,
+                    game_score.away_team,
                 )
             )
         else:
             lines.append(
-                generate_pitcher_no_data_section(game_score.away_starter, is_home=False)
+                generate_pitcher_no_data_section(
+                    game_score.away_starter, game_score.away_team
+                )
             )
 
     # Add home pitcher breakdown
@@ -526,12 +524,14 @@ def generate_game_detail_section(
                 generate_pitcher_breakdown_table(
                     game_score.home_starter,
                     game_score.home_pitcher_nerd_stats,
-                    is_home=True,
+                    game_score.home_team,
                 )
             )
         else:
             lines.append(
-                generate_pitcher_no_data_section(game_score.home_starter, is_home=True)
+                generate_pitcher_no_data_section(
+                    game_score.home_starter, game_score.home_team
+                )
             )
 
     # Add "Go back to top of page" link at the bottom of each game section

@@ -92,6 +92,18 @@ tags: mlbw
 
         assert result == expected
 
+    def test_generate_metadata_block_single_digit_day(self) -> None:
+        """Test metadata block generation with single-digit day (no leading zero)."""
+        result = generate_metadata_block("2025-08-01")
+
+        expected = """---
+title: "MLB: What to watch on August 1, 2025"
+date: 2025-08-01
+tags: mlbw
+---"""
+
+        assert result == expected
+
     def test_generate_metadata_block_invalid_date(self) -> None:
         """Test metadata block generation with invalid date."""
         result = generate_metadata_block("invalid-date")
@@ -129,16 +141,16 @@ tags: mlbw
 
         # Test pitcher headings
         assert (
-            generate_automatic_anchor_id("Visiting starter: Brandon Walter")
-            == "visiting-starter-brandon-walter"
+            generate_automatic_anchor_id("Brandon Walter, Houston Astros")
+            == "brandon-walter-houston-astros"
         )
         assert (
-            generate_automatic_anchor_id("Home starter: Brandon Pfaadt")
-            == "home-starter-brandon-pfaadt"
+            generate_automatic_anchor_id("Brandon Pfaadt, Arizona Diamondbacks")
+            == "brandon-pfaadt-arizona-diamondbacks"
         )
         assert (
-            generate_automatic_anchor_id("Visiting starter: Jesús Luzardo")
-            == "visiting-starter-jesus-luzardo"
+            generate_automatic_anchor_id("Jesús Luzardo, Miami Marlins")
+            == "jesus-luzardo-miami-marlins"
         )
 
         # Test special characters and multiple spaces
@@ -168,12 +180,12 @@ tags: mlbw
         assert generate_automatic_anchor_id("Andrés Giménez") == "andres-gimenez"
         assert generate_automatic_anchor_id("Gleyber Torres") == "gleyber-torres"
         assert (
-            generate_automatic_anchor_id("Visiting starter: José Berríos")
-            == "visiting-starter-jose-berrios"
+            generate_automatic_anchor_id("José Berríos, Toronto Blue Jays")
+            == "jose-berrios-toronto-blue-jays"
         )
         assert (
-            generate_automatic_anchor_id("Home starter: Cristian Javier")
-            == "home-starter-cristian-javier"
+            generate_automatic_anchor_id("Cristian Javier, Houston Astros")
+            == "cristian-javier-houston-astros"
         )
 
         # Test various accented characters
@@ -310,9 +322,9 @@ tags: mlbw
         assert "[4.9](#houston-astros)" in result
         assert "[7.9](#arizona-diamondbacks)" in result
 
-        # Pitcher links: "Visiting starter: Name" and "Home starter: Name"
-        assert "[8.9](#visiting-starter-brandon-walter)" in result
-        assert "[4.4](#home-starter-brandon-pfaadt)" in result
+        # Pitcher links: "Name, Team"
+        assert "[8.9](#brandon-walter-houston-astros)" in result
+        assert "[4.4](#brandon-pfaadt-arizona-diamondbacks)" in result
 
     def test_generate_markdown_table_with_missing_data(self) -> None:
         """Test markdown table generation with missing pitcher data."""
@@ -455,8 +467,8 @@ tags: mlbw
         assert "### Los Angeles Dodgers" in result
         assert "{% wideTable %}" in result
         assert "{% endwideTable %}" in result
-        assert "| **Raw Stat** |" in result
-        assert "| **Z-Score** |" in result
+        assert "| **Raw stat** |" in result
+        assert "| **Z-score** |" in result
         assert "| **tNERD** |" in result
 
         # Check specific values
@@ -503,15 +515,15 @@ tags: mlbw
         pitcher_nerd_stats.pnerd_score = 10.12
 
         result = generate_pitcher_breakdown_table(
-            "Gerrit Cole", pitcher_nerd_stats, is_home=True
+            "Gerrit Cole", pitcher_nerd_stats, "New York Yankees"
         )
 
         # Check structure
-        assert "### Home starter: Gerrit Cole" in result
+        assert "### Gerrit Cole, New York Yankees" in result
         assert "{% wideTable %}" in result
         assert "{% endwideTable %}" in result
-        assert "| **Raw Stat** |" in result
-        assert "| **Z-Score** |" in result
+        assert "| **Raw stat** |" in result
+        assert "| **Z-score** |" in result
         assert "| **pNERD** |" in result
 
         # Check specific values
@@ -523,9 +535,9 @@ tags: mlbw
 
         # Test visiting pitcher
         result_away = generate_pitcher_breakdown_table(
-            "Gerrit Cole", pitcher_nerd_stats, is_home=False
+            "Gerrit Cole", pitcher_nerd_stats, "New York Yankees"
         )
-        assert "### Visiting starter: Gerrit Cole" in result_away
+        assert "### Gerrit Cole, New York Yankees" in result_away
 
     def test_generate_game_detail_section(self) -> None:
         """Test game detail section generation."""
@@ -693,8 +705,8 @@ tags: mlbw
         # Check that the structure includes the expected sections
         assert "### New York Yankees" in result
         assert "### Los Angeles Dodgers" in result
-        assert "### Visiting starter: Gerrit Cole" in result
-        assert "### Home starter: Walker Buehler" in result
+        assert "### Gerrit Cole, New York Yankees" in result
+        assert "### Walker Buehler, Los Angeles Dodgers" in result
 
         assert "[Go back to top of page](#)" in result
 
@@ -818,15 +830,15 @@ tags: mlbw
         result = generate_game_detail_section(game_score)
 
         # Check that both pitcher sections are present
-        assert "### Visiting starter: Nick Pivetta" in result
-        assert "### Home starter: Shane Baz" in result
+        assert "### Nick Pivetta, Boston Red Sox" in result
+        assert "### Shane Baz, Tampa Bay Rays" in result
 
         # Check that the missing pitcher shows "No detailed stats available"
         assert "No detailed stats available" in result
 
         # Verify the structure - "No detailed stats available" should come after the visiting starter heading
-        nick_pivetta_index = result.find("### Visiting starter: Nick Pivetta")
-        shane_baz_index = result.find("### Home starter: Shane Baz")
+        nick_pivetta_index = result.find("### Nick Pivetta, Boston Red Sox")
+        shane_baz_index = result.find("### Shane Baz, Tampa Bay Rays")
         no_data_index = result.find("No detailed stats available")
 
         assert nick_pivetta_index < no_data_index < shane_baz_index
