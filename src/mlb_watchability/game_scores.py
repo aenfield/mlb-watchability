@@ -212,26 +212,21 @@ class GameScore:
                 if home_pitcher_nerd_stats:
                     home_pitcher_nerd_score = home_pitcher_nerd_stats.pnerd_score
 
-            # Calculate average pitcher NERD if we have at least one score
-            if (
-                away_pitcher_nerd_score is not None
-                and home_pitcher_nerd_score is not None
-            ):
-                average_pitcher_nerd_score = (
-                    away_pitcher_nerd_score + home_pitcher_nerd_score
-                ) / 2
-            elif away_pitcher_nerd_score is not None:
-                average_pitcher_nerd_score = away_pitcher_nerd_score
-            elif home_pitcher_nerd_score is not None:
-                average_pitcher_nerd_score = home_pitcher_nerd_score
+            # Calculate average pitcher NERD, using 5.0 as default for missing data
+            # Use actual scores if available, otherwise default to 5.0
+            away_pitcher_score_final = (
+                away_pitcher_nerd_score if away_pitcher_nerd_score is not None else 5.0
+            )
+            home_pitcher_score_final = (
+                home_pitcher_nerd_score if home_pitcher_nerd_score is not None else 5.0
+            )
+            average_pitcher_nerd_score = (
+                away_pitcher_score_final + home_pitcher_score_final
+            ) / 2
 
             # Calculate final gNERD score
             # gNERD = average of team NERD + average of pitcher NERD
-            if average_pitcher_nerd_score is not None:
-                gnerd_score = average_team_nerd_score + average_pitcher_nerd_score
-            else:
-                # If no pitcher data available, use only team NERD
-                gnerd_score = average_team_nerd_score
+            gnerd_score = average_team_nerd_score + average_pitcher_nerd_score
 
             game_score = cls(
                 away_team=away_team,

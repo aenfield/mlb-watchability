@@ -279,15 +279,15 @@ class TestGameScores:
             assert game_score.home_team_nerd_score == 7.9
             assert game_score.average_team_nerd_score == pytest.approx((6.8 + 7.9) / 2)
 
-            # Check pitcher scores - only one available
+            # Check pitcher scores - one available, one defaults to 5.0
             assert game_score.away_pitcher_nerd_score == 5.5
             assert game_score.home_pitcher_nerd_score is None
-            assert (
-                game_score.average_pitcher_nerd_score == 5.5
-            )  # Only one pitcher available
+            assert game_score.average_pitcher_nerd_score == pytest.approx(
+                (5.5 + 5.0) / 2
+            )  # One pitcher available, one defaults to 5.0
 
             # Check final gNERD score
-            expected_gnerd = ((6.8 + 7.9) / 2) + 5.5
+            expected_gnerd = ((6.8 + 7.9) / 2) + ((5.5 + 5.0) / 2)
             assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
     def test_calculate_game_scores_no_pitcher_data(self) -> None:
@@ -378,13 +378,15 @@ class TestGameScores:
                 (5.95 + 11.4) / 2
             )
 
-            # Check pitcher scores - none available
+            # Check pitcher scores - none available, both default to 5.0
             assert game_score.away_pitcher_nerd_score is None
             assert game_score.home_pitcher_nerd_score is None
-            assert game_score.average_pitcher_nerd_score is None
+            assert game_score.average_pitcher_nerd_score == pytest.approx(
+                (5.0 + 5.0) / 2
+            )  # Both pitchers default to 5.0
 
-            # Check final gNERD score - only team NERD since no pitcher data
-            expected_gnerd = (5.95 + 11.4) / 2
+            # Check final gNERD score - team NERD + pitcher defaults
+            expected_gnerd = ((5.95 + 11.4) / 2) + ((5.0 + 5.0) / 2)
             assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
     def test_calculate_game_scores_multiple_games_sorted(self) -> None:
@@ -2287,6 +2289,223 @@ class TestGameScores:
             # Third game (beyond limit) should NOT have description
             assert game_scores[2].game_description is None
             assert game_scores[2].game_description_sources is None
+
+    def test_pitcher_default_score_one_missing(self) -> None:
+        """Test that missing pitcher data defaults to 5.0 when one pitcher has data."""
+        games = [
+            {
+                "away_team": "Arizona Diamondbacks",
+                "home_team": "Colorado Rockies",
+                "away_starter": "Known Ace",
+                "home_starter": "Unknown Rookie",
+                "time": "8:40 PM",
+            }
+        ]
+
+        mock_team_nerd_details = {
+            "ARI": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="ARI",
+                    batting_runs=15.0,
+                    barrel_rate=0.09,
+                    baserunning_runs=7.0,
+                    fielding_runs=11.0,
+                    payroll=160.0,
+                    age=26.5,
+                    luck=8.0,
+                ),
+                z_batting_runs=1.5,
+                z_barrel_rate=0.9,
+                z_baserunning_runs=0.7,
+                z_fielding_runs=1.1,
+                z_payroll=0.0,
+                z_age=-1.0,
+                z_luck=0.4,
+                adjusted_payroll=0.0,
+                adjusted_age=1.0,
+                adjusted_luck=0.4,
+                tnerd_score=8.7,
+            ),
+            "COL": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="COL",
+                    batting_runs=3.0,
+                    barrel_rate=0.065,
+                    baserunning_runs=1.0,
+                    fielding_runs=4.0,
+                    payroll=90.0,
+                    age=30.0,
+                    luck=-2.0,
+                ),
+                z_batting_runs=0.3,
+                z_barrel_rate=0.0,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.4,
+                z_payroll=1.0,
+                z_age=0.5,
+                z_luck=-0.1,
+                adjusted_payroll=0.0,
+                adjusted_age=0.0,
+                adjusted_luck=0.1,
+                tnerd_score=4.2,
+            ),
+        }
+
+        # Only away pitcher has data
+        mock_pitcher_nerd_details = {
+            "Known Ace": PitcherNerdStats(
+                pitcher_stats=PitcherStats(
+                    name="Known Ace",
+                    team="ARI",
+                    xfip_minus=80.0,
+                    swinging_strike_rate=0.16,
+                    strike_rate=0.70,
+                    velocity=97.5,
+                    age=25,
+                    pace=19.0,
+                    luck=12.0,
+                    knuckleball_rate=0.0,
+                ),
+                z_xfip_minus=-2.0,
+                z_swinging_strike_rate=2.5,
+                z_strike_rate=1.5,
+                z_velocity=1.8,
+                z_age=-1.0,
+                z_pace=-1.5,
+                adjusted_velocity=1.8,
+                adjusted_age=1.0,
+                adjusted_luck=0.6,
+                pnerd_score=9.2,
+            )
+        }
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # Verify team scores
+            assert game_score.away_team_nerd_score == 8.7
+            assert game_score.home_team_nerd_score == 4.2
+            average_team_nerd = (8.7 + 4.2) / 2
+
+            # Verify pitcher scores - one known, one defaults to 5.0
+            assert game_score.away_pitcher_nerd_score == 9.2
+            assert game_score.home_pitcher_nerd_score is None
+            assert game_score.average_pitcher_nerd_score == pytest.approx(
+                (9.2 + 5.0) / 2
+            )
+
+            # Verify final gNERD calculation
+            expected_gnerd = average_team_nerd + ((9.2 + 5.0) / 2)
+            assert game_score.gnerd_score == pytest.approx(expected_gnerd)
+
+    def test_pitcher_default_score_both_missing(self) -> None:
+        """Test that both pitchers default to 5.0 when no pitcher data is available."""
+        games = [
+            {
+                "away_team": "Oakland Athletics",
+                "home_team": "Seattle Mariners",
+                "away_starter": "Completely Unknown",
+                "home_starter": "Also Unknown",
+                "time": "4:10 PM",
+            }
+        ]
+
+        mock_team_nerd_details = {
+            "ATH": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="ATH",
+                    batting_runs=-5.0,
+                    barrel_rate=0.06,
+                    baserunning_runs=-2.0,
+                    fielding_runs=2.0,
+                    payroll=60.0,
+                    age=25.0,
+                    luck=-8.0,
+                ),
+                z_batting_runs=-0.5,
+                z_barrel_rate=-0.3,
+                z_baserunning_runs=-0.2,
+                z_fielding_runs=0.2,
+                z_payroll=1.5,
+                z_age=-1.5,
+                z_luck=-0.4,
+                adjusted_payroll=0.0,
+                adjusted_age=1.5,
+                adjusted_luck=0.4,
+                tnerd_score=2.8,
+            ),
+            "SEA": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="SEA",
+                    batting_runs=18.0,
+                    barrel_rate=0.088,
+                    baserunning_runs=9.0,
+                    fielding_runs=14.0,
+                    payroll=190.0,
+                    age=28.0,
+                    luck=6.0,
+                ),
+                z_batting_runs=1.8,
+                z_barrel_rate=0.8,
+                z_baserunning_runs=0.9,
+                z_fielding_runs=1.4,
+                z_payroll=-0.5,
+                z_age=-0.2,
+                z_luck=0.3,
+                adjusted_payroll=0.5,
+                adjusted_age=0.2,
+                adjusted_luck=0.3,
+                tnerd_score=9.8,
+            ),
+        }
+
+        # No pitcher data at all
+        mock_pitcher_nerd_details: dict[str, PitcherNerdStats] = {}
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # Verify team scores
+            assert game_score.away_team_nerd_score == 2.8
+            assert game_score.home_team_nerd_score == 9.8
+            average_team_nerd = (2.8 + 9.8) / 2
+
+            # Verify pitcher scores - both default to 5.0
+            assert game_score.away_pitcher_nerd_score is None
+            assert game_score.home_pitcher_nerd_score is None
+            assert game_score.average_pitcher_nerd_score == pytest.approx(5.0)
+
+            # Verify final gNERD calculation
+            expected_gnerd = average_team_nerd + 5.0
+            assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
 
 class TestGameScoresIntegration:
