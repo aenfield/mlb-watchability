@@ -85,7 +85,7 @@ This is inspired by [Carson Cistulli's NERD scores](https://blogs.fangraphs.com/
 
 FOOTER_TEXT = """Notes:
 
-- **Pitcher 'no data'**: Pitchers only have a pNERD score once they've started at least one game and have at least 20 innings pitched. I might also show 'no data' when I'm not correctly linking the schedule information with a pitcher's stats, like if the names don't match (I have an open issue to improve this).
+- **Pitcher 'no data'**: Pitchers only have a pNERD score once they've started at least one game and have at least 20 innings pitched. I also show 'no data' when I can't correctly link a starting pitcher with their stats.
 """
 
 TABLE_HEADER = "| Score | Time (PT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |"
