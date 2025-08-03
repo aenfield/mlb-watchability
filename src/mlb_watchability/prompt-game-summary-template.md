@@ -21,9 +21,47 @@ You are analyzing an MLB game for "watchability", using as input "game NERD scor
 
 ## Historic and today's games context
 
-Historically, gNERD scores range approxiately between 3 and 18. tNERD between 0 and 10, and pNERD between -2 and 15. There are occasionally scores higher or lower than these ranges.
+Consider the following historical context from previous games when evaluating the NERD scores, as input to determine how today's scores compare. Don't call this historical summary data 'a recent dataset' or try to describe from where it comes (since you don't know).
+
+gNERD Scores (n=175, nulls=0):
+
+- Mean: 10.11
+- Min: 2.90 (2025-07-27: COL @ BAL)
+- Max: 19.80 (2025-08-02: DET @ PHI)
+- Percentiles:
+- 5%: 5.47
+- 25%: 8.35
+- 50%: 10.10
+- 75%: 12.00
+- 95%: 14.76
+
+tNERD Scores (n=350, nulls=0):
+
+- Mean: 5.23
+- Min: 1.50 (2025-08-02: SFG)
+- Max: 9.60 (2025-07-23: CHC)
+- Percentiles:
+- 5%: 2.00
+- 25%: 2.90
+- 50%: 5.60
+- 75%: 6.90
+- 95%: 8.60
+
+pNERD Scores (n=318, nulls=32):
+
+- Mean: 4.89
+- Min: -2.30 (2025-07-26: Randy Vásquez)
+- Max: 14.60 (2025-07-26: Tarik Skubal)
+- Percentiles:
+- 5%: 0.60
+- 25%: 3.02
+- 50%: 4.55
+- 75%: 6.40
+- 95%: 10.23
 
 {% if min_gnerd is defined -%}
+
+And the summary stats for today's games:
 
 - **Game NERD scores today** range from {{ "%.2f"|format(min_gnerd) }} to {{ "%.2f"|format(max_gnerd) }} (average: {{ "%.2f"|format(avg_gnerd) }})
 - **Team NERD scores today** range from {{ "%.2f"|format(min_team_nerd) }} to {{ "%.2f"|format(max_team_nerd) }} (average: {{ "%.2f"|format(avg_team_nerd) }})

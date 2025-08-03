@@ -1,0 +1,649 @@
+> /clear
+> ⎿  (no content)
+
+> Take a look at todo.md #40 and figure out what you'd do. Ask me any questions, first. Don't do
+> anything yet.
+
+⏺ Read(todo.md)
+⎿  Read 185 lines (ctrl+r to expand)
+
+⏺ Looking at todo.md #40, I can see this is a data analysis task to:
+
+1. Create a script in the analysis directory that processes markdown files from
+   ../blog-eleventy/content/blog/mlbw/
+2. Parse each .md file to extract game data (scores, teams, pitchers)
+3. Generate a CSV file with the parsed data
+4. Calculate and print summary statistics for the score distributions
+
+Before I proceed, I have a few questions:
+
+1. Directory structure: Should I create the analysis directory if it doesn't exist, or does it
+   already exist?
+2. Markdown file format: I should look at the actual markdown files to understand their structure
+   for parsing. Should I examine a few sample files from the blog directory first?
+3. Error handling: How should the script handle cases where:
+
+
+    - Some markdown files might be malformed or missing data
+    - The blog directory doesn't exist or is empty
+    - Parsing fails for specific games
+
+4. Script naming: What should I call this analysis script? Something like analyze_nerd_scores.py?
+5. Dependencies: Should this use the same dependencies as the main project (polars/pandas via the
+   existing pyproject.toml) or can it be standalone?
+
+Would you like me to start by examining the existing markdown files to understand their structure,
+or do you have preferences for any of these questions?
+
+> 1. Already exists. 2. Yep - look at the files to see the structure. 3. No need for heavy error
+>    handling because if it fails, I'll look at it. You should write code that handles all the markdown
+>    files, unless they're severely different. All of the data you need is in the initial table at the
+>    top - you shouldn't need any data in the detail tables below (ask me if you think you do). 4. Call
+>    the script 'historical_score_analysis.py'. 5. You should use pandas.
+
+✻ Thinking…
+
+The user wants me to:
+
+1. Look at the existing markdown files to understand their structure
+2. Create a script called 'historical_score_analysis.py' in the analysis directory
+3. Parse the initial table at the top of each markdown file to extract the needed data
+4. Use pandas for data processing
+5. Generate a CSV file and print summary statistics
+
+Let me start by examining the structure of the markdown files and the analysis directory.
+
+⏺ List(analysis)
+⎿  Listed 22 paths (ctrl+r to expand)
+
+⏺ List(../blog-eleventy/content/blog/mlbw)
+⎿  Listed 21 paths (ctrl+r to expand)
+
+✻ Thinking…
+
+The files don't appear malicious - they're markdown files in a blog directory with dates in the
+filenames. Let me examine a couple of these markdown files to understand their structure,
+particularly the initial table format.
+
+⏺ Read(../blog-eleventy/content/blog/mlbw/mlb_what_to_watch_2025_07_29.md)
+⎿  Error: File content (32495 tokens) exceeds maximum allowed tokens (25000). Please use offset and
+limit parameters to read specific portions of the file, or use the GrepTool to search for
+specific content.
+
+⏺ Read(../blog-eleventy/content/blog/mlbw/mlb_what_to_watch_2025_08_01.md)
+⎿  Read 768 lines (ctrl+r to expand)
+
+✻ Thinking…
+
+Perfect! Now I understand the structure. Looking at the file, I can see:
+
+1. The file has metadata at the top (title, date, tags)
+2. There's an initial table that contains all the game data I need:
+
+
+    - Score (gNERD)
+    - Time
+    - Visitors team
+    - Visitors score (tNERD)
+    - Home team
+    - Home score (tNERD)
+    - Visiting starter
+    - Visiting starter score (pNERD)
+    - Home starter
+    - Home starter score (pNERD)
+
+3. The table structure looks like:
+   | Score | Time (PT) | Visitors | Score | Home | Score | Starter (V) | Score | Starter (H) | Score |
+   |-------|------------|----------|-------|------|-------|-------------|-------|-------------|-------
+   |
+   | [14.9](#houston-astros-boston-red-sox-4-10p) | 4:10p {data-sort='1610'} | [Houston
+   Astros](https://www.fangraphs.com/teams/astros/stats) | [4.5](#houston-astros) | [Boston Red
+   Sox](https://www.fangraphs.com/teams/red-sox/stats) | [7.4](#boston-red-sox) | [Hunter
+   Brown](https://www.fangraphs.com/search?q=Brown) | [9.0](#hunter-brown-houston-astros) | [Cooper
+   Criswell](https://www.fangraphs.com/search?q=Criswell) | No data |
+
+I need to extract:
+
+- The date from the filename
+- gNERD score from first column
+- visiting tNERD from 4th column
+- home tNERD from 6th column
+- visiting pitcher pNERD from 8th column
+
+- home pitcher pNERD from 10th column
+- visiting team name (extract from markdown link)
+- home team name (extract from markdown link)
+- visiting pitcher name (extract from markdown link)
+- home pitcher name (extract from markdown link)
+
+I'll verify the file structure across multiple examples to ensure consistency and develop a
+reliable extraction script.
+
+⏺ Read(../blog-eleventy/content/blog/mlbw/mlb_what_to_watch_2025_07_21.md)
+⎿  Read 37 lines (ctrl+r to expand)
+
+✻ Thinking…
+
+Great! I can see the structure is consistent. Now I understand what I need to build:
+
+1. Parse markdown files from ../blog-eleventy/content/blog/mlbw/ directory
+2. Extract data from the initial table in each file:
+
+
+    - Date from filename (format: mlb_what_to_watch_2025_07_29.md)
+    - gNERD score (first column)
+    - Visiting team name (extract from markdown link in 3rd column)
+    - Visiting team tNERD (4th column)
+    - Home team name (extract from markdown link in 5th column)
+    - Home team tNERD (6th column)
+    - Visiting pitcher name (extract from markdown link in 7th column)
+    - Visiting pitcher pNERD (8th column)
+    - Home pitcher name (extract from markdown link in 9th column)
+    - Home pitcher pNERD (10th column)
+
+3. Handle special cases:
+
+
+    - "No data" for pitcher scores
+    - Negative scores (like -2.1 for Randy Vásquez)
+    - Different team abbreviations
+
+4. Generate CSV with these columns:
+
+
+    - date, gNERD score, visiting tNERD, home tNERD, visiting pitcher pNERD, home team pitcher pNERD,
+
+visiting team (three letter abbrev), home team (three letter abbrev), visiting pitcher name, home
+team pitcher name 5. Calculate summary statistics for gNERD, tNERD, and pNERD scores
+
+Let me now plan the implementation. I'll need to:
+
+1. Use pandas for data processing
+2. Use regex to parse the markdown table rows
+3. Extract team abbreviations from the team names
+4. Handle the "No data" cases
+5. Calculate summary statistics
+
+I should write this as historical_score_analysis.py in the analysis directory.
+
+⏺ Perfect! I can see the structure is consistent across files. The data I need is in the initial
+table with columns for:
+
+- gNERD score (first column)
+- Team names (in markdown links)
+- tNERD scores (4th and 6th columns)
+- Pitcher names (in markdown links)
+- pNERD scores (8th and 10th columns, sometimes "No data")
+
+I also see some scores can be negative (like -2.1) which is important to handle.
+
+Now I understand the parsing requirements. The script needs to:
+
+1. Parse each markdown file to extract the table data
+2. Extract team abbreviations from full team names
+3. Handle "No data" cases for pitcher scores
+4. Generate a CSV with the specified columns
+5. Calculate summary statistics
+
+Ready to implement this - should I proceed with writing historical_score_analysis.py in the
+analysis directory?
+
+> Great. For team abbreviations, there's other code in the project that you can use to map - look for
+> it. For pNERD no data, it can be the normal null value for pandas (I think np.nan?) and for the
+> CSV just output nothing - i.e., two commas in a row like 123,,ABC.
+
+⏺ Update Todos
+⎿  ☐ Find existing team name to abbreviation mapping code in the project  
+ ☐ Write historical_score_analysis.py script to parse markdown files
+☐ Extract game data from markdown tables into pandas DataFrame
+☐ Save DataFrame to CSV file in analysis directory
+☐ Calculate and print summary statistics for gNERD, tNERD, and pNERD scores
+
+⏺ Search(pattern: "team.*abbrev|abbrev.*team")
+⎿  Found 11 files (ctrl+r to expand)
+
+⏺ Search(pattern: ""red.\*sox"|"yankees"|"astros"")
+⎿  Found 2 files (ctrl+r to expand)
+
+⏺ Read(src/mlb_watchability/team_mappings.py)
+⎿  Read 137 lines (ctrl+r to expand)
+
+⏺ Update Todos
+⎿  ☒ Find existing team name to abbreviation mapping code in the project  
+ ☐ Write historical_score_analysis.py script to parse markdown files
+☐ Extract game data from markdown tables into pandas DataFrame
+☐ Save DataFrame to CSV file in analysis directory
+☐ Calculate and print summary statistics for gNERD, tNERD, and pNERD scores
+
+⏺ Perfect! I found the team mapping code. Now I'll write the script to parse the markdown files and
+extract the data.
+
+⏺ Write(analysis/historical_score_analysis.py)
+⎿  Wrote 222 lines to analysis/historical_score_analysis.py  
+ #!/usr/bin/env python3
+"""
+Historical NERD Score Analysis
+Analyzes historical gNERD, tNERD, and pNERD scores from generated markdown files
+to understand score distributions and calculate summary statistics.
+"""
+import pandas as pd
+import numpy as np
+… +212 lines (ctrl+r to expand)
+
+⏺ Update Todos
+⎿  ☒ Find existing team name to abbreviation mapping code in the project  
+ ☒ Write historical_score_analysis.py script to parse markdown files
+☒ Extract game data from markdown tables into pandas DataFrame
+☒ Save DataFrame to CSV file in analysis directory
+☒ Calculate and print summary statistics for gNERD, tNERD, and pNERD scores
+
+⏺ Now let me test the script to make sure it works correctly:
+
+⏺ Bash(python analysis/historical_score_analysis.py)
+⎿  Error: zsh: command not found: python
+
+⏺ Bash(uv run python analysis/historical_score_analysis.py)
+⎿ Error: Blog directory not found at /Users/andrewenfield/work/github/mlb-watchability/blog-elevent
+y/content/blog/mlbw
+
+⏺ I need to fix the path - the blog directory is a sibling directory, not a child:
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Updated analysis/historical_score_analysis.py with 2 additions and 2 removals  
+ 131  
+ 132 def analyze_historical_scores():
+133 """Main function to analyze historical NERD scores."""
+134 - # Get markdown files directory
+135 - blog_dir = Path(**file**).parent.parent / 'blog-eleventy' / 'content' / 'blog' /
+'mlbw' - 'mlbw'
+134 + # Get markdown files directory (sibling to mlb-watchability)
+135 + blog_dir = Path(**file**).parent.parent.parent / 'blog-eleventy' / 'content' /
+'blog' / 'mlbw' + 'blog' / 'mlbw'
+136  
+ 137 if not blog_dir.exists():
+138 print(f"Error: Blog directory not found at {blog_dir}")
+
+⏺ Bash(uv run python analysis/historical_score_analysis.py)
+⎿  Found 13 markdown files to process  
+ Processing mlb_what_to_watch_2025_07_21.md...
+Processing mlb_what_to_watch_2025_07_22.md...
+… +55 lines (ctrl+r to expand)
+
+⏺ Great! The script worked but I noticed the counts seem low. Let me check the CSV to see what
+happened:
+
+⏺ Read(analysis/historical_nerd_scores.csv)
+⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ Perfect! The CSV looks correct with the empty fields for "No data" pitcher scores (like ,, for
+missing values). Let me check why the counts seem low by examining the logic:
+
+⏺ Bash(wc -l analysis/historical_nerd_scores.csv)
+⎿   176 analysis/historical_nerd_scores.csv
+
+⏺ So we have 175 games (176 lines including header). Looking at the statistics, the counts seem quite
+low:
+
+- gNERD: 30 (should be 175)
+- tNERD: 60 (should be 350 - 2 per game)
+- pNERD: 52 (should be less than 350 due to missing data)
+
+This suggests there's an issue with the parsing. Let me look at one of the files more carefully to
+debug:
+
+⏺ Read(../blog-eleventy/content/blog/mlbw/mlb_what_to_watch_2025_07_21.md)
+⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ I see the issue! The parsing is working correctly - there are 15 games in this file. The low counts
+in the statistics suggest there might be a different parsing issue or that some files have
+different formats. Let me check if there are linked scores that need to be parsed differently:
+
+⏺ Read(../blog-eleventy/content/blog/mlbw/mlb_what_to_watch_2025_08_01.md)
+⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ Ah! I found the issue. In newer files, the scores are wrapped in markdown links like [14.9](#...)
+but my parsing function isn't extracting the number from inside the brackets. I need to update the
+parse_score_value function to handle both cases:
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Updated analysis/historical_score_analysis.py with 7 additions and 1 removal  
+ 33  
+ 34  
+ 35 def parse_score_value(score_str: str) -> float:
+36 - """Parse score value, handling 'No data' cases."""
+36 + """Parse score value, handling 'No data' cases and markdown links."""
+37 score_str = score_str.strip()
+38 if score_str.lower() in ['no data', '']:
+39 return np.nan
+40 +  
+ 41 + # Handle markdown links like [14.9](#...)
+42 + link_match = re.match(r'\[([^\]]+)\]', score_str)
+43 + if link_match:
+44 + score_str = link_match.group(1)
+45 +  
+ 46 try:
+47 return float(score_str)
+48 except ValueError:
+
+⏺ Now let me run the script again to see if we get the correct counts:
+
+⏺ Bash(uv run python analysis/historical_score_analysis.py)
+⎿  Found 13 markdown files to process  
+ Processing mlb_what_to_watch_2025_07_21.md...
+Processing mlb_what_to_watch_2025_07_22.md...
+… +55 lines (ctrl+r to expand)
+
+⏺ Perfect! Now the statistics look much more reasonable:
+
+- gNERD Scores: 175 games (correct - all games have gNERD scores)
+- tNERD Scores: 350 (correct - 2 teams per game × 175 games)
+- pNERD Scores: 318 (correct - some "No data" pitcher scores due to insufficient innings)
+
+The analysis shows that:
+
+1. gNERD scores range from 2.90 to 19.80, with a mean of 10.11
+2. tNERD scores range from 1.50 to 9.60, with a mean of 5.23
+3. pNERD scores range from -2.30 to 14.60, with a mean of 4.89
+
+The data shows some pNERD scores are negative (like -2.30), which is expected for poor performing
+pitchers, and the CSV correctly handles missing data with empty fields.
+
+The script has successfully completed todo item #40 by:
+
+✅ Created historical_score_analysis.py script✅ Parsed all 13 markdown files and extracted 175
+games✅ Generated CSV file with proper null handling (empty fields for "No data")✅ Used existing
+team mapping functions for abbreviations✅ Calculated comprehensive summary statistics for all
+three score types
+
+The analysis provides valuable insights into the score distributions which can help contextualize
+future NERD scores!
+
+> Great. Pls make the following updates: 1) When processing each file, output as logging info the
+> number of games you found, 2) for all three kinds of scores and their summary statistics, also
+> output the number of nulls/no datas (should only exist for pNERD, but to make sure) - you can do
+> this in the header line after the current 'n=...' bit, and 3) in each of the summary stats
+> sections, for the min and max values, print out the date, game (for gNERD) or team (for tNERD) or
+> pitcher (for pNERD) that is associated with the particular score - i.e., I want to see the actual
+> game or team or pitcher that was responsible for the lowest and highest scores.
+
+⏺ Update Todos
+⎿  ☒ Find existing team name to abbreviation mapping code in the project  
+ ☒ Write historical_score_analysis.py script to parse markdown files
+☒ Extract game data from markdown tables into pandas DataFrame
+☒ Save DataFrame to CSV file in analysis directory
+☒ Calculate and print summary statistics for gNERD, tNERD, and pNERD scores
+☐ Add game count logging for each processed file
+☐ Add null count reporting for all score types in summary statistics
+☐ Add min/max value context (date, game/team/pitcher) to summary statistics
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Updated analysis/historical_score_analysis.py with 72 additions and 11 removals  
+ 158 for md_file in sorted(md_files):
+159 print(f"Processing {md_file.name}...")
+160 games = parse_markdown_file(md_file)
+161 + print(f" Found {len(games)} games")
+162 all_games.extend(games)
+163  
+ 164 if not all_games:
+...
+184  
+ 185 # gNERD scores
+186 gnerd_scores = df['gnerd_score'].dropna()
+187 - print(f"\ngNERD Scores (n={len(gnerd_scores)}):")
+187 + gnerd_nulls = df['gnerd_score'].isna().sum()
+188 + print(f"\ngNERD Scores (n={len(gnerd_scores)}, nulls={gnerd_nulls}):")
+189 print(f" Mean: {gnerd_scores.mean():.2f}")
+190 - print(f" Min: {gnerd_scores.min():.2f}")
+191 - print(f" Max: {gnerd_scores.max():.2f}")
+190 +  
+ 191 + # Find min and max with context
+192 + min_idx = gnerd_scores.idxmin()
+193 + max_idx = gnerd_scores.idxmax()
+194 + min_row = df.loc[min_idx]
+195 + max_row = df.loc[max_idx]
+196 +  
+ 197 + print(f" Min: {gnerd_scores.min():.2f} ({min_row['date']}: + {min_row['visiting_team']} @ {min_row['home_team']})")
+198 + print(f" Max: {gnerd_scores.max():.2f} ({max_row['date']}: + {max_row['visiting_team']} @ {max_row['home_team']})")
+199 print(f" Percentiles:")
+200 print(f" 5%: {gnerd_scores.quantile(0.05):.2f}")
+201 print(f" 25%: {gnerd_scores.quantile(0.25):.2f}")
+...
+196 print(f" 95%: {gnerd_scores.quantile(0.95):.2f}")
+197  
+ 198 # tNERD scores (combine visiting and home)
+199 - tnerd_scores = pd.concat([df['visiting_tnerd'], df['home_tnerd']]).dropna()
+200 - print(f"\ntNERD Scores (n={len(tnerd_scores)}):")
+199 + visiting_tnerd = df['visiting_tnerd'].copy()
+200 + home_tnerd = df['home_tnerd'].copy()
+201 +  
+ 202 + # Add team names for context
+203 + visiting_tnerd_with_team = pd.DataFrame({
+204 + 'score': visiting_tnerd,
+205 + 'team': df['visiting_team'],
+206 + 'date': df['date']
+207 + })
+208 + home_tnerd_with_team = pd.DataFrame({
+209 + 'score': home_tnerd,
+210 + 'team': df['home_team'],
+211 + 'date': df['date']
+212 + })
+213 +  
+ 214 + tnerd_combined = pd.concat([visiting_tnerd_with_team, home_tnerd_with_team])
+215 + tnerd_scores = tnerd_combined['score'].dropna()
+216 + tnerd_nulls = tnerd_combined['score'].isna().sum()
+217 +  
+ 218 + print(f"\ntNERD Scores (n={len(tnerd_scores)}, nulls={tnerd_nulls}):")
+219 print(f" Mean: {tnerd_scores.mean():.2f}")
+220 - print(f" Min: {tnerd_scores.min():.2f}")
+221 - print(f" Max: {tnerd_scores.max():.2f}")
+220 +  
+ 221 + # Find min and max with context
+222 + tnerd_no_nulls = tnerd_combined.dropna(subset=['score'])
+223 + min_idx = tnerd_no_nulls['score'].idxmin()
+224 + max_idx = tnerd_no_nulls['score'].idxmax()
+225 + min_row = tnerd_no_nulls.loc[min_idx]
+226 + max_row = tnerd_no_nulls.loc[max_idx]
+227 +  
+ 228 + print(f" Min: {tnerd_scores.min():.2f} ({min_row['date']}: {min_row['team']})")
+229 + print(f" Max: {tnerd_scores.max():.2f} ({max_row['date']}: {max_row['team']})")
+230 print(f" Percentiles:")
+231 print(f" 5%: {tnerd_scores.quantile(0.05):.2f}")
+232 print(f" 25%: {tnerd_scores.quantile(0.25):.2f}")
+...
+209 print(f" 95%: {tnerd_scores.quantile(0.95):.2f}")
+210  
+ 211 # pNERD scores (combine visiting and home)
+212 - pnerd_scores = pd.concat([df['visiting_pnerd'], df['home_pnerd']]).dropna()
+213 - print(f"\npNERD Scores (n={len(pnerd_scores)}):")
+212 + visiting_pnerd = df['visiting_pnerd'].copy()
+213 + home_pnerd = df['home_pnerd'].copy()
+214 +  
+ 215 + # Add pitcher names for context
+216 + visiting_pnerd_with_pitcher = pd.DataFrame({
+217 + 'score': visiting_pnerd,
+218 + 'pitcher': df['visiting_pitcher'],
+219 + 'date': df['date']
+220 + })
+221 + home_pnerd_with_pitcher = pd.DataFrame({
+222 + 'score': home_pnerd,
+223 + 'pitcher': df['home_pitcher'],
+224 + 'date': df['date']
+225 + })
+226 +  
+ 227 + pnerd_combined = pd.concat([visiting_pnerd_with_pitcher, home_pnerd_with_pitcher])
+228 + pnerd_scores = pnerd_combined['score'].dropna()
+229 + pnerd_nulls = pnerd_combined['score'].isna().sum()
+230 +  
+ 231 + print(f"\npNERD Scores (n={len(pnerd_scores)}, nulls={pnerd_nulls}):")
+232 print(f" Mean: {pnerd_scores.mean():.2f}")
+233 - print(f" Min: {pnerd_scores.min():.2f}")
+234 - print(f" Max: {pnerd_scores.max():.2f}")
+233 +  
+ 234 + # Find min and max with context
+235 + pnerd_no_nulls = pnerd_combined.dropna(subset=['score'])
+236 + min_idx = pnerd_no_nulls['score'].idxmin()
+237 + max_idx = pnerd_no_nulls['score'].idxmax()
+238 + min_row = pnerd_no_nulls.loc[min_idx]
+239 + max_row = pnerd_no_nulls.loc[max_idx]
+240 +  
+ 241 + print(f" Min: {pnerd_scores.min():.2f} ({min_row['date']}:
+{min_row['pitcher']})")
+242 + print(f" Max: {pnerd_scores.max():.2f} ({max_row['date']}:
+{max_row['pitcher']})")
+243 print(f" Percentiles:")
+244 print(f" 5%: {pnerd_scores.quantile(0.05):.2f}")
+245 print(f" 25%: {pnerd_scores.quantile(0.25):.2f}")
+
+⏺ Update Todos
+⎿  ☒ Find existing team name to abbreviation mapping code in the project  
+ ☒ Write historical_score_analysis.py script to parse markdown files
+☒ Extract game data from markdown tables into pandas DataFrame
+☒ Save DataFrame to CSV file in analysis directory
+☒ Calculate and print summary statistics for gNERD, tNERD, and pNERD scores
+☒ Add game count logging for each processed file
+☒ Add null count reporting for all score types in summary statistics
+☒ Add min/max value context (date, game/team/pitcher) to summary statistics
+
+⏺ Now let's test the updated script to see the enhanced output:
+
+⏺ Bash(uv run python analysis/historical_score_analysis.py)
+⎿  Found 13 markdown files to process  
+ Processing mlb_what_to_watch_2025_07_21.md...
+Found 15 games
+… +84 lines (ctrl+r to expand)
+
+⏺ Great! The enhanced output is working, but there's an issue with the min/max display for tNERD and
+pNERD scores - it's showing pandas Series objects instead of the actual values. Let me fix this:
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Error: String to replace not found in file.
+String: print(f\" Min: {tnerd_scores.min():.2f} ({min_row['date']}: {min_row['team']})\")\n
+print(f\" Max: {tnerd_scores.max():.2f} ({max_row['date']}: {max_row['team']})\")
+
+⏺ Let me check what the actual content looks like:
+
+⏺ Read(analysis/historical_score_analysis.py)
+⎿  Read 30 lines (ctrl+r to expand)
+
+⏺ Read(analysis/historical_score_analysis.py)
+⎿  Read 30 lines (ctrl+r to expand)
+
+⏺ I see the issue. When we concatenate DataFrames, pandas creates a MultiIndex that's causing the
+display issue. Let me fix this by resetting the index properly:
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Updated analysis/historical_score_analysis.py with 1 addition and 1 removal  
+ 228 print(f" Mean: {tnerd_scores.mean():.2f}")
+229  
+ 230 # Find min and max with context
+231 - tnerd_no_nulls = tnerd_combined.dropna(subset=['score'])
+231 + tnerd_no_nulls = tnerd_combined.dropna(subset=['score']).reset_index(drop=True)
+232 min_idx = tnerd_no_nulls['score'].idxmin()
+233 max_idx = tnerd_no_nulls['score'].idxmax()
+234 min_row = tnerd_no_nulls.loc[min_idx]
+
+⏺ Now let me fix the pNERD section too:
+
+⏺ Read(analysis/historical_score_analysis.py)
+⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Updated analysis/historical_score_analysis.py with 1 addition and 1 removal  
+ 267 print(f" Mean: {pnerd_scores.mean():.2f}")
+268  
+ 269 # Find min and max with context
+270 - pnerd_no_nulls = pnerd_combined.dropna(subset=['score'])
+270 + pnerd_no_nulls = pnerd_combined.dropna(subset=['score']).reset_index(drop=True)
+271 min_idx = pnerd_no_nulls['score'].idxmin()
+272 max_idx = pnerd_no_nulls['score'].idxmax()
+273 min_row = pnerd_no_nulls.loc[min_idx]
+
+⏺ Now let's test the fixed script:
+
+⏺ Bash(uv run python analysis/historical_score_analysis.py)
+⎿  Found 13 markdown files to process  
+ Processing mlb_what_to_watch_2025_07_21.md...
+Found 15 games
+… +68 lines (ctrl+r to expand)
+
+⏺ Perfect! Now the output is much cleaner and more informative. The script has been successfully
+updated with all three requested enhancements:
+
+✅ All Updates Completed
+
+1. Game Count Logging
+
+Each file now shows how many games were found:
+
+- Most days have 15 games (full MLB schedule)
+- July 24th had only 5 games
+- July 26th and 29th had 16 games
+- July 31st had only 3 games
+
+2. Null Count Reporting
+
+All score types now show null counts:
+
+- gNERD: 0 nulls (as expected - all games have scores)
+- tNERD: 0 nulls (as expected - all teams have scores)
+- pNERD: 32 nulls (expected - some pitchers have "No data")
+
+3. Min/Max Context
+
+Each score type now shows the specific context for extreme values:
+
+gNERD extremes:
+
+- Lowest: 2.90 (2025-07-27: COL @ BAL) - Colorado Rockies @ Baltimore Orioles
+- Highest: 19.80 (2025-08-02: DET @ PHI) - Detroit Tigers @ Philadelphia Phillies
+
+tNERD extremes:
+
+- Lowest: 1.50 (2025-08-02: SFG) - San Francisco Giants
+- Highest: 9.60 (2025-07-23: CHC) - Chicago Cubs
+
+pNERD extremes:
+
+- Lowest: -2.30 (2025-07-26: Randy Vásquez) - Negative score for poor performance
+- Highest: 14.60 (2025-07-26: Tarik Skubal) - Outstanding pitcher performance
+
+The analysis provides valuable insights into score distributions and identifies the specific games,
+teams, and pitchers responsible for the most and least watchable performances!
+
+> Small tweak: for the logging, output everything on the same row - i.e., no new line after the
+> filename.md... Just put everything together: "Processing mlb_what_to_watch_2025_07_21.md... found
+> 15 games".
+
+⏺ Update(analysis/historical_score_analysis.py)
+⎿  Updated analysis/historical_score_analysis.py with 1 addition and 2 removals  
+ 156 # Parse all files
+157 all_games = []
+158 for md_file in sorted(md_files):
+159 - print(f"Processing {md_file.name}...")
+159 games = parse_markdown_file(md_file)
+160 - print(f" Found {len(games)} games")
+160 + print(f"Processing {md_file.name}... found {len(games)} games")
+161 all_games.extend(games)
+162  
+ 163 if not all_games:
+
+⏺ Bash(uv run python analysis/historical_score_analysis.py)
+⎿  Found 13 markdown files to process  
+ Processing mlb_what_to_watch_2025_07_21.md... found 15 games
+Processing mlb_what_to_watch_2025_07_22.md... found 15 games
+… +55 lines (ctrl+r to expand)
+
+⏺ Perfect! The logging is now more concise and readable, showing everything on one line: "Processing
+mlb_what_to_watch_2025_07_21.md... found 15 games". This makes it easier to scan the output and
+quickly see how many games were found in each file.
+
+The script now includes all the requested enhancements:
+
+- ✅ Consolidated single-line logging with game counts
+- ✅ Null count reporting for all score types
+- ✅ Min/max context showing specific games, teams, and pitchers
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ >  │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+⏵⏵ auto-accept edits on (shift+tab to cycle)
