@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from .data_retrieval import get_game_schedule
 from .game_scores import GameScore
+from .llm_client import MODEL_STRING_CHEAP, MODEL_STRING_FULL
 from .markdown_generator import (
     generate_complete_markdown_content,
     generate_markdown_filename,
@@ -37,6 +38,10 @@ def main(
         default=None,
         help="Number of top games to generate descriptions for. Defaults to 1 if --game_desc_source is provided.",
     ),
+    llm_model: str = typer.Option(
+        default="normal",
+        help="LLM model to use: 'normal' (default) or 'cheap'. Only applies when --game-desc-source is 'llm'.",
+    ),
 ) -> None:
     """Generate a markdown file with MLB game watchability scores for a given date."""
 
@@ -64,6 +69,18 @@ def main(
         )
         raise typer.Exit(1)
 
+    # Validate llm_model parameter
+    if llm_model not in ["normal", "cheap"]:
+        logger.error(f"Invalid llm_model: {llm_model}. Must be 'normal' or 'cheap'.")
+        typer.echo(
+            f"Error: llm_model must be 'normal' or 'cheap', not '{llm_model}'",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    # Determine which model to use
+    model_to_use = MODEL_STRING_FULL if llm_model == "normal" else MODEL_STRING_CHEAP
+
     # Determine the date to use
     target_date = date if date is not None else get_today()
     logger.info(f"Generating markdown file for date: {target_date}")
@@ -71,7 +88,7 @@ def main(
     # Log game description settings
     if game_desc_source is not None:
         logger.info(
-            f"Game descriptions enabled: source={game_desc_source}, limit={game_desc_limit}"
+            f"Game descriptions enabled: source={game_desc_source}, limit={game_desc_limit}, model={llm_model} ({model_to_use})"
         )
     else:
         logger.info("Game descriptions disabled")
@@ -98,6 +115,7 @@ def main(
             season,
             game_desc_source=game_desc_source,
             game_desc_limit=game_desc_limit or 1,
+            model=model_to_use,
         )
         logger.info(f"Successfully calculated scores for {len(game_scores)} games")
 

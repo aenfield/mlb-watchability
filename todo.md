@@ -78,7 +78,7 @@ Core Implementation
 
 27. ~~As part of https://github.com/aenfield/mlb-watchability/issues/6, I first want to expand the pitcher_stats.py and team_stats.py implementations to expose the components of the pNERD/tNERD score. We can probably do this by factoring the relevant code from the pitcher_nerd_breakdown.py and team_nerd_breakdown.py first cut implementations into the pitcher/team stats implementations - in the end, PitcherNerdStats/TeamNerdStats should have properties with the components, and the components should sum to pNERD/tNERD score. Then make pitcher_nerd_breakdown.py and team_nerd_breakdown.py use the new PitcherNerdStats/TeamNerdStats implementations, make sure existing tests pass, and add new tests for the new location of the functionality.~~
 
-28. Now, continuing with implementing https://github.com/aenfield/mlb-watchability/issues/6, I want to do a first cut at the expanded UI. For this one, I want to add a new set of tables to the Markdown file created by mlbw-markdown, after the existing table. The format should look like this, with one section like this for each game.
+28. ~~Now, continuing with implementing https://github.com/aenfield/mlb-watchability/issues/6, I want to do a first cut at the expanded UI. For this one, I want to add a new set of tables to the Markdown file created by mlbw-markdown, after the existing table. The format should look like this, with one section like this for each game.~~
 
 # Detail
 
@@ -116,7 +116,7 @@ Core Implementation
 | **Z-Score**  | -1.51 | 1.66   | 0.30     | 2.02     | -1.49 | 0.07  | —    | —    | —        | —     |
 | **pNERD**    | 3.01  | 0.83   | 0.15     | 2.00     | 1.49  | -0.04 | 0.00 | 0.00 | 3.80     | 11.25 |
 
-The example section ends here. There should be a section like the above for each game.
+~~The example section ends here. There should be a section like the above for each game.~~
 
 29. ~~Add within-page links in the table at the top that go to specific detail section for the game below, using anchors and fragments - i.e., with # in the link. If the user clicks on the overall game score it sholud go to the top of the section and if they click on one of the tNERD or pNERD scores it should go to that specific part of the section.~~
 
@@ -150,7 +150,9 @@ The example section ends here. There should be a section like the above for each
 
 39. ~~Write a quickie data analysis script, in the analysis directory, to understand the basics of the distributions of the calculated pNERD, tNERD, and gNERD scores based on as much historical data as possible. The data comes from the generated .md files in the directory ../blog-eleventy/content/blog/mlbw/. First generate an internal-to-program table with a row per day, and the following columns: date, gNERD score, visiting tNERD, home tNERD, visiting pitcher pNERD, home team pitcher pNERD, visiting team (three letter abbrev), home team (three letter abbrev), visiting pitcher name, home team pitcher name. Parse each each input .md file to get the information for a single row. Save the table to a .csv file in the analysis directory. And finish by printing out summary statistics for gNERD scores, team tNERD scores, and pitcher pNERD scores, including the number of scores, mean, min, max, and percentiles at 0.05, 0.25, 0.5, 0.75, and 0.95.~~
 
-40. Consider limiting allowed sites for sources via the Anthropic API to a few to prefer content from places like FanGraphs and hopefully other analytical sites with recent info (would also want to make sure there's enough general and recent game-specific info).
+40. ~~Evaluate using the cheaper Haiku model in production instead of Sonnet. I did this already by comparing costs - it's 1/3 the cost to use Haiku (overall, with the token costs going way down and the web search cost staying the same), which means the monthly cost will be ~$15 or less instead of around ~$40, adding an llm-model param to mlbw-markdown to enable choosing the normal or cheap model, and then by doing single-sample eyeball comparison between three games. Overall I may actually like the Haiku summaries better - they're shorter, but still have very similar info (better - Sonnet is too long even though I've asked for shorter); they seem to be less focused on NERD while still including it (Sonnet goes too hard w/ NERD scores and percentiles, etc. even though I've prompted it to not do so), and, hey, it's non-trivially cheaper, especially for someone w/o a job. I'll switch it in production and see how it does over a full slate of games for at least a few days.~~
+
+41. Consider limiting allowed sites for sources via the Anthropic API to a few to prefer content from places like FanGraphs and hopefully other analytical sites with recent info (would also want to make sure there's enough general and recent game-specific info).
 
 ## Notes for possible integration and enhancement
 

@@ -25,6 +25,14 @@ on:
         required: false
         type: string
         default: "1"
+      llm-model:
+        description: "LLM model to use ('normal' or 'cheap', defaults to 'cheap')"
+        required: false
+        type: choice
+        options:
+          - normal
+          - cheap
+        default: cheap
 
 jobs:
   generate-markdown:
@@ -49,18 +57,19 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DAILYGEN }}
         run: |
-          # Use defaults for scheduled runs (where the first parts will be empty 
+          # Use defaults for scheduled runs (where the first parts will be empty)
           GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
           GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '30' }}"
+          LLM_MODEL="${{ github.event.inputs.llm-model || 'cheap' }}"
 
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
-            echo "Using game-desc-source: $GAME_DESC_SOURCE, game-desc-limit: $GAME_DESC_LIMIT"
-            uv run mlbw-markdown "${{ github.event.inputs.date }}" --game-desc-source "$GAME_DESC_SOURCE" --game-desc-limit "$GAME_DESC_LIMIT"
+            echo "Using game-desc-source: $GAME_DESC_SOURCE, game-desc-limit: $GAME_DESC_LIMIT, llm-model: $LLM_MODEL"
+            uv run mlbw-markdown "${{ github.event.inputs.date }}" --game-desc-source "$GAME_DESC_SOURCE" --game-desc-limit "$GAME_DESC_LIMIT" --llm-model "$LLM_MODEL"
           else
             echo "Running mlbw-markdown with today's date"
-            echo "Using game-desc-source: $GAME_DESC_SOURCE, game-desc-limit: $GAME_DESC_LIMIT"
-            uv run mlbw-markdown --game-desc-source "$GAME_DESC_SOURCE" --game-desc-limit "$GAME_DESC_LIMIT"
+            echo "Using game-desc-source: $GAME_DESC_SOURCE, game-desc-limit: $GAME_DESC_LIMIT, llm-model: $LLM_MODEL"
+            uv run mlbw-markdown --game-desc-source "$GAME_DESC_SOURCE" --game-desc-limit "$GAME_DESC_LIMIT" --llm-model "$LLM_MODEL"
           fi
 
       - name: Upload markdown artifact
