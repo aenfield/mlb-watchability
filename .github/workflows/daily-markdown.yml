@@ -2,8 +2,8 @@ name: Daily MLB Watchability Markdown
 
 on:
   schedule:
-    # Run every day at 8:00 AM Pacific Time (1500 PM UTC during PDT)
-    - cron: "0 15 * * *"
+    # Run every day at 6:00 AM Pacific Time (1300 PM UTC during PDT)
+    - cron: "0 13 * * *"
 
   # Allow manual triggering, with particular defaults suitable for manually triggered jobs
   workflow_dispatch:
