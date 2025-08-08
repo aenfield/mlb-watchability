@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 from .data_retrieval import get_game_schedule
 from .game_scores import GameScore
-from .llm_client import MODEL_STRING_CHEAP, MODEL_STRING_FULL
 from .markdown_generator import (
     generate_complete_markdown_content,
     generate_markdown_filename,
@@ -41,6 +40,10 @@ def main(
     llm_model: str = typer.Option(
         default="normal",
         help="LLM model to use: 'normal' (default) or 'cheap'. Only applies when --game-desc-source is 'llm'.",
+    ),
+    llm_model_provider: str = typer.Option(
+        default="anthropic",
+        help="LLM provider to use: 'anthropic' (default) or 'openai'. Only applies when --game-desc-source is 'llm'.",
     ),
 ) -> None:
     """Generate a markdown file with MLB game watchability scores for a given date."""
@@ -78,8 +81,19 @@ def main(
         )
         raise typer.Exit(1)
 
-    # Determine which model to use
-    model_to_use = MODEL_STRING_FULL if llm_model == "normal" else MODEL_STRING_CHEAP
+    # Validate llm_model_provider parameter
+    if llm_model_provider not in ["anthropic", "openai"]:
+        logger.error(
+            f"Invalid llm_model_provider: {llm_model_provider}. Must be 'anthropic' or 'openai'."
+        )
+        typer.echo(
+            f"Error: llm_model_provider must be 'anthropic' or 'openai', not '{llm_model_provider}'",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    # Pass the generic model type - the create_llm_client factory will map it to provider-specific models
+    model_to_use = llm_model
 
     # Determine the date to use
     target_date = date if date is not None else get_today()
@@ -88,7 +102,7 @@ def main(
     # Log game description settings
     if game_desc_source is not None:
         logger.info(
-            f"Game descriptions enabled: source={game_desc_source}, limit={game_desc_limit}, model={llm_model} ({model_to_use})"
+            f"Game descriptions enabled: source={game_desc_source}, limit={game_desc_limit}, provider={llm_model_provider}, model={model_to_use}"
         )
     else:
         logger.info("Game descriptions disabled")
@@ -116,6 +130,7 @@ def main(
             game_desc_source=game_desc_source,
             game_desc_limit=game_desc_limit or 1,
             model=model_to_use,
+            provider=llm_model_provider,
         )
         logger.info(f"Successfully calculated scores for {len(game_scores)} games")
 

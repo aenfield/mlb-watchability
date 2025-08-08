@@ -1,13 +1,17 @@
 """Tests for game score calculator."""
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from jinja2 import TemplateNotFound
 
 from mlb_watchability.game_scores import GameScore
-from mlb_watchability.llm_client import MODEL_STRING_CHEAP, MODEL_STRING_FULL
+from mlb_watchability.llm_client import (
+    MODEL_STRING_CHEAP,
+    MODEL_STRING_FULL,
+    LLMResponse,
+)
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
 from mlb_watchability.team_stats import TeamNerdStats, TeamStats
 
@@ -877,20 +881,32 @@ class TestGameScores:
         # Mock the LLM response
         mock_response = "This is an exciting matchup between two powerhouse teams!"
 
-        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
-            mock_llm.return_value = (mock_response, [])
+        # Mock the LLM client and response
+        mock_llm_response = LLMResponse(
+            content=mock_response, model="test-model", web_sources=[]
+        )
+
+        with patch(
+            "mlb_watchability.game_scores.create_llm_client"
+        ) as mock_create_client:
+            mock_client = Mock()
+            mock_client.generate_text.return_value = mock_llm_response
+            mock_create_client.return_value = mock_client
 
             description, web_sources = game_score.generate_description()
 
             assert description == mock_response
             assert web_sources == []
 
-            # Verify LLM was called with correct parameters
-            mock_llm.assert_called_once()
-            call_args = mock_llm.call_args
-            assert call_args[1]["model"] == MODEL_STRING_FULL
-            # max_tokens should not be explicitly passed, using function default (None)
-            assert "max_tokens" not in call_args[1]
+            # Verify client was created with correct parameters
+            mock_create_client.assert_called_once_with(
+                provider="anthropic", model=MODEL_STRING_FULL
+            )
+
+            # Verify client.generate_text was called with correct parameters
+            mock_client.generate_text.assert_called_once()
+            call_args = mock_client.generate_text.call_args
+            # Temperature and web search should be passed
             assert call_args[1]["temperature"] == 0.7
             assert call_args[1]["include_web_search"] is True
 
@@ -961,16 +977,31 @@ class TestGameScores:
 
         mock_response = "Game with limited pitcher data available."
 
-        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
-            mock_llm.return_value = (mock_response, [])
+        # Mock the LLM client and response
+        mock_llm_response = LLMResponse(
+            content=mock_response, model="test-model", web_sources=[]
+        )
+
+        with patch(
+            "mlb_watchability.game_scores.create_llm_client"
+        ) as mock_create_client:
+            mock_client = Mock()
+            mock_client.generate_text.return_value = mock_llm_response
+            mock_create_client.return_value = mock_client
 
             description, web_sources = game_score.generate_description()
 
             assert description == mock_response
             assert web_sources == []
 
+            # Verify client was created and called
+            mock_create_client.assert_called_once_with(
+                provider="anthropic", model=MODEL_STRING_FULL
+            )
+            mock_client.generate_text.assert_called_once()
+
             # Verify prompt was generated even with missing data
-            prompt = mock_llm.call_args[1]["prompt"]
+            prompt = mock_client.generate_text.call_args[1]["prompt"]
             assert "TBD" in prompt
             assert "No detailed stats available" in prompt
 
@@ -999,8 +1030,17 @@ class TestGameScores:
         # Mock response with leading/trailing whitespace
         mock_response = "   \n  This is a great game!  \n  "
 
-        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
-            mock_llm.return_value = (mock_response, [])
+        # Mock the LLM client and response
+        mock_llm_response = LLMResponse(
+            content=mock_response, model="test-model", web_sources=[]
+        )
+
+        with patch(
+            "mlb_watchability.game_scores.create_llm_client"
+        ) as mock_create_client:
+            mock_client = Mock()
+            mock_client.generate_text.return_value = mock_llm_response
+            mock_create_client.return_value = mock_client
 
             description, web_sources = game_score.generate_description()
 
@@ -1036,8 +1076,17 @@ class TestGameScores:
             {"url": "https://example.com/article2", "title": "Player Stats"},
         ]
 
-        with patch("mlb_watchability.game_scores.generate_text_from_llm") as mock_llm:
-            mock_llm.return_value = (mock_response, mock_sources)
+        # Mock the LLM client and response
+        mock_llm_response = LLMResponse(
+            content=mock_response, model="test-model", web_sources=mock_sources
+        )
+
+        with patch(
+            "mlb_watchability.game_scores.create_llm_client"
+        ) as mock_create_client:
+            mock_client = Mock()
+            mock_client.generate_text.return_value = mock_llm_response
+            mock_create_client.return_value = mock_client
 
             description, web_sources = game_score.generate_description()
 

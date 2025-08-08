@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from mlb_watchability.game_scores import CANNED_GAME_DESCRIPTION, GameScore
-from mlb_watchability.llm_client import MODEL_STRING_CHEAP, MODEL_STRING_FULL
 from mlb_watchability.markdown_cli import app as markdown_app
 
 
@@ -91,10 +90,11 @@ class TestMarkdownCliLlmModel:
                     in result.stdout
                 )
 
-                # Verify that GameScore.from_games was called with MODEL_STRING_FULL
+                # Verify that GameScore.from_games was called with generic model type "normal"
                 mock_calculate_scores.assert_called_once()
                 call_args = mock_calculate_scores.call_args
-                assert call_args[1]["model"] == MODEL_STRING_FULL
+                assert call_args[1]["model"] == "normal"
+                assert call_args[1]["provider"] == "anthropic"  # default provider
 
             finally:
                 os.chdir(original_cwd)
@@ -140,10 +140,11 @@ class TestMarkdownCliLlmModel:
                     in result.stdout
                 )
 
-                # Verify that GameScore.from_games was called with MODEL_STRING_CHEAP
+                # Verify that GameScore.from_games was called with generic model type "cheap"
                 mock_calculate_scores.assert_called_once()
                 call_args = mock_calculate_scores.call_args
-                assert call_args[1]["model"] == MODEL_STRING_CHEAP
+                assert call_args[1]["model"] == "cheap"
+                assert call_args[1]["provider"] == "anthropic"  # default provider
 
             finally:
                 os.chdir(original_cwd)
@@ -188,10 +189,11 @@ class TestMarkdownCliLlmModel:
                     in result.stdout
                 )
 
-                # Verify that GameScore.from_games was called with MODEL_STRING_FULL (default)
+                # Verify that GameScore.from_games was called with generic model type "normal" (default)
                 mock_calculate_scores.assert_called_once()
                 call_args = mock_calculate_scores.call_args
-                assert call_args[1]["model"] == MODEL_STRING_FULL
+                assert call_args[1]["model"] == "normal"
+                assert call_args[1]["provider"] == "anthropic"  # default provider
 
             finally:
                 os.chdir(original_cwd)
@@ -259,7 +261,204 @@ class TestMarkdownCliLlmModel:
                 # even though descriptions are canned (model parameter should still be passed)
                 mock_calculate_scores.assert_called_once()
                 call_args = mock_calculate_scores.call_args
-                assert call_args[1]["model"] == MODEL_STRING_CHEAP
+                assert call_args[1]["model"] == "cheap"
+                assert call_args[1]["provider"] == "anthropic"  # default provider
 
             finally:
                 os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    def test_markdown_cli_with_llm_model_provider_anthropic(
+        self,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test markdown CLI with --llm-model-provider anthropic parameter."""
+        # Setup mocks
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = [
+            {
+                "away_team": "Seattle Mariners",
+                "home_team": "Los Angeles Dodgers",
+                "away_starter": "Logan Gilbert",
+                "home_starter": "Walker Buehler",
+                "time": "19:10",
+            }
+        ]
+        mock_calculate_scores.return_value = self.create_sample_game_scores()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command with --llm-model-provider anthropic
+                result = self.runner.invoke(
+                    markdown_app,
+                    [
+                        "2025-07-20",
+                        "--game-desc-source",
+                        "llm",
+                        "--llm-model-provider",
+                        "anthropic",
+                        "--llm-model",
+                        "cheap",
+                    ],
+                )
+
+                # Check that command succeeded
+                assert result.exit_code == 0
+                assert (
+                    "Markdown file generated: mlb_what_to_watch_2025_07_20.md"
+                    in result.stdout
+                )
+
+                # Verify that GameScore.from_games was called with anthropic provider
+                mock_calculate_scores.assert_called_once()
+                call_args = mock_calculate_scores.call_args
+                assert call_args[1]["provider"] == "anthropic"
+                assert call_args[1]["model"] == "cheap"
+
+            finally:
+                os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    def test_markdown_cli_with_llm_model_provider_openai(
+        self,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test markdown CLI with --llm-model-provider openai parameter."""
+        # Setup mocks
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = [
+            {
+                "away_team": "Seattle Mariners",
+                "home_team": "Los Angeles Dodgers",
+                "away_starter": "Logan Gilbert",
+                "home_starter": "Walker Buehler",
+                "time": "19:10",
+            }
+        ]
+        mock_calculate_scores.return_value = self.create_sample_game_scores()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command with --llm-model-provider openai
+                result = self.runner.invoke(
+                    markdown_app,
+                    [
+                        "2025-07-20",
+                        "--game-desc-source",
+                        "llm",
+                        "--llm-model-provider",
+                        "openai",
+                        "--llm-model",
+                        "normal",
+                    ],
+                )
+
+                # Check that command succeeded
+                assert result.exit_code == 0
+                assert (
+                    "Markdown file generated: mlb_what_to_watch_2025_07_20.md"
+                    in result.stdout
+                )
+
+                # Verify that GameScore.from_games was called with openai provider
+                mock_calculate_scores.assert_called_once()
+                call_args = mock_calculate_scores.call_args
+                assert call_args[1]["provider"] == "openai"
+                assert call_args[1]["model"] == "normal"
+
+            finally:
+                os.chdir(original_cwd)
+
+    @patch("mlb_watchability.markdown_cli.GameScore.from_games")
+    @patch("mlb_watchability.markdown_cli.get_game_schedule")
+    @patch("mlb_watchability.markdown_cli.extract_year_from_date")
+    def test_markdown_cli_with_llm_model_provider_default(
+        self,
+        mock_extract_year: MagicMock,
+        mock_get_schedule: MagicMock,
+        mock_calculate_scores: MagicMock,
+    ) -> None:
+        """Test markdown CLI with default provider (should be anthropic)."""
+        # Setup mocks
+        mock_extract_year.return_value = 2025
+        mock_get_schedule.return_value = [
+            {
+                "away_team": "Seattle Mariners",
+                "home_team": "Los Angeles Dodgers",
+                "away_starter": "Logan Gilbert",
+                "home_starter": "Walker Buehler",
+                "time": "19:10",
+            }
+        ]
+        mock_calculate_scores.return_value = self.create_sample_game_scores()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+
+                # Run the CLI command without --llm-model-provider (should default to anthropic)
+                result = self.runner.invoke(
+                    markdown_app,
+                    [
+                        "2025-07-20",
+                        "--game-desc-source",
+                        "llm",
+                        "--llm-model",
+                        "normal",
+                    ],
+                )
+
+                # Check that command succeeded
+                assert result.exit_code == 0
+                assert (
+                    "Markdown file generated: mlb_what_to_watch_2025_07_20.md"
+                    in result.stdout
+                )
+
+                # Verify that GameScore.from_games was called with default anthropic provider
+                mock_calculate_scores.assert_called_once()
+                call_args = mock_calculate_scores.call_args
+                assert call_args[1]["provider"] == "anthropic"  # default
+                assert call_args[1]["model"] == "normal"
+
+            finally:
+                os.chdir(original_cwd)
+
+    def test_markdown_cli_with_invalid_llm_model_provider(self) -> None:
+        """Test markdown CLI with invalid --llm-model-provider parameter."""
+        # Run the CLI command with invalid provider
+        result = self.runner.invoke(
+            markdown_app,
+            [
+                "2025-07-20",
+                "--game-desc-source",
+                "llm",
+                "--llm-model-provider",
+                "invalid",
+            ],
+        )
+
+        # Check that command fails with error
+        assert result.exit_code == 1
+        # Error message might be in output or stderr - check both
+        error_message = (
+            "Error: llm_model_provider must be 'anthropic' or 'openai', not 'invalid'"
+        )
+        assert error_message in result.output or error_message in getattr(
+            result, "stderr", ""
+        )

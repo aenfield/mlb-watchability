@@ -10,9 +10,12 @@ import pytest
 from mlb_watchability.llm_client import (
     MODEL_STRING_CHEAP,
     MODEL_STRING_FULL,
+    OPENAI_MODEL_CHEAP,
+    OPENAI_MODEL_FULL,
     AnthropicClient,
     LLMClientError,
     LLMResponse,
+    OpenAIClient,
     create_llm_client,
     generate_text_from_llm,
 )
@@ -343,6 +346,229 @@ class TestAnthropicClient:
             }
 
 
+class TestOpenAIClient:
+    """Test OpenAI client implementation."""
+
+    def test_init_with_api_key(self) -> None:
+        """Test initialization with explicit API key."""
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai:
+            client = OpenAIClient(api_key="test-key", default_model=OPENAI_MODEL_CHEAP)
+            assert client.api_key == "test-key"
+            assert client.default_model == OPENAI_MODEL_CHEAP
+            mock_openai.assert_called_once_with(api_key="test-key")
+
+    def test_init_with_env_var(self) -> None:
+        """Test initialization with environment variable."""
+        with (
+            patch.dict(os.environ, {"OPENAI_API_KEY": "env-key"}),
+            patch("mlb_watchability.llm_client.OpenAI") as mock_openai,
+        ):
+            client = OpenAIClient()
+            assert client.api_key == "env-key"
+            assert client.default_model == OPENAI_MODEL_FULL
+            mock_openai.assert_called_once_with(api_key="env-key")
+
+    def test_init_without_api_key(self) -> None:
+        """Test initialization fails without API key."""
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(LLMClientError, match="OpenAI API key not provided"),
+        ):
+            OpenAIClient()
+
+    def test_init_missing_openai_package(self) -> None:
+        """Test initialization fails if openai package is missing."""
+        with (
+            patch("mlb_watchability.llm_client.OpenAI", None),
+            pytest.raises(LLMClientError, match="OpenAI package not installed"),
+        ):
+            OpenAIClient(api_key="test-key")
+
+    def test_generate_text_success(self) -> None:
+        """Test successful text generation."""
+        # Mock the OpenAI response
+        mock_usage = Mock()
+        mock_usage.input_tokens = 40
+        mock_usage.output_tokens = 60
+
+        mock_response = Mock()
+        mock_response.output_text = "Generated OpenAI response text"
+        mock_response.usage = mock_usage
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key", default_model=OPENAI_MODEL_CHEAP)
+            response = client.generate_text(
+                "Test prompt", max_tokens=150, temperature=0.5
+            )
+
+            assert isinstance(response, LLMResponse)
+            assert response.content == "Generated OpenAI response text"
+            assert response.model == OPENAI_MODEL_CHEAP
+            assert response.usage == {
+                "input_tokens": 40,
+                "output_tokens": 60,
+                "web_search_requests": 0,
+            }
+
+            # Verify the API call (GPT-5 Responses API doesn't support temperature/max_tokens)
+            mock_client.responses.create.assert_called_once_with(
+                model=OPENAI_MODEL_CHEAP,
+                input="Test prompt",
+            )
+
+    def test_generate_text_with_custom_model(self) -> None:
+        """Test text generation with custom model."""
+        mock_response = Mock()
+        mock_response.output_text = "Generated response"
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+            response = client.generate_text("Test prompt", model=OPENAI_MODEL_CHEAP)
+
+            assert response.model == OPENAI_MODEL_CHEAP
+            assert response.usage is None
+
+            mock_client.responses.create.assert_called_once_with(
+                model=OPENAI_MODEL_CHEAP,
+                input="Test prompt",
+            )
+
+    def test_generate_text_empty_response(self) -> None:
+        """Test handling of empty response."""
+        mock_response = Mock()
+        mock_response.output_text = ""
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+
+            with pytest.raises(LLMClientError, match="Received empty response"):
+                client.generate_text("Test prompt")
+
+    def test_generate_text_api_error(self) -> None:
+        """Test handling of OpenAI API errors."""
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.side_effect = Exception(
+                "API rate limit exceeded"
+            )
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+
+            with pytest.raises(LLMClientError, match="Unexpected error"):
+                client.generate_text("Test prompt")
+
+    def test_generate_text_with_web_search(self) -> None:
+        """Test text generation with web search enabled."""
+        # Mock web search tool call
+        mock_web_result = Mock()
+        mock_web_result.url = "https://example.com"
+        mock_web_result.title = "Example Article"
+        mock_web_result.page_age = "1 hour"
+
+        mock_tool_output = Mock()
+        mock_tool_output.results = [mock_web_result]
+
+        mock_tool_call = Mock()
+        mock_tool_call.type = "web_search"
+        mock_tool_call.output = mock_tool_output
+
+        mock_usage = Mock()
+        mock_usage.input_tokens = 50
+        mock_usage.output_tokens = 75
+
+        mock_response = Mock()
+        mock_response.output_text = "Generated response with web search"
+        mock_response.usage = mock_usage
+        mock_response.tool_calls = [mock_tool_call]
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+            response = client.generate_text(
+                "Test prompt with web search", include_web_search=True
+            )
+
+            assert response.content == "Generated response with web search"
+            assert response.web_sources is not None
+            assert len(response.web_sources) == 1
+            assert response.web_sources[0]["url"] == "https://example.com"
+            assert response.web_sources[0]["title"] == "Example Article"
+            assert response.web_sources[0]["page_age"] == "1 hour"
+            assert response.usage is not None
+            assert response.usage["web_search_requests"] == 1
+
+            # Verify the API call includes web search tools
+            mock_client.responses.create.assert_called_once()
+            call_args = mock_client.responses.create.call_args[1]
+            assert "tools" in call_args
+            assert call_args["tools"] == [{"type": "web_search"}]
+
+    def test_generate_text_web_search_disabled(self) -> None:
+        """Test text generation with web search disabled (default)."""
+        mock_response = Mock()
+        mock_response.output_text = "Generated response without web search"
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+            response = client.generate_text("Test prompt", include_web_search=False)
+
+            assert response.content == "Generated response without web search"
+            assert response.web_sources == []
+
+            # Verify the API call does not include tools
+            mock_client.responses.create.assert_called_once()
+            call_args = mock_client.responses.create.call_args[1]
+            assert "tools" not in call_args
+
+    def test_generate_text_no_tool_calls(self) -> None:
+        """Test text generation when response has no tool_calls attribute."""
+        mock_usage = Mock()
+        mock_usage.input_tokens = 30
+        mock_usage.output_tokens = 45
+
+        mock_response = Mock()
+        mock_response.output_text = "Generated response"
+        mock_response.usage = mock_usage
+        # Remove tool_calls attribute to simulate no tool calls
+        if hasattr(mock_response, "tool_calls"):
+            delattr(mock_response, "tool_calls")
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+            response = client.generate_text("Test prompt", include_web_search=True)
+
+            assert response.content == "Generated response"
+            assert response.web_sources == []
+            assert response.usage is not None
+            assert response.usage["web_search_requests"] == 0
+
+
 class TestCreateLLMClient:
     """Test LLM client factory function."""
 
@@ -381,8 +607,8 @@ class TestCreateLLMClient:
 
     def test_unsupported_provider(self) -> None:
         """Test error for unsupported provider."""
-        with pytest.raises(LLMClientError, match="Unsupported LLM provider: openai"):
-            create_llm_client(provider="openai")
+        with pytest.raises(LLMClientError, match="Unsupported LLM provider: unknown"):
+            create_llm_client(provider="unknown")
 
     def test_create_with_additional_kwargs(self) -> None:
         """Test passing additional kwargs to client."""
@@ -401,6 +627,112 @@ class TestCreateLLMClient:
                 default_model=MODEL_STRING_CHEAP,
                 api_key="custom-key",
             )
+
+    def test_create_openai_client(self) -> None:
+        """Test creating OpenAI client."""
+        with patch("mlb_watchability.llm_client.OpenAIClient") as mock_openai:
+            mock_instance = Mock()
+            mock_openai.return_value = mock_instance
+
+            client = create_llm_client(provider="openai", model=OPENAI_MODEL_FULL)
+
+            assert client == mock_instance
+            mock_openai.assert_called_once_with(default_model=OPENAI_MODEL_FULL)
+
+    def test_create_openai_client_default_model(self) -> None:
+        """Test creating OpenAI client with default model."""
+        with patch("mlb_watchability.llm_client.OpenAIClient") as mock_openai:
+            mock_instance = Mock()
+            mock_openai.return_value = mock_instance
+
+            client = create_llm_client(provider="openai")
+
+            assert client == mock_instance
+            mock_openai.assert_called_once_with(default_model=OPENAI_MODEL_FULL)
+
+    def test_create_openai_client_case_insensitive(self) -> None:
+        """Test provider name is case insensitive for OpenAI."""
+        with patch("mlb_watchability.llm_client.OpenAIClient") as mock_openai:
+            mock_instance = Mock()
+            mock_openai.return_value = mock_instance
+
+            client = create_llm_client(provider="OPENAI")
+
+            assert client == mock_instance
+            mock_openai.assert_called_once()
+
+    def test_create_openai_with_additional_kwargs(self) -> None:
+        """Test passing additional kwargs to OpenAI client."""
+        with patch("mlb_watchability.llm_client.OpenAIClient") as mock_openai:
+            mock_instance = Mock()
+            mock_openai.return_value = mock_instance
+
+            client = create_llm_client(
+                provider="openai",
+                model=OPENAI_MODEL_CHEAP,
+                api_key="custom-openai-key",
+            )
+
+            assert client == mock_instance
+            mock_openai.assert_called_once_with(
+                default_model=OPENAI_MODEL_CHEAP,
+                api_key="custom-openai-key",
+            )
+
+    def test_generic_model_mapping_anthropic(self) -> None:
+        """Test generic model name mapping for Anthropic."""
+        with patch("mlb_watchability.llm_client.AnthropicClient") as mock_anthropic:
+            mock_instance = Mock()
+            mock_anthropic.return_value = mock_instance
+
+            # Test "normal" mapping
+            create_llm_client(provider="anthropic", model="normal")
+            mock_anthropic.assert_called_with(default_model=MODEL_STRING_FULL)
+
+            mock_anthropic.reset_mock()
+
+            # Test "cheap" mapping
+            create_llm_client(provider="anthropic", model="cheap")
+            mock_anthropic.assert_called_with(default_model=MODEL_STRING_CHEAP)
+
+            mock_anthropic.reset_mock()
+
+            # Test "full" mapping
+            create_llm_client(provider="anthropic", model="full")
+            mock_anthropic.assert_called_with(default_model=MODEL_STRING_FULL)
+
+    def test_generic_model_mapping_openai(self) -> None:
+        """Test generic model name mapping for OpenAI."""
+        with patch("mlb_watchability.llm_client.OpenAIClient") as mock_openai:
+            mock_instance = Mock()
+            mock_openai.return_value = mock_instance
+
+            # Test "normal" mapping
+            create_llm_client(provider="openai", model="normal")
+            mock_openai.assert_called_with(default_model=OPENAI_MODEL_FULL)
+
+            mock_openai.reset_mock()
+
+            # Test "cheap" mapping
+            create_llm_client(provider="openai", model="cheap")
+            mock_openai.assert_called_with(default_model=OPENAI_MODEL_CHEAP)
+
+            mock_openai.reset_mock()
+
+            # Test "full" mapping
+            create_llm_client(provider="openai", model="full")
+            mock_openai.assert_called_with(default_model=OPENAI_MODEL_FULL)
+
+    def test_custom_model_string_passthrough(self) -> None:
+        """Test that custom model strings are passed through unchanged."""
+        with patch("mlb_watchability.llm_client.OpenAIClient") as mock_openai:
+            mock_instance = Mock()
+            mock_openai.return_value = mock_instance
+
+            # Test custom model string
+            custom_model = "gpt-4o-custom"
+            create_llm_client(provider="openai", model=custom_model)
+            mock_openai.assert_called_with(default_model=custom_model)
 
 
 class TestGenerateTextFromLLM:
@@ -604,3 +936,55 @@ class TestCallActualAPI:
     #     assert len(response.content) > 0
     #     # I'm going to test for web results even though I don't know 100% since the model decides when to search
     #     assert isinstance(response.web_sources, list) and len(response.web_sources) > 0
+
+    @pytest.mark.costly
+    def test_openai_real_api_call_no_web_search(self) -> None:
+        """Test OpenAI client with real API calls without web search."""
+        client = create_llm_client(provider="openai", model="cheap")
+
+        response = client.generate_text(
+            prompt=TEST_PROMPT_MARINERS_GAME,
+            max_tokens=100,
+            temperature=0.0,
+            include_web_search=False,
+        )
+
+        # Basic validation - don't test specific content as it's brittle
+        assert isinstance(response, LLMResponse)
+        assert response.model == OPENAI_MODEL_CHEAP
+        assert len(response.content) > 0
+        assert response.web_sources == []
+
+    @pytest.mark.costly
+    def test_openai_real_api_call_with_web_search(self) -> None:
+        """Test OpenAI client with real API calls with web search."""
+        client = create_llm_client(provider="openai", model="cheap")
+
+        response = client.generate_text(
+            prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH,
+            max_tokens=100,
+            temperature=0.0,
+            include_web_search=True,
+        )
+
+        # Basic validation - don't test specific content as it's brittle
+        assert isinstance(response, LLMResponse)
+        assert response.model == OPENAI_MODEL_CHEAP
+        assert len(response.content) > 0
+
+        # OpenAI Responses API provides web search through annotations
+        assert response.usage is not None
+        assert response.usage["web_search_requests"] > 0
+
+        # Should have structured web sources from annotations (url_citation type)
+        assert isinstance(response.web_sources, list)
+        assert (
+            len(response.web_sources) > 0
+        ), "Should extract web sources from annotations"
+
+        # Verify structure of web sources
+        for source in response.web_sources:
+            assert "url" in source
+            assert "title" in source
+            assert source["url"]  # URL should not be empty
+            assert source["title"]  # Title should not be empty

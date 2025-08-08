@@ -7,7 +7,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from .llm_client import MODEL_STRING_FULL, generate_text_from_llm
+from .llm_client import MODEL_STRING_FULL, create_llm_client
 from .pitcher_stats import (
     PitcherNerdStats,
     calculate_detailed_pitcher_nerd_scores,
@@ -148,6 +148,7 @@ class GameScore:
         game_desc_source: str | None = None,
         game_desc_limit: int = 1,
         model: str = MODEL_STRING_FULL,
+        provider: str = "anthropic",
     ) -> list["GameScore"]:
         """
         Calculate gNERD scores for a list of games.
@@ -158,6 +159,7 @@ class GameScore:
             game_desc_source: Source for game descriptions - None, "canned", or "llm"
             game_desc_limit: Number of top games to generate descriptions for (default 1)
             model: Model to use for LLM descriptions (default MODEL_STRING_FULL)
+            provider: LLM provider to use for descriptions (default "anthropic")
 
         Returns:
             List of GameScore objects sorted by gNERD score (highest first)
@@ -297,7 +299,9 @@ class GameScore:
                     game_score.game_description = CANNED_GAME_DESCRIPTION
                     game_score.game_description_sources = []
                 elif game_desc_source == "llm":
-                    description, sources = game_score.generate_description(model=model)
+                    description, sources = game_score.generate_description(
+                        model=model, provider=provider
+                    )
                     game_score.game_description = description
                     game_score.game_description_sources = sources
 
@@ -476,26 +480,33 @@ class GameScore:
         return self._render_prompt_template(template_data)
 
     def get_description_from_llm_using_prompt(
-        self, completed_prompt: str, model: str = MODEL_STRING_FULL
+        self,
+        completed_prompt: str,
+        model: str = MODEL_STRING_FULL,
+        provider: str = "anthropic",
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate description from LLM using the provided completed prompt."""
         logger.info(f"Retrieving summary for {self.away_team} @ {self.home_team}")
-        description, web_sources = generate_text_from_llm(
+
+        # Create client with specified provider and model
+        client = create_llm_client(provider=provider, model=model)
+        response = client.generate_text(
             prompt=completed_prompt,
-            model=model,
             temperature=0.7,
             include_web_search=True,
         )
-        return description, web_sources
+
+        return response.content, response.web_sources or []
 
     def generate_description(
-        self, model: str = MODEL_STRING_FULL
+        self, model: str = MODEL_STRING_FULL, provider: str = "anthropic"
     ) -> tuple[str, list[dict[str, Any]]]:
         """
         Generate an AI-powered description of the game using team and pitcher details.
 
         Args:
             model: The model to use for description generation (default: MODEL_STRING_FULL)
+            provider: The LLM provider to use (default: "anthropic")
 
         Returns:
             Tuple of (generated description string, list of web sources)
@@ -508,7 +519,7 @@ class GameScore:
         formatted_prompt = self.generate_formatted_prompt()
 
         description, web_sources = self.get_description_from_llm_using_prompt(
-            formatted_prompt, model
+            formatted_prompt, model, provider
         )
 
         # description, web_sources = generate_text_from_llm(
