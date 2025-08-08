@@ -906,12 +906,15 @@ class TestGameScores:
             # Verify client.generate_text was called with correct parameters
             mock_client.generate_text.assert_called_once()
             call_args = mock_client.generate_text.call_args
-            # Temperature and web search should be passed
-            assert call_args[1]["temperature"] == 0.7
-            assert call_args[1]["include_web_search"] is True
+
+            # Extract parameters from the call (using keyword arguments)
+            prompt = call_args.kwargs.get("prompt")
+            params = call_args.kwargs.get("params")
+
+            assert params.temperature == 0.7
+            assert params.include_web_search is True
 
             # Verify prompt contains expected data
-            prompt = call_args[1]["prompt"]
             assert "Boston Red Sox" in prompt
             assert "New York Yankees" in prompt
             assert "John Pitcher" in prompt

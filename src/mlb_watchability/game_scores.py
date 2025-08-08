@@ -7,7 +7,12 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from .llm_client import ANTHROPIC_MODEL_FULL, create_llm_client
+from .llm_client import (
+    ANTHROPIC_MODEL_FULL,
+    AnthropicParams,
+    OpenAIParams,
+    create_llm_client,
+)
 from .pitcher_stats import (
     PitcherNerdStats,
     calculate_detailed_pitcher_nerd_scores,
@@ -488,12 +493,20 @@ class GameScore:
         """Generate description from LLM using the provided completed prompt."""
         logger.info(f"Retrieving summary for {self.away_team} @ {self.home_team}")
 
+        # Create appropriate parameters based on provider
+        params: AnthropicParams | OpenAIParams
+        if provider == "anthropic":
+            params = AnthropicParams(include_web_search=True)
+        elif provider == "openai":
+            params = OpenAIParams(include_web_search=True)
+        else:
+            raise ValueError(f"Unsupported provider: {provider}")
+
         # Create client with specified provider and model
         client = create_llm_client(provider=provider, model=model)
         response = client.generate_text(
             prompt=completed_prompt,
-            temperature=0.7,
-            include_web_search=True,
+            params=params,
         )
 
         return response.content, response.web_sources or []
@@ -522,12 +535,13 @@ class GameScore:
             formatted_prompt, model, provider
         )
 
+        # Alternative way to call generate_text_from_llm directly:
+        # from .llm_client import AnthropicParams
+        # params = AnthropicParams(max_tokens=300, temperature=0.7, include_web_search=True)
         # description, web_sources = generate_text_from_llm(
         #     prompt=formatted_prompt,
+        #     params=params,
         #     model=ANTHROPIC_MODEL_CHEAP,
-        #     max_tokens=300,
-        #     temperature=0.7,
-        #     include_web_search=True,
         # )
 
         return description.strip(), web_sources
