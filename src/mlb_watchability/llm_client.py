@@ -32,10 +32,6 @@ ANTHROPIC_MODEL_CHEAP = "claude-3-5-haiku-latest"
 OPENAI_MODEL_FULL = "gpt-5"
 OPENAI_MODEL_CHEAP = "gpt-5-mini"
 
-# Backward compatibility aliases
-MODEL_STRING_FULL = ANTHROPIC_MODEL_FULL
-MODEL_STRING_CHEAP = ANTHROPIC_MODEL_CHEAP
-
 
 def _raise_empty_response_error() -> None:
     """Helper function to raise empty response error."""
@@ -122,7 +118,7 @@ class AnthropicClient(LLMClient):
     def __init__(
         self,
         api_key: str | None = None,
-        default_model: str = MODEL_STRING_FULL,
+        default_model: str = ANTHROPIC_MODEL_FULL,
     ):
         """
         Initialize Anthropic client.
@@ -518,7 +514,7 @@ def create_llm_client(
 # Convenience function for quick usage
 def generate_text_from_llm(
     prompt: str,
-    model: str = MODEL_STRING_FULL,
+    model: str = ANTHROPIC_MODEL_FULL,
     max_tokens: int | None = None,
     temperature: float = 0.7,
     include_web_search: bool = False,

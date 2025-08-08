@@ -7,7 +7,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from .llm_client import MODEL_STRING_FULL, create_llm_client
+from .llm_client import ANTHROPIC_MODEL_FULL, create_llm_client
 from .pitcher_stats import (
     PitcherNerdStats,
     calculate_detailed_pitcher_nerd_scores,
@@ -147,7 +147,7 @@ class GameScore:
         season: int = 2025,
         game_desc_source: str | None = None,
         game_desc_limit: int = 1,
-        model: str = MODEL_STRING_FULL,
+        model: str = ANTHROPIC_MODEL_FULL,
         provider: str = "anthropic",
     ) -> list["GameScore"]:
         """
@@ -158,7 +158,7 @@ class GameScore:
             season: Season year for statistics calculation
             game_desc_source: Source for game descriptions - None, "canned", or "llm"
             game_desc_limit: Number of top games to generate descriptions for (default 1)
-            model: Model to use for LLM descriptions (default MODEL_STRING_FULL)
+            model: Model to use for LLM descriptions (default ANTHROPIC_MODEL_FULL)
             provider: LLM provider to use for descriptions (default "anthropic")
 
         Returns:
@@ -482,7 +482,7 @@ class GameScore:
     def get_description_from_llm_using_prompt(
         self,
         completed_prompt: str,
-        model: str = MODEL_STRING_FULL,
+        model: str = ANTHROPIC_MODEL_FULL,
         provider: str = "anthropic",
     ) -> tuple[str, list[dict[str, Any]]]:
         """Generate description from LLM using the provided completed prompt."""
@@ -499,13 +499,13 @@ class GameScore:
         return response.content, response.web_sources or []
 
     def generate_description(
-        self, model: str = MODEL_STRING_FULL, provider: str = "anthropic"
+        self, model: str = ANTHROPIC_MODEL_FULL, provider: str = "anthropic"
     ) -> tuple[str, list[dict[str, Any]]]:
         """
         Generate an AI-powered description of the game using team and pitcher details.
 
         Args:
-            model: The model to use for description generation (default: MODEL_STRING_FULL)
+            model: The model to use for description generation (default: ANTHROPIC_MODEL_FULL)
             provider: The LLM provider to use (default: "anthropic")
 
         Returns:
@@ -524,7 +524,7 @@ class GameScore:
 
         # description, web_sources = generate_text_from_llm(
         #     prompt=formatted_prompt,
-        #     model=MODEL_STRING_CHEAP,
+        #     model=ANTHROPIC_MODEL_CHEAP,
         #     max_tokens=300,
         #     temperature=0.7,
         #     include_web_search=True,

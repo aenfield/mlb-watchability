@@ -257,7 +257,7 @@ class TestMarkdownCliLlmModel:
                 # Check that command succeeded
                 assert result.exit_code == 0
 
-                # Verify that GameScore.from_games was called with MODEL_STRING_CHEAP
+                # Verify that GameScore.from_games was called with ANTHROPIC_MODEL_CHEAP
                 # even though descriptions are canned (model parameter should still be passed)
                 mock_calculate_scores.assert_called_once()
                 call_args = mock_calculate_scores.call_args

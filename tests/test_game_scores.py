@@ -8,8 +8,8 @@ from jinja2 import TemplateNotFound
 
 from mlb_watchability.game_scores import GameScore
 from mlb_watchability.llm_client import (
-    MODEL_STRING_CHEAP,
-    MODEL_STRING_FULL,
+    ANTHROPIC_MODEL_CHEAP,
+    ANTHROPIC_MODEL_FULL,
     LLMResponse,
 )
 from mlb_watchability.pitcher_stats import PitcherNerdStats, PitcherStats
@@ -900,7 +900,7 @@ class TestGameScores:
 
             # Verify client was created with correct parameters
             mock_create_client.assert_called_once_with(
-                provider="anthropic", model=MODEL_STRING_FULL
+                provider="anthropic", model=ANTHROPIC_MODEL_FULL
             )
 
             # Verify client.generate_text was called with correct parameters
@@ -996,7 +996,7 @@ class TestGameScores:
 
             # Verify client was created and called
             mock_create_client.assert_called_once_with(
-                provider="anthropic", model=MODEL_STRING_FULL
+                provider="anthropic", model=ANTHROPIC_MODEL_FULL
             )
             mock_client.generate_text.assert_called_once()
 
@@ -2209,7 +2209,7 @@ class TestGameScoresIntegration:
 
         # Call the real API
         description, web_sources = game_score.generate_description(
-            model=MODEL_STRING_CHEAP
+            model=ANTHROPIC_MODEL_CHEAP
         )
 
         # Basic validations - don't test specific content since it's generated
@@ -2232,7 +2232,7 @@ class TestGameScoresIntegration:
 
     @pytest.mark.costly
     def test_from_games_with_llm_description_cheap_model_real_api(self) -> None:
-        """Test from_games with game_desc_source='llm' using real API calls with MODEL_STRING_CHEAP."""
+        """Test from_games with game_desc_source='llm' using real API calls with ANTHROPIC_MODEL_CHEAP."""
         games = [
             {
                 "away_team": "Seattle Mariners",
@@ -2356,13 +2356,13 @@ class TestGameScoresIntegration:
             mock_team.return_value = mock_team_nerd_details
             mock_pitcher.return_value = mock_pitcher_nerd_details
 
-            # Test with LLM source, limit of 1, and MODEL_STRING_CHEAP
+            # Test with LLM source, limit of 1, and ANTHROPIC_MODEL_CHEAP
             game_scores = GameScore.from_games(
                 games,
                 2025,
                 game_desc_source="llm",
                 game_desc_limit=1,
-                model=MODEL_STRING_CHEAP,
+                model=ANTHROPIC_MODEL_CHEAP,
             )
 
             assert len(game_scores) == 1

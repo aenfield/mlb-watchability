@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from mlb_watchability.llm_client import (
-    MODEL_STRING_CHEAP,
-    MODEL_STRING_FULL,
+    ANTHROPIC_MODEL_CHEAP,
+    ANTHROPIC_MODEL_FULL,
     OPENAI_MODEL_CHEAP,
     OPENAI_MODEL_FULL,
     AnthropicClient,
@@ -32,9 +32,9 @@ class TestLLMResponse:
 
     def test_basic_response(self) -> None:
         """Test basic response creation."""
-        response = LLMResponse(content="test content", model=MODEL_STRING_CHEAP)
+        response = LLMResponse(content="test content", model=ANTHROPIC_MODEL_CHEAP)
         assert response.content == "test content"
-        assert response.model == MODEL_STRING_CHEAP
+        assert response.model == ANTHROPIC_MODEL_CHEAP
         assert response.usage is None
         assert response.cost_estimate is None
 
@@ -42,7 +42,7 @@ class TestLLMResponse:
         """Test response with optional metadata."""
         response = LLMResponse(
             content="test content",
-            model=MODEL_STRING_CHEAP,
+            model=ANTHROPIC_MODEL_CHEAP,
             usage={"input_tokens": 75, "output_tokens": 75, "web_search_requests": 0},
             cost_estimate=0.003,
         )
@@ -65,7 +65,7 @@ class TestLLMResponse:
         ]
         response = LLMResponse(
             content="test content",
-            model=MODEL_STRING_CHEAP,
+            model=ANTHROPIC_MODEL_CHEAP,
             web_sources=web_sources,
         )
         assert response.web_sources == web_sources
@@ -78,10 +78,10 @@ class TestAnthropicClient:
         """Test initialization with explicit API key."""
         with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic:
             client = AnthropicClient(
-                api_key="test-key", default_model=MODEL_STRING_CHEAP
+                api_key="test-key", default_model=ANTHROPIC_MODEL_CHEAP
             )
             assert client.api_key == "test-key"
-            assert client.default_model == MODEL_STRING_CHEAP
+            assert client.default_model == ANTHROPIC_MODEL_CHEAP
             mock_anthropic.assert_called_once_with(api_key="test-key")
 
     def test_init_with_env_var(self) -> None:
@@ -92,7 +92,7 @@ class TestAnthropicClient:
         ):
             client = AnthropicClient()
             assert client.api_key == "env-key"
-            assert client.default_model == MODEL_STRING_FULL
+            assert client.default_model == ANTHROPIC_MODEL_FULL
             mock_anthropic.assert_called_once_with(api_key="env-key")
 
     def test_init_without_api_key(self) -> None:
@@ -132,7 +132,7 @@ class TestAnthropicClient:
             mock_anthropic_class.return_value = mock_client
 
             client = AnthropicClient(
-                api_key="test-key", default_model=MODEL_STRING_CHEAP
+                api_key="test-key", default_model=ANTHROPIC_MODEL_CHEAP
             )
             response = client.generate_text(
                 "Test prompt", max_tokens=150, temperature=0.5
@@ -140,7 +140,7 @@ class TestAnthropicClient:
 
             assert isinstance(response, LLMResponse)
             assert response.content == "Generated response text"
-            assert response.model == MODEL_STRING_CHEAP
+            assert response.model == ANTHROPIC_MODEL_CHEAP
             assert response.usage == {
                 "input_tokens": 50,
                 "output_tokens": 50,
@@ -149,7 +149,7 @@ class TestAnthropicClient:
 
             # Verify the API call
             mock_client.messages.create.assert_called_once_with(
-                model=MODEL_STRING_CHEAP,
+                model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 temperature=0.5,
                 max_tokens=150,
@@ -170,13 +170,13 @@ class TestAnthropicClient:
             mock_anthropic_class.return_value = mock_client
 
             client = AnthropicClient(api_key="test-key")
-            response = client.generate_text("Test prompt", model=MODEL_STRING_CHEAP)
+            response = client.generate_text("Test prompt", model=ANTHROPIC_MODEL_CHEAP)
 
-            assert response.model == MODEL_STRING_CHEAP
+            assert response.model == ANTHROPIC_MODEL_CHEAP
             assert response.usage is None
 
             mock_client.messages.create.assert_called_once_with(
-                model=MODEL_STRING_CHEAP,
+                model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 temperature=0.7,
                 max_tokens=1000,
@@ -578,10 +578,10 @@ class TestCreateLLMClient:
             mock_instance = Mock()
             mock_anthropic.return_value = mock_instance
 
-            client = create_llm_client(provider="anthropic", model=MODEL_STRING_FULL)
+            client = create_llm_client(provider="anthropic", model=ANTHROPIC_MODEL_FULL)
 
             assert client == mock_instance
-            mock_anthropic.assert_called_once_with(default_model=MODEL_STRING_FULL)
+            mock_anthropic.assert_called_once_with(default_model=ANTHROPIC_MODEL_FULL)
 
     def test_create_anthropic_client_default_model(self) -> None:
         """Test creating Anthropic client with default model."""
@@ -592,7 +592,7 @@ class TestCreateLLMClient:
             client = create_llm_client(provider="anthropic")
 
             assert client == mock_instance
-            mock_anthropic.assert_called_once_with(default_model=MODEL_STRING_FULL)
+            mock_anthropic.assert_called_once_with(default_model=ANTHROPIC_MODEL_FULL)
 
     def test_create_anthropic_client_case_insensitive(self) -> None:
         """Test provider name is case insensitive."""
@@ -618,13 +618,13 @@ class TestCreateLLMClient:
 
             client = create_llm_client(
                 provider="anthropic",
-                model=MODEL_STRING_CHEAP,
+                model=ANTHROPIC_MODEL_CHEAP,
                 api_key="custom-key",
             )
 
             assert client == mock_instance
             mock_anthropic.assert_called_once_with(
-                default_model=MODEL_STRING_CHEAP,
+                default_model=ANTHROPIC_MODEL_CHEAP,
                 api_key="custom-key",
             )
 
@@ -687,19 +687,19 @@ class TestCreateLLMClient:
 
             # Test "normal" mapping
             create_llm_client(provider="anthropic", model="normal")
-            mock_anthropic.assert_called_with(default_model=MODEL_STRING_FULL)
+            mock_anthropic.assert_called_with(default_model=ANTHROPIC_MODEL_FULL)
 
             mock_anthropic.reset_mock()
 
             # Test "cheap" mapping
             create_llm_client(provider="anthropic", model="cheap")
-            mock_anthropic.assert_called_with(default_model=MODEL_STRING_CHEAP)
+            mock_anthropic.assert_called_with(default_model=ANTHROPIC_MODEL_CHEAP)
 
             mock_anthropic.reset_mock()
 
             # Test "full" mapping
             create_llm_client(provider="anthropic", model="full")
-            mock_anthropic.assert_called_with(default_model=MODEL_STRING_FULL)
+            mock_anthropic.assert_called_with(default_model=ANTHROPIC_MODEL_FULL)
 
     def test_generic_model_mapping_openai(self) -> None:
         """Test generic model name mapping for OpenAI."""
@@ -741,7 +741,7 @@ class TestGenerateTextFromLLM:
     def test_generate_text_from_llm_success(self) -> None:
         """Test successful text generation."""
         mock_response = LLMResponse(
-            content="Generated summary", model=MODEL_STRING_FULL, web_sources=[]
+            content="Generated summary", model=ANTHROPIC_MODEL_FULL, web_sources=[]
         )
 
         with patch("mlb_watchability.llm_client.create_llm_client") as mock_create:
@@ -755,7 +755,7 @@ class TestGenerateTextFromLLM:
 
             assert text == "Generated summary"
             assert sources == []
-            mock_create.assert_called_once_with(model=MODEL_STRING_FULL)
+            mock_create.assert_called_once_with(model=ANTHROPIC_MODEL_FULL)
             mock_client.generate_text.assert_called_once_with(
                 prompt="Test prompt",
                 max_tokens=200,
@@ -766,7 +766,7 @@ class TestGenerateTextFromLLM:
     def test_generate_text_from_llm_with_custom_model(self) -> None:
         """Test text generation with custom model."""
         mock_response = LLMResponse(
-            content="Summary", model=MODEL_STRING_CHEAP, web_sources=[]
+            content="Summary", model=ANTHROPIC_MODEL_CHEAP, web_sources=[]
         )
 
         with patch("mlb_watchability.llm_client.create_llm_client") as mock_create:
@@ -775,12 +775,12 @@ class TestGenerateTextFromLLM:
             mock_create.return_value = mock_client
 
             text, sources = generate_text_from_llm(
-                "Test prompt", model=MODEL_STRING_CHEAP
+                "Test prompt", model=ANTHROPIC_MODEL_CHEAP
             )
 
             assert text == "Summary"
             assert sources == []
-            mock_create.assert_called_once_with(model=MODEL_STRING_CHEAP)
+            mock_create.assert_called_once_with(model=ANTHROPIC_MODEL_CHEAP)
 
     def test_generate_text_from_llm_with_web_search(self) -> None:
         """Test text generation with web search enabled."""
@@ -789,7 +789,7 @@ class TestGenerateTextFromLLM:
         ]
         mock_response = LLMResponse(
             content="Summary with web search",
-            model=MODEL_STRING_FULL,
+            model=ANTHROPIC_MODEL_FULL,
             web_sources=web_sources,
         )
 
@@ -837,7 +837,7 @@ class TestIntegrationScenarios:
 
             # Test the full workflow
             with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"}):
-                client = create_llm_client("anthropic", MODEL_STRING_CHEAP)
+                client = create_llm_client("anthropic", ANTHROPIC_MODEL_CHEAP)
 
                 prompt = "Analyze this baseball game: Team A vs Team B"
                 response = client.generate_text(prompt, max_tokens=100, temperature=0.8)
@@ -846,7 +846,7 @@ class TestIntegrationScenarios:
                     response.content
                     == "This is a comprehensive game summary with analysis."
                 )
-                assert response.model == MODEL_STRING_CHEAP
+                assert response.model == ANTHROPIC_MODEL_CHEAP
                 assert response.usage == {
                     "input_tokens": 25,
                     "output_tokens": 50,
@@ -855,7 +855,7 @@ class TestIntegrationScenarios:
 
                 # Verify the API was called correctly
                 expected_call = {
-                    "model": MODEL_STRING_CHEAP,
+                    "model": ANTHROPIC_MODEL_CHEAP,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.8,
                     "max_tokens": 100,
@@ -871,7 +871,7 @@ class TestCallActualAPI:
         """Test convenience function (and thereby also client.generate_text) with real API calls without web search."""
         text, sources = generate_text_from_llm(
             prompt=TEST_PROMPT_MARINERS_GAME,
-            model=MODEL_STRING_CHEAP,
+            model=ANTHROPIC_MODEL_CHEAP,
             max_tokens=100,
             temperature=0.0,
             include_web_search=False,
@@ -885,7 +885,7 @@ class TestCallActualAPI:
         """Test convenience function (and thereby also client.generate_text) with real API calls with a web search."""
         text_with_search, sources_with_search = generate_text_from_llm(
             prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH,
-            model=MODEL_STRING_CHEAP,
+            model=ANTHROPIC_MODEL_CHEAP,
             max_tokens=100,
             temperature=0.0,
             include_web_search=True,
@@ -899,7 +899,7 @@ class TestCallActualAPI:
     # @pytest.mark.costly
     # def test_real_api_call_without_web_search() -> None:
     #     """Test actual API call without web search using the cheap model."""
-    #     client = AnthropicClient(default_model=MODEL_STRING_CHEAP)
+    #     client = AnthropicClient(default_model=ANTHROPIC_MODEL_CHEAP)
 
     #     response = client.generate_text(
     #         prompt=TEST_PROMPT_MARINERS_GAME,
@@ -910,7 +910,7 @@ class TestCallActualAPI:
 
     #     # Basic validation - don't test specific content as it's brittle
     #     assert isinstance(response, LLMResponse)
-    #     assert response.model == MODEL_STRING_CHEAP
+    #     assert response.model == ANTHROPIC_MODEL_CHEAP
     #     assert response.usage is not None
     #     assert response.usage["input_tokens"] > 0
     #     assert len(response.content) > 0
@@ -919,7 +919,7 @@ class TestCallActualAPI:
     # @pytest.mark.costly
     # def test_real_api_call_with_web_search() -> None:
     #     """Test actual API call with web search using the cheap model."""
-    #     client = AnthropicClient(default_model=MODEL_STRING_CHEAP)
+    #     client = AnthropicClient(default_model=ANTHROPIC_MODEL_CHEAP)
 
     #     response = client.generate_text(
     #         prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH,
@@ -930,7 +930,7 @@ class TestCallActualAPI:
 
     #     # Basic validation - don't test specific content as it's brittle
     #     assert isinstance(response, LLMResponse)
-    #     assert response.model == MODEL_STRING_CHEAP
+    #     assert response.model == ANTHROPIC_MODEL_CHEAP
     #     assert response.usage is not None
     #     assert response.usage["input_tokens"] > 0
     #     assert len(response.content) > 0
