@@ -9,7 +9,7 @@ As of early August 2025, every day, code automatically:
 
 - pulls the day's schedule and team and pitcher stats from external sources;
 - generates team, pitcher, and game NERD scores;
-- uses Claude via Anthropic's API to generate a readable summary of each game that incorporates the NERD stats and the latest from the web;
+- uses the OpenAI API or Claude via Anthropic's API to generate a readable summary of each game that incorporates the NERD stats and the latest from the web;
 - authors a blog post by creating a Markdown file; and
 - publishes the post to my blog at [andrewenfield.com](https://andrewenfield.com).
 
