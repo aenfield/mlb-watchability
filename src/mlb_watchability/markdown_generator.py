@@ -459,6 +459,15 @@ def generate_game_detail_section(
         )
 
         # Add combined AI disclaimer and source attribution in single parenthetical
+        # Determine the provider attribution based on which LLM was used
+        if game_score.game_description_provider == "anthropic":
+            provider_text = "A model from [Anthropic](https://www.anthropic.com)"
+        elif game_score.game_description_provider == "openai":
+            provider_text = "A model from [OpenAI](https://www.openai.com)"
+        else:
+            # Fallback for unknown providers or legacy data
+            provider_text = "An unable to be specified model (despite best intentions)"
+
         if game_score.game_description_sources:
             # Create numbered source links
             source_links = []
@@ -470,11 +479,11 @@ def generate_game_detail_section(
 
             if source_links:
                 sources_text = ", ".join(source_links)
-                attribution_line = f"([Claude](https://www.anthropic.com/claude) generated this text using instructions, the NERD scores, and these sources: {sources_text}.)"
+                attribution_line = f"({provider_text} generated this text using instructions, the NERD scores, and these sources: {sources_text}.)"
             else:
-                attribution_line = "([Claude](https://www.anthropic.com/claude) generated this text using instructions and the NERD scores.)"
+                attribution_line = f"({provider_text} generated this text using instructions and the NERD scores.)"
         else:
-            attribution_line = "([Claude](https://www.anthropic.com/claude) generated this text using instructions and the NERD scores.)"
+            attribution_line = f"({provider_text} generated this text using instructions and the NERD scores.)"
 
         lines.append(attribution_line)
         lines.append("")

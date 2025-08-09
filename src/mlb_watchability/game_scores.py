@@ -137,6 +137,7 @@ class GameScore:
     # Game description and sources
     game_description: str | None = None
     game_description_sources: list[dict[str, Any]] | None = None
+    game_description_provider: str | None = None
 
     # Statistics about all games in this set
     all_games_nerd_stats: AllGamesNerdStats | None = None
@@ -309,6 +310,7 @@ class GameScore:
                     )
                     game_score.game_description = description
                     game_score.game_description_sources = sources
+                    game_score.game_description_provider = provider
 
         return game_scores
 

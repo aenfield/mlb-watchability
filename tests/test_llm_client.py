@@ -21,6 +21,7 @@ from mlb_watchability.llm_client import (
     OpenAIParams,
     create_llm_client,
     generate_text_from_llm,
+    remove_markdown_links_and_text,
 )
 
 # Test constants
@@ -1325,3 +1326,54 @@ class TestCallActualAPI:
             assert "title" in source, "Each web source should have a title"
             assert isinstance(source["url"], str), "URL should be a string"
             assert isinstance(source["title"], str), "Title should be a string"
+
+
+class TestUtilityFunctions:
+    """Test utility functions from the llm_client module."""
+
+    def test_remove_markdown_links_and_text_basic(self) -> None:
+        """Test basic markdown link removal with parentheses."""
+
+        text = "This is a ([link](https://example.com)) in text"
+        expected = "This is a  in text"
+        result = remove_markdown_links_and_text(text)
+        assert result == expected
+
+    def test_remove_markdown_links_and_text_multiple(self) -> None:
+        """Test removing multiple markdown links."""
+
+        text = "Check ([site1](https://site1.com)) and ([site2](https://site2.com)) for more info"
+        expected = "Check  and  for more info"
+        result = remove_markdown_links_and_text(text)
+        assert result == expected
+
+    def test_remove_markdown_links_and_text_real_example(self) -> None:
+        """Test with real example from game analysis."""
+
+        text = "**Skubal Day vaults this one to appointment viewing.** ([blessyouboys.com](https://www.blessyouboys.com/detroit-tigers-previews/78867/detroit-tigers-preview-los-angeles-angels-skubal-hendricks?utm_source=chatgpt.com))\nThis sits at the top of today's slate."
+
+        expected = "**Skubal Day vaults this one to appointment viewing.** \nThis sits at the top of today's slate."
+
+        result = remove_markdown_links_and_text(text)
+        assert result == expected
+
+    def test_remove_markdown_links_and_text_no_links(self) -> None:
+        """Test text without any markdown links."""
+
+        text = "This text has no links at all."
+        result = remove_markdown_links_and_text(text)
+        assert result == text
+
+    def test_remove_markdown_links_and_text_empty_string(self) -> None:
+        """Test with empty string."""
+
+        result = remove_markdown_links_and_text("")
+        assert result == ""
+
+    def test_remove_markdown_links_and_text_multiple_in_parens(self) -> None:
+        """Test removing multiple markdown links within the same parentheses."""
+
+        text = "Check out these sources ([site1](https://site1.com), [site2](https://site2.com)) for info"
+        expected = "Check out these sources  for info"
+        result = remove_markdown_links_and_text(text)
+        assert result == expected

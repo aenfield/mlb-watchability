@@ -7,6 +7,7 @@ Supports OpenAI models by default with environment-based configuration.
 
 import logging
 import os
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
@@ -109,6 +110,36 @@ def _validate_response_content(content: str) -> None:
     """Helper function to validate response content is not empty."""
     if not content:
         _raise_empty_response_error()
+
+
+def remove_markdown_links_and_text(text: str) -> str:
+    """
+    Remove Markdown-style links and their text completely from text, including surrounding parentheses.
+
+    Converts text like:
+    "This is a ([link](https://example.com)) in text"
+    to:
+    "This is a  in text"
+
+    Also handles multiple links within parentheses like:
+    "See sources ([link1](url1), [link2](url2))"
+    to:
+    "See sources "
+
+    Args:
+        text: The input text containing Markdown links
+
+    Returns:
+        The text with Markdown links and surrounding parentheses completely removed
+    """
+    # First, handle parentheses that contain only markdown links (and possibly commas/spaces)
+    # Match parentheses containing one or more markdown links with optional separators
+    text = re.sub(r"\(\s*(?:\[([^\]]+)\]\([^)]+\)\s*,?\s*)+\)", "", text)
+
+    # Then handle any remaining standalone markdown links without parentheses
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", "", text)
+
+    return text
 
 
 @dataclass
@@ -439,6 +470,9 @@ class OpenAIClient(LLMClient):
                 # Update usage with web search count
                 if usage and search_call_count > 0:
                     usage["web_search_requests"] = search_call_count
+
+            # we'll handle printing the links ourselves, so don't need them in the text too
+            content = remove_markdown_links_and_text(content)
 
             # Log usage details
             _log_generation_details(content, model_to_use, usage, web_sources)
