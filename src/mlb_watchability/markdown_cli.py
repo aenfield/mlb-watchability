@@ -1,6 +1,7 @@
 """Command-line interface for generating MLB Watchability markdown files."""
 
 import logging
+import os
 from pathlib import Path
 
 import typer
@@ -54,6 +55,10 @@ def main(
         logger.info("Loaded environment variables from .env file")
     else:
         logger.debug("No .env file found or loaded")
+
+    # Log current LLM retry configuration
+    llm_retries_enabled = os.getenv("ENABLE_LLM_RETRIES", "")
+    logger.info(f"ENABLE_LLM_RETRIES environment variable: '{llm_retries_enabled}'")
 
     # Handle parameter defaults and validation
     if game_desc_source is not None and game_desc_limit is None:

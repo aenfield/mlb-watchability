@@ -12,6 +12,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
+from tenacity import retry, stop_after_attempt, wait_chain, wait_exponential, wait_fixed
+from tenacity.retry import retry_base
+
 try:
     from anthropic import Anthropic
 except ImportError:
@@ -23,6 +26,14 @@ except ImportError:
     OpenAI = None  # type: ignore[assignment,misc]
 
 logger = logging.getLogger(__name__)
+
+
+class _RetryIfEnabled(retry_base):
+    """Custom retry condition that checks if LLM retries are enabled via environment variable."""
+
+    def __call__(self, _retry_state: Any) -> bool:
+        """Return True if retries should be attempted, False otherwise."""
+        return os.getenv("ENABLE_LLM_RETRIES", "").lower() in ("true", "1", "yes")
 
 
 @dataclass
@@ -401,8 +412,22 @@ class OpenAIClient(LLMClient):
             # if model_to_use != OPENAI_MODEL_CHEAP:
             # request_params["tool_choice"] = {"type": "web_search_preview"}
 
-            # Create response with Responses API
-            response = self.client.responses.create(**request_params)
+            # Create response with Responses API with retry logic
+            @retry(
+                stop=stop_after_attempt(3),
+                wait=wait_chain(
+                    wait_fixed(61),  # First retry: 61s
+                    wait_exponential(
+                        multiplier=61, min=61, max=300
+                    ),  # Then 120s, 240s...
+                ),
+                retry=_RetryIfEnabled(),
+                reraise=True,
+            )
+            def _make_openai_api_call() -> Any:
+                return self.client.responses.create(**request_params)
+
+            response = _make_openai_api_call()
 
             # Pretty print the full JSON response - Claude: don't remove this if you remove debugging stuff in the future
             # import json; print(json.dumps(dict(response), indent=2, default=str))
