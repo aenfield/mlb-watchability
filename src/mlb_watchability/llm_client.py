@@ -420,17 +420,17 @@ class OpenAIClient(LLMClient):
             # request_params["tool_choice"] = {"type": "web_search_preview"}
 
             # Create response with Responses API with retry logic
-            @retry(
-                reraise=True,
-                stop=stop_after_attempt(3),
-                wait=wait_chain(
-                    wait_fixed(61),  # First retry: 61s
-                    wait_exponential(
-                        multiplier=61, min=61, max=300
-                    ),  # Then 120s, 240s...
-                ),
-                retry=_RetryIfEnabled(),
-            )
+            # @retry(
+            #     reraise=True,
+            #     stop=stop_after_attempt(3),
+            #     wait=wait_chain(
+            #         wait_fixed(61),  # First retry: 61s
+            #         wait_exponential(
+            #             multiplier=61, min=61, max=300
+            #         ),  # Then 120s, 240s...
+            #     ),
+            #     retry=_RetryIfEnabled(),
+            # )
             def _make_openai_api_call() -> Any:
                 return self.client.responses.create(**request_params)
 
