@@ -48,3 +48,4 @@ Additional testing information is in architecture.md.
 ## Code Principles
 
 - Keep the code DRY ('don't repeat yourself'). Do this when you create new code. Also, when you see duplicated code in your reviews, add a TODO to your internal list and then propose change(s) to reduce/remove the duplication and ask if you should make those change(s).
+- Code being tested should NOT do something special with mock objects so the tests that create those mock objects pass. If there's a problem caused by the mock object then the TEST needs to change, not the code being tested.

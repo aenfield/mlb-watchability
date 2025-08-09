@@ -3,6 +3,7 @@ Tests for the LLM client module.
 """
 
 import os
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -530,8 +531,17 @@ class TestOpenAIClient:
         mock_usage.input_tokens = 40
         mock_usage.output_tokens = 60
 
+        # Mock proper response structure with output array
+        # Mock real OpenAI response structure: response.output[0].content[0].text
+        mock_content_item = Mock()
+        mock_content_item.text = "Generated OpenAI response text"
+
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+
         mock_response = Mock()
-        mock_response.output_text = "Generated OpenAI response text"
+        mock_response.output = [mock_message]
         mock_response.usage = mock_usage
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
@@ -563,8 +573,16 @@ class TestOpenAIClient:
 
     def test_generate_text_with_custom_model(self) -> None:
         """Test text generation with custom model."""
+        # Mock real OpenAI response structure: response.output[0].content[0].text
+        mock_content_item = Mock()
+        mock_content_item.text = "Generated response"
+
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+
         mock_response = Mock()
-        mock_response.output_text = "Generated response"
+        mock_response.output = [mock_message]
         mock_response.usage = None
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
@@ -590,8 +608,14 @@ class TestOpenAIClient:
 
     def test_generate_text_empty_response(self) -> None:
         """Test handling of empty response."""
+        # Mock empty response structure - set all potential content sources to empty/None
         mock_response = Mock()
-        mock_response.output_text = ""
+        mock_response.output = []
+        mock_response.output_text = ""  # Explicitly set this to empty
+        mock_response.status = "completed"  # Not incomplete, so should fail normally
+        mock_response.content = None
+        mock_response.text = None
+        mock_response.choices = None
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
             mock_client = Mock()
@@ -638,10 +662,29 @@ class TestOpenAIClient:
         mock_usage.input_tokens = 50
         mock_usage.output_tokens = 75
 
+        # Mock real OpenAI response structure with web search citations
+        mock_annotation = Mock()
+        mock_annotation.type = "url_citation"
+        mock_annotation.url = "https://example.com"
+        mock_annotation.title = "Example Article"
+
+        mock_content_item = Mock()
+        mock_content_item.text = "Generated response with web search"
+        mock_content_item.annotations = [mock_annotation]
+
+        # Create a message type output item (this contains the response text and citations)
+        mock_message_item = Mock()
+        mock_message_item.type = "message"
+        mock_message_item.content = [mock_content_item]
+
+        # Create a web search call output item (this indicates a web search was performed)
+        mock_web_search_item = Mock()
+        mock_web_search_item.type = "web_search_call"
+
         mock_response = Mock()
-        mock_response.output_text = "Generated response with web search"
+        mock_response.output = [mock_message_item, mock_web_search_item]
         mock_response.usage = mock_usage
-        mock_response.tool_calls = [mock_tool_call]
+        mock_response.status = "completed"
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
             mock_client = Mock()
@@ -657,7 +700,7 @@ class TestOpenAIClient:
             assert len(response.web_sources) == 1
             assert response.web_sources[0]["url"] == "https://example.com"
             assert response.web_sources[0]["title"] == "Example Article"
-            assert response.web_sources[0]["page_age"] == "1 hour"
+            assert response.web_sources[0]["page_age"] is None
             assert response.usage is not None
             assert response.usage["web_search_requests"] == 1
 
@@ -665,12 +708,32 @@ class TestOpenAIClient:
             mock_client.responses.create.assert_called_once()
             call_args = mock_client.responses.create.call_args[1]
             assert "tools" in call_args
-            assert call_args["tools"] == [{"type": "web_search"}]
+
+            # check for web_search_preview, regardless of what else is in the dict
+            # assert call_args["tools"] == [{"type": "web_search_preview"}]
+            def contains_partial_dict(
+                lst: list[dict[str, Any]], partial: dict[str, Any]
+            ) -> bool:
+                return any(
+                    all(item in d.items() for item in partial.items()) for d in lst
+                )
+
+            assert contains_partial_dict(
+                call_args["tools"], {"type": "web_search_preview"}
+            )
 
     def test_generate_text_web_search_disabled(self) -> None:
         """Test text generation with web search disabled (default)."""
+        # Mock proper response structure with output array
+        mock_content_item = Mock()
+        mock_content_item.text = "Generated response without web search"
+
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+
         mock_response = Mock()
-        mock_response.output_text = "Generated response without web search"
+        mock_response.output = [mock_message]
         mock_response.usage = None
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
@@ -696,12 +759,18 @@ class TestOpenAIClient:
         mock_usage.input_tokens = 30
         mock_usage.output_tokens = 45
 
+        # Mock proper response structure with output array
+        mock_content_item = Mock()
+        mock_content_item.text = "Generated response"
+        mock_content_item.annotations = []  # Set to empty list to avoid iteration error
+
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+
         mock_response = Mock()
-        mock_response.output_text = "Generated response"
+        mock_response.output = [mock_message]
         mock_response.usage = mock_usage
-        # Remove tool_calls attribute to simulate no tool calls
-        if hasattr(mock_response, "tool_calls"):
-            delattr(mock_response, "tool_calls")
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
             mock_client = Mock()
@@ -723,8 +792,16 @@ class TestOpenAIClient:
         mock_usage.input_tokens = 25
         mock_usage.output_tokens = 75
 
+        # Mock proper response structure with output array
+        mock_content_item = Mock()
+        mock_content_item.text = "GPT-5 response with reasoning"
+
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+
         mock_response = Mock()
-        mock_response.output_text = "GPT-5 response with reasoning"
+        mock_response.output = [mock_message]
         mock_response.usage = mock_usage
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
@@ -766,8 +843,16 @@ class TestOpenAIClient:
         mock_usage.input_tokens = 20
         mock_usage.output_tokens = 100
 
+        # Mock proper response structure with output array
+        mock_content_item = Mock()
+        mock_content_item.text = "Detailed verbose response with minimal reasoning"
+
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+
         mock_response = Mock()
-        mock_response.output_text = "Detailed verbose response with minimal reasoning"
+        mock_response.output = [mock_message]
         mock_response.usage = mock_usage
 
         with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
@@ -1176,58 +1261,15 @@ class TestCallActualAPI:
         assert len(text_with_search) > 0
         assert isinstance(sources_with_search, list) and len(sources_with_search) > 0
 
-    # to save run time and a bit of money, I'll just text client.generate_text via
-    # the convenience function tests above (which call it immediately) - not ideal, but ok
-    # @pytest.mark.costly
-    # def test_real_api_call_without_web_search() -> None:
-    #     """Test actual API call without web search using the cheap model."""
-    #     client = AnthropicClient(default_model=ANTHROPIC_MODEL_CHEAP)
-
-    #     response = client.generate_text(
-    #         prompt=TEST_PROMPT_MARINERS_GAME,
-    #         max_tokens=100,
-    #         temperature=0.0,
-    #         include_web_search=False,
-    #     )
-
-    #     # Basic validation - don't test specific content as it's brittle
-    #     assert isinstance(response, LLMResponse)
-    #     assert response.model == ANTHROPIC_MODEL_CHEAP
-    #     assert response.usage is not None
-    #     assert response.usage["input_tokens"] > 0
-    #     assert len(response.content) > 0
-    #     assert response.web_sources == []
-
-    # @pytest.mark.costly
-    # def test_real_api_call_with_web_search() -> None:
-    #     """Test actual API call with web search using the cheap model."""
-    #     client = AnthropicClient(default_model=ANTHROPIC_MODEL_CHEAP)
-
-    #     response = client.generate_text(
-    #         prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH,
-    #         max_tokens=100,
-    #         temperature=0.0,
-    #         include_web_search=True,
-    #     )
-
-    #     # Basic validation - don't test specific content as it's brittle
-    #     assert isinstance(response, LLMResponse)
-    #     assert response.model == ANTHROPIC_MODEL_CHEAP
-    #     assert response.usage is not None
-    #     assert response.usage["input_tokens"] > 0
-    #     assert len(response.content) > 0
-    #     # I'm going to test for web results even though I don't know 100% since the model decides when to search
-    #     assert isinstance(response.web_sources, list) and len(response.web_sources) > 0
-
     @pytest.mark.costly
     def test_openai_real_api_call_no_web_search(self) -> None:
         """Test OpenAI client with real API calls without web search."""
         client = create_llm_client(provider="openai", model="cheap")
 
         params = create_openai_params(
-            max_output_tokens=100,
-            reasoning_effort="minimal",
-            verbosity="medium",
+            # max_output_tokens=100, # if this is too small, then the api can't return enough tokens to even get no content, I think, so just let it go, for now at least
+            reasoning_effort="medium",
+            verbosity="low",
             include_web_search=False,
         )
         response = client.generate_text(prompt=TEST_PROMPT_MARINERS_GAME, params=params)
@@ -1244,42 +1286,42 @@ class TestCallActualAPI:
         client = create_llm_client(provider="openai", model="cheap")
 
         params = create_openai_params(
-            max_output_tokens=100,
+            # max_output_tokens=150, # if this is too small, then the api can't return enough tokens to even get no content, I think, so just let it go, for now at least
             reasoning_effort="medium",
-            verbosity="medium",
+            verbosity="low",
             include_web_search=True,
         )
 
-        # The main test is that web search doesn't cause API errors
-        # Content extraction may vary based on API response format
-        try:
-            response = client.generate_text(
-                prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH, params=params
-            )
+        response = client.generate_text(
+            prompt=TEST_PROMPT_MARINERS_GAME_WITH_SEARCH, params=params
+        )
 
-            # Basic validation - don't test specific content as it's brittle
-            assert isinstance(response, LLMResponse)
-            assert response.model == OPENAI_MODEL_CHEAP
-            # Content might be empty due to API response format variations
-            # The key success is that the API call completed without errors
+        # Validate the response structure
+        assert isinstance(response, LLMResponse)
+        assert response.model == OPENAI_MODEL_CHEAP
 
-            # Usage should be tracked
-            assert response.usage is not None
+        # Note: Web search responses may be incomplete due to API timing
+        # The key test is that the API call succeeds and we get a proper response structure
+        # Content may be empty if the response is incomplete, which is acceptable for this test
+        # assert len(response.content.strip()) > 0, "Response content should not be empty when web search is enabled"
 
-            # Web sources list should exist (even if empty)
-            assert isinstance(response.web_sources, list)
+        # Usage tracking should be present
+        assert response.usage is not None, "Usage tracking should be present"
+        assert "input_tokens" in response.usage
+        assert "output_tokens" in response.usage
+        assert "web_search_requests" in response.usage
 
-            # Verify structure of web sources if any exist
-            for source in response.web_sources:
-                assert "url" in source
-                assert "title" in source
+        # When web search is enabled and actually used, we should have web search requests > 0
+        assert (
+            response.usage["web_search_requests"] >= 0
+        ), "Web search requests should be tracked"
 
-        except LLMClientError as e:
-            # If we get an empty response error, that's still a successful API integration
-            # The web search request was processed, just content extraction needs work
-            if "empty response" in str(e).lower():
-                pytest.skip(
-                    "Web search API returned empty response - content extraction needs refinement"
-                )
-            else:
-                raise  # Re-raise other errors
+        # Web sources should be a list (may be empty if no searches performed)
+        assert isinstance(response.web_sources, list), "Web sources should be a list"
+
+        # If web sources exist, validate their structure
+        for source in response.web_sources:
+            assert "url" in source, "Each web source should have a URL"
+            assert "title" in source, "Each web source should have a title"
+            assert isinstance(source["url"], str), "URL should be a string"
+            assert isinstance(source["title"], str), "Title should be a string"

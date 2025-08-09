@@ -89,9 +89,8 @@ def _log_generation_details(
     web_sources: list[dict[str, Any]],
 ) -> None:
     """Helper function to log generation details consistently."""
-    # Handle cases where content might be a mock object (for tests)
-    content_length = len(content) if hasattr(content, "__len__") else len(str(content))
-    web_sources_length = len(web_sources) if hasattr(web_sources, "__len__") else 0
+    content_length = len(content)
+    web_sources_length = len(web_sources)
 
     if usage:
         logger.info(
@@ -347,153 +346,99 @@ class OpenAIClient(LLMClient):
             request_params: dict[str, Any] = {
                 "model": model_to_use,
                 "input": prompt,
+                "reasoning": {"effort": params.reasoning_effort},
+                "text": {"verbosity": params.verbosity},
             }
 
-            # Add GPT-5 specific parameters for Responses API
+            # Add optional parameters
             if params.max_output_tokens is not None:
                 request_params["max_output_tokens"] = params.max_output_tokens
 
-            request_params["reasoning"] = {"effort": params.reasoning_effort}
-            request_params["text"] = {"verbosity": params.verbosity}
-
             # Add web search tool if requested
             if params.include_web_search:
-                request_params["tools"] = [{"type": "web_search"}]
+                # request_params["tools"] = [{"type": "web_search_preview"}]
+                # try below with a 'low' context size, to see what the results look like in practice
+                request_params["tools"] = [
+                    {"type": "web_search_preview", "search_context_size": "low"}
+                ]
 
-            logger.debug(
-                f"Making OpenAI request with model: {model_to_use}, "
-                f"reasoning_effort: {params.reasoning_effort}, "
-                f"verbosity: {params.verbosity}, "
-                f"web_search: {params.include_web_search}"
-            )
+            # per https://platform.openai.com/docs/guides/tools-web-search as of 8/8/25, tool_choice forces the use of
+            # web search, which "can help ensure lower latency and more consistent results", so we'll use it... but
+            # gpt-5-mini doesn't support its use, so we'll only include it when we're not gpt-5-mini
+            # actually, per the following this (and concise mode for results?) are both borked right now:
+            # https://github.com/openai/openai-python/issues/2537?utm_source=chatgpt.com
+            # if model_to_use != OPENAI_MODEL_CHEAP:
+            # request_params["tool_choice"] = {"type": "web_search_preview"}
 
             # Create response with Responses API
-            web_search_enabled = params.include_web_search
             response = self.client.responses.create(**request_params)
 
-            # Extract content from response - handle both mock and real responses
+            # Pretty print the full JSON response - Claude: don't remove this if you remove debugging stuff in the future
+            # import json; print(json.dumps(dict(response), indent=2, default=str))
+
+            # Extract content from response
             content = ""
-
-            # First try output_text (simple text responses and mock objects)
-            if hasattr(response, "output_text") and response.output_text:
-                content = response.output_text
-                # For mock objects, content might be a Mock object - convert to string
-                if hasattr(content, "_mock_name"):
-                    content = str(content)
-
-            # Check if there's content in reasoning output
-            elif hasattr(response, "output") and response.output:
-                output = response.output
-                if hasattr(output, "__iter__"):
-                    try:
-                        for item in output:
-                            # Check if this is a text response item (not reasoning)
-                            if (
-                                hasattr(item, "type")
-                                and item.type == "text"
-                                and hasattr(item, "content")
-                                and item.content
-                            ):
-                                content += item.content
-                            # Or check if it has text attribute directly
-                            elif hasattr(item, "text") and item.text:
-                                content += item.text
-                    except (TypeError, AttributeError):
-                        # Handle cases where output is not iterable or attributes are missing
-                        pass
+            if hasattr(response, "output") and response.output:
+                for item in response.output:
+                    # Handle message type items
+                    if (
+                        hasattr(item, "type")
+                        and item.type == "message"
+                        and hasattr(item, "content")
+                        and item.content
+                    ):
+                        for content_item in item.content:
+                            if hasattr(content_item, "text") and content_item.text:
+                                content += content_item.text
 
             _validate_response_content(content)
 
-            # Extract usage information if available
+            # Extract usage information
             usage = None
             if hasattr(response, "usage") and response.usage is not None:
                 usage = {
                     "input_tokens": getattr(response.usage, "input_tokens", 0),
                     "output_tokens": getattr(response.usage, "output_tokens", 0),
-                    "web_search_requests": 0,  # Will be updated if web search was used
+                    "web_search_requests": 0,
                 }
 
-            # Extract web search sources if available
+            # Extract web search sources and count search requests
             web_sources = []
-            if web_search_enabled:
-                # Method 1: Check for citations in the output messages (newer OpenAI Responses API format)
-                if hasattr(response, "output"):
-                    output = getattr(response, "output", [])
-                    try:
-                        for message in output:
-                            if hasattr(message, "content"):
-                                for content_item in message.content:
-                                    if hasattr(content_item, "annotations"):
-                                        for annotation in content_item.annotations:
-                                            if (
-                                                hasattr(annotation, "type")
-                                                and annotation.type == "url_citation"
-                                                and hasattr(annotation, "url")
-                                                and hasattr(annotation, "title")
-                                            ):
-                                                web_sources.append(
-                                                    {
-                                                        "url": annotation.url,
-                                                        "title": annotation.title,
-                                                        "page_age": None,
-                                                    }
-                                                )
-                    except (TypeError, AttributeError):
-                        # Handle mock objects or other non-iterable outputs
-                        pass
+            if params.include_web_search and hasattr(response, "output"):
+                search_call_count = 0
 
-                # Method 2: Check for tool_calls (fallback for older format or testing)
-                if not web_sources:
-                    tool_calls = getattr(response, "tool_calls", [])
-                    if tool_calls and hasattr(tool_calls, "__iter__"):
-                        try:
-                            for tool_call in tool_calls:
-                                if hasattr(tool_call, "type") and (
-                                    tool_call.type
-                                    in (
-                                        "web_search",
-                                        "web_search_preview",
-                                        "web_search_call",
-                                    )
-                                ):
-                                    # Update web search request count
-                                    if usage:
-                                        usage["web_search_requests"] += 1
+                for item in response.output:
+                    # Count web search calls
+                    if hasattr(item, "type") and item.type == "web_search_call":
+                        search_call_count += 1
 
-                                    # Try different possible output structures
-                                    output = getattr(tool_call, "output", None)
-                                    if output and hasattr(output, "results"):
-                                        for result in output.results:
-                                            if hasattr(result, "url") and hasattr(
-                                                result, "title"
-                                            ):
-                                                web_sources.append(
-                                                    {
-                                                        "url": result.url,
-                                                        "title": result.title,
-                                                        "page_age": getattr(
-                                                            result, "page_age", None
-                                                        ),
-                                                    }
-                                                )
-                        except (TypeError, AttributeError):
-                            # Handle mock objects or other non-iterable outputs
-                            pass
+                    # Extract citations from message content
+                    elif (
+                        hasattr(item, "type")
+                        and item.type == "message"
+                        and hasattr(item, "content")
+                        and item.content
+                    ):
+                        for content_item in item.content:
+                            if hasattr(content_item, "annotations"):
+                                for annotation in content_item.annotations:
+                                    if (
+                                        hasattr(annotation, "type")
+                                        and annotation.type == "url_citation"
+                                        and hasattr(annotation, "url")
+                                        and hasattr(annotation, "title")
+                                    ):
+                                        web_sources.append(
+                                            {
+                                                "url": annotation.url,
+                                                "title": annotation.title,
+                                                "page_age": None,
+                                            }
+                                        )
 
-                # Update web search requests count if we found citations
-                if web_sources and usage:
-                    usage["web_search_requests"] = max(
-                        1, usage.get("web_search_requests", 0)
-                    )
-
-                # Final fallback: If content has URLs but no sources found,
-                # assume web search occurred based on content pattern
-                if (
-                    not web_sources
-                    and ("http" in content or ".com" in content)
-                    and usage
-                ):
-                    usage["web_search_requests"] = 1
+                # Update usage with web search count
+                if usage and search_call_count > 0:
+                    usage["web_search_requests"] = search_call_count
 
             # Log usage details
             _log_generation_details(content, model_to_use, usage, web_sources)
@@ -507,10 +452,8 @@ class OpenAIClient(LLMClient):
 
         except Exception as e:
             if "openai" in str(type(e)).lower():
-                # OpenAI-specific error
                 raise LLMClientError(f"OpenAI API error: {str(e)}") from e
             else:
-                # Other errors
                 raise LLMClientError(f"Unexpected error: {str(e)}") from e
 
 

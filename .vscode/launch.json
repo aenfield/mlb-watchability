@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug single costly pytest test",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "-m",
+        "costly",
+        "-k",
+        "test_openai_real_api_call_no_web_search",  
+        "-s"
+      ],
+      "justMyCode": true,
+      "subProcess": true
+    }
+  ]
+}
