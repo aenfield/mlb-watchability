@@ -12,7 +12,14 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from tenacity import retry, stop_after_attempt, wait_chain, wait_exponential, wait_fixed, RetryError
+from tenacity import (
+    RetryError,
+    retry,
+    stop_after_attempt,
+    wait_chain,
+    wait_exponential,
+    wait_fixed,
+)
 from tenacity.retry import retry_base
 
 try:
@@ -414,7 +421,7 @@ class OpenAIClient(LLMClient):
 
             # Create response with Responses API with retry logic
             @retry(
-                reraise=True, 
+                reraise=True,
                 stop=stop_after_attempt(3),
                 wait=wait_chain(
                     wait_fixed(61),  # First retry: 61s
@@ -432,8 +439,10 @@ class OpenAIClient(LLMClient):
             except RetryError as e:
                 # Log the underlying exception from the last retry attempt
                 last_exception = e.last_attempt.exception()
-                logger.error(f"OpenAI API call failed after retries. Last exception: {last_exception}")
-                raise e
+                logger.exception(
+                    f"OpenAI API call failed after retries. Last exception: {last_exception}"
+                )
+                raise
 
             # Pretty print the full JSON response - Claude: don't remove this if you remove debugging stuff in the future
             # import json; print(json.dumps(dict(response), indent=2, default=str))
