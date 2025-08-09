@@ -2,8 +2,8 @@ name: Daily MLB Watchability Markdown
 
 on:
   schedule:
-    # Run every day at 6:00 AM Pacific Time (1300 PM UTC during PDT)
-    - cron: "0 13 * * *"
+    # Run every day at 5:30 AM Pacific Time (1230 UTC during PDT)
+    - cron: "30 12 * * *"
 
   # Allow manual triggering, with particular defaults suitable for manually triggered jobs
   workflow_dispatch:
@@ -71,7 +71,7 @@ jobs:
           GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
           GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '30' }}"
           LLM_MODEL="${{ github.event.inputs.llm-model || 'cheap' }}"
-          LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'anthropic' }}"
+          LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'openai' }}"
 
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
