@@ -64,6 +64,7 @@ jobs:
       - name: Generate markdown file
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DAILYGEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_DAILYGEN }}
         run: |
           # Use defaults for scheduled runs (where the first parts will be empty)
           GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
