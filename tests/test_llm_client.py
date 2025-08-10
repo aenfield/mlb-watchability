@@ -3,6 +3,7 @@ Tests for the LLM client module.
 """
 
 import os
+from collections.abc import Generator
 from typing import Any
 from unittest.mock import Mock, patch
 
@@ -29,6 +30,13 @@ TEST_PROMPT_MARINERS_GAME = (
     "Generate a short 150 character summary of today's Seattle Mariners game"
 )
 TEST_PROMPT_MARINERS_GAME_WITH_SEARCH = "Search the web for the latest and generate a short 100 character summary of today's Seattle Mariners game"
+
+
+@pytest.fixture(autouse=True)
+def reset_openai_rate_limiting() -> Generator[None, None, None]:
+    """Reset OpenAI rate limiting before each test."""
+    OpenAIClient._reset_rate_limiting()
+    yield
 
 
 # Test helper functions

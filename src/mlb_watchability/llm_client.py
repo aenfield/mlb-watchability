@@ -8,6 +8,7 @@ Supports OpenAI models by default with environment-based configuration.
 import logging
 import os
 import re
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
@@ -174,6 +175,30 @@ class LLMClientError(Exception):
 
 class LLMClient(ABC):
     """Abstract base class for LLM clients."""
+
+    def _apply_rate_limit(
+        self,
+        last_call_time: float | None,
+        delay_seconds: float,
+        model_description: str,
+    ) -> None:
+        """
+        Apply rate limiting by sleeping if needed.
+
+        Args:
+            last_call_time: Timestamp of the last call, or None if no previous call
+            delay_seconds: Minimum delay required between calls
+            model_description: Description of the model for logging purposes
+        """
+        if last_call_time is not None:
+            current_time = time.time()
+            time_since_last_call = current_time - last_call_time
+            if time_since_last_call < delay_seconds:
+                sleep_time = delay_seconds - time_since_last_call
+                logger.info(
+                    f"Rate limiting: waiting {sleep_time:.1f} seconds before {model_description} call"
+                )
+                time.sleep(sleep_time)
 
     @abstractmethod
     def generate_text(
@@ -347,6 +372,15 @@ class AnthropicClient(LLMClient):
 class OpenAIClient(LLMClient):
     """OpenAI client implementation using GPT-5 and Responses API."""
 
+    # class variables for rate limiting - shared across all instances, see comment below on rationale
+    _class_last_full_model_call_time: float | None = None
+    _class_rate_limit_delay = 66.0  # 1.1 minutes in seconds
+
+    @classmethod
+    def _reset_rate_limiting(cls) -> None:
+        """Reset rate limiting state. Used for testing - called by pytest autouse fixture."""
+        cls._class_last_full_model_call_time = None
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -384,6 +418,17 @@ class OpenAIClient(LLMClient):
             )
 
         model_to_use = model or self.default_model
+
+        # Check rate limiting for full model only - class methods so last call is shared across instances
+        # As of 8/8/25, i only have tier 1 and a 30K token limit so basically can make a single gpt-5 call at most per min w/o hitting limits
+        # Ok, so I couldn't even make a single call in some cases w/ tier 1 because it was over 30k, so
+        # I added enough to get to tier 2 - no need to apply a rate limit then, knock on wood
+        # if model_to_use == OPENAI_MODEL_FULL:
+        #     self._apply_rate_limit(
+        #         OpenAIClient._class_last_full_model_call_time,
+        #         OpenAIClient._class_rate_limit_delay,
+        #         "OpenAI normal model",
+        #     )
 
         try:
             # Prepare request parameters for Responses API
@@ -428,6 +473,9 @@ class OpenAIClient(LLMClient):
             # )
             def _make_openai_api_call() -> Any:
                 return self.client.responses.create(**request_params)
+
+            # update rate limiting timestamp right before we start since OpenAI calcs rate limits from the start of each call
+            OpenAIClient._class_last_full_model_call_time = time.time()
 
             try:
                 response = _make_openai_api_call()
