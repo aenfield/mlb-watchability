@@ -539,6 +539,10 @@ class TestOpenAIClient:
         mock_usage = Mock()
         mock_usage.input_tokens = 40
         mock_usage.output_tokens = 60
+        # Mock input_tokens_details for cached tokens
+        mock_input_tokens_details = Mock()
+        mock_input_tokens_details.cached_tokens = 0
+        mock_usage.input_tokens_details = mock_input_tokens_details
 
         # Mock proper response structure with output array
         # Mock real OpenAI response structure: response.output[0].content[0].text
@@ -568,6 +572,7 @@ class TestOpenAIClient:
             assert response.usage == {
                 "input_tokens": 40,
                 "output_tokens": 60,
+                "cached_tokens": 0,
                 "web_search_requests": 0,
             }
 

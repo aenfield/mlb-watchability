@@ -108,9 +108,20 @@ def _log_generation_details(
     web_sources_length = len(web_sources)
 
     if usage:
+        # Include cached_tokens in log if available (OpenAI only)
+        cached_info = ""
+        if "cached_tokens" in usage:
+            try:
+                cached_tokens = int(usage["cached_tokens"])
+                if cached_tokens > 0:
+                    cached_info = f", cached_tokens: {cached_tokens}"
+            except (ValueError, TypeError):
+                # Handle mock objects or invalid values gracefully
+                pass
+
         logger.info(
             f"Generated {content_length} characters using {model}, "
-            f"input_tokens: {usage['input_tokens']}, output_tokens: {usage['output_tokens']}, "
+            f"input_tokens: {usage['input_tokens']}, output_tokens: {usage['output_tokens']}{cached_info}, "
             f"web_search_requests: {usage['web_search_requests']}, web_sources: {web_sources_length}"
         )
     else:
@@ -302,6 +313,9 @@ class AnthropicClient(LLMClient):
             # Extract usage information if available
             usage = None
             if hasattr(response, "usage") and response.usage is not None:
+                # first output raw data, as it changes over what we do manually (could potentially remove manual stuff since this is just for logs anyway)
+                logger.info(f"Anthropic response.usage: {response.usage}")
+
                 # Extract web search requests from server_tool_use if available
                 web_search_requests = 0
                 if (
@@ -510,9 +524,23 @@ class OpenAIClient(LLMClient):
             # Extract usage information
             usage = None
             if hasattr(response, "usage") and response.usage is not None:
+                # first output raw data, as it changes over what we do manually (could potentially remove manual stuff since this is just for logs anyway)
+                logger.info(f"OpenAI response.usage: {response.usage}")
+
+                # Extract cached tokens from input_tokens_details if available
+                cached_tokens = 0
+                if (
+                    hasattr(response.usage, "input_tokens_details")
+                    and response.usage.input_tokens_details is not None
+                ):
+                    cached_tokens = getattr(
+                        response.usage.input_tokens_details, "cached_tokens", 0
+                    )
+
                 usage = {
                     "input_tokens": getattr(response.usage, "input_tokens", 0),
                     "output_tokens": getattr(response.usage, "output_tokens", 0),
+                    "cached_tokens": cached_tokens,
                     "web_search_requests": 0,
                 }
 
