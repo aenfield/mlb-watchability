@@ -98,6 +98,15 @@ def _raise_empty_response_error() -> None:
     raise LLMClientError("Received empty response from LLM")
 
 
+def _log_prompt_character_counts(
+    system_prompt_length: int, user_prompt_length: int
+) -> None:
+    """Helper function to log prompt character counts consistently."""
+    logger.info(
+        f"Using system prompt of {system_prompt_length} characters and user prompt of {user_prompt_length} characters."
+    )
+
+
 def _log_generation_details(
     content: str,
     model: str,
@@ -296,6 +305,9 @@ class AnthropicClient(LLMClient):
                         "max_uses": 1,
                     }
                 ]
+
+            # Log prompt character counts (Anthropic doesn't use system prompts in our implementation)
+            _log_prompt_character_counts(0, len(prompt))
 
             logger.debug(
                 f"Making Anthropic request with model: {model_to_use}, web_search: {params.include_web_search}"
@@ -508,6 +520,12 @@ class OpenAIClient(LLMClient):
             # )
             def _make_openai_api_call() -> Any:
                 return self.client.responses.create(**request_params)
+
+            # Log prompt character counts
+            system_prompt_length = 0
+            if params.use_system_prompt and "instructions" in request_params:
+                system_prompt_length = len(request_params["instructions"])
+            _log_prompt_character_counts(system_prompt_length, len(prompt))
 
             # update rate limiting timestamp right before we start since OpenAI calcs rate limits from the start of each call
             OpenAIClient._class_last_full_model_call_time = time.time()
