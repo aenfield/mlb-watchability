@@ -500,7 +500,7 @@ class GameScore:
         if provider == "anthropic":
             params = AnthropicParams(include_web_search=True)
         elif provider == "openai":
-            params = OpenAIParams(include_web_search=True)
+            params = OpenAIParams(include_web_search=True, use_system_prompt=True)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 

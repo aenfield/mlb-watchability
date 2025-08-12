@@ -1,6 +1,7 @@
 """Command-line interface for generating MLB game prompt files."""
 
 import logging
+import os
 from pathlib import Path
 
 import typer
@@ -25,6 +26,36 @@ app = typer.Typer()
 def generate_prompt_filename(date: str, game_index: int) -> str:
     """Generate a filename for the game prompt file."""
     return f"game_prompt_{date}_game_{game_index}.md"
+
+
+def load_system_prompt() -> str:
+    """Load system prompt from file, return empty string if not found."""
+    try:
+        system_prompt_path = os.path.join(
+            os.path.dirname(__file__), "prompt-game-summary-system.md"
+        )
+        with open(system_prompt_path) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return ""
+
+
+def format_prompt_with_sections(user_prompt: str) -> str:
+    """Format prompt content with system and user sections."""
+    # Always load system prompt content
+    system_prompt = load_system_prompt()
+    system_section = system_prompt or "System prompt file not found."
+
+    # Format with both sections
+    formatted_content = f"""# System Prompt (currently only used with OpenAI)
+
+{system_section}
+
+# User Prompt
+
+{user_prompt}"""
+
+    return formatted_content
 
 
 @app.command()
@@ -106,7 +137,10 @@ def main(
 
         # Generate formatted prompt content
         logger.info("Generating formatted prompt content")
-        prompt_content = selected_game_score.generate_formatted_prompt()
+        user_prompt_content = selected_game_score.generate_formatted_prompt()
+
+        # Format with system and user prompt sections
+        formatted_prompt = format_prompt_with_sections(user_prompt_content)
 
         # Generate filename
         filename = generate_prompt_filename(target_date, game_index)
@@ -115,7 +149,7 @@ def main(
         # Write to file
         output_path = Path(filename)
         try:
-            output_path.write_text(prompt_content, encoding="utf-8")
+            output_path.write_text(formatted_prompt, encoding="utf-8")
             logger.info(f"Successfully wrote prompt file: {output_path.absolute()}")
             typer.echo(f"Game prompt file generated: {filename}")
 
@@ -130,7 +164,7 @@ def main(
             try:
                 description, web_sources = (
                     selected_game_score.get_description_from_llm_using_prompt(
-                        prompt_content
+                        user_prompt_content
                     )
                 )
 

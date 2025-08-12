@@ -63,6 +63,7 @@ class OpenAIParams(LLMParams):
     reasoning_effort: str = "medium"  # minimal, low, medium, high
     verbosity: str = "medium"  # low, medium, high
     include_web_search: bool = False
+    use_system_prompt: bool = False
 
     def __post_init__(self) -> None:
         """Validate parameters after initialization."""
@@ -390,6 +391,20 @@ class OpenAIClient(LLMClient):
     _class_last_full_model_call_time: float | None = None
     _class_rate_limit_delay = 66.0  # 1.1 minutes in seconds
 
+    def _load_system_prompt(self) -> str:
+        """Load system prompt from file."""
+        system_prompt_path = os.path.join(
+            os.path.dirname(__file__), "prompt-game-summary-system.md"
+        )
+        try:
+            with open(system_prompt_path) as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            logger.warning(
+                f"System prompt file not found at {system_prompt_path}, skipping system prompt"
+            )
+            return ""
+
     @classmethod
     def _reset_rate_limiting(cls) -> None:
         """Reset rate limiting state. Used for testing - called by pytest autouse fixture."""
@@ -456,6 +471,12 @@ class OpenAIClient(LLMClient):
             # Add optional parameters
             if params.max_output_tokens is not None:
                 request_params["max_output_tokens"] = params.max_output_tokens
+
+            # Add system prompt if requested
+            if params.use_system_prompt:
+                system_prompt = self._load_system_prompt()
+                if system_prompt:
+                    request_params["instructions"] = system_prompt
 
             # Add web search tool if requested
             if params.include_web_search:

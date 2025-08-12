@@ -58,6 +58,7 @@ def create_openai_params(
     reasoning_effort: str = "medium",
     verbosity: str = "medium",
     include_web_search: bool = False,
+    use_system_prompt: bool = False,
 ) -> OpenAIParams:
     """Helper to create OpenAIParams for tests."""
     return OpenAIParams(
@@ -65,6 +66,7 @@ def create_openai_params(
         reasoning_effort=reasoning_effort,
         verbosity=verbosity,
         include_web_search=include_web_search,
+        use_system_prompt=use_system_prompt,
     )
 
 
@@ -890,6 +892,67 @@ class TestOpenAIClient:
                 text={"verbosity": "high"},
             )
 
+    def test_generate_text_with_system_prompt(self) -> None:
+        """Test generate_text with system prompt enabled."""
+        mock_usage = Mock()
+        mock_usage.input_tokens = 20
+        mock_usage.output_tokens = 100
+
+        mock_content_item = Mock()
+        mock_content_item.text = "Test response with system prompt"
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+        mock_response = Mock()
+        mock_response.output = [mock_message]
+        mock_response.usage = mock_usage
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+            params = create_openai_params(use_system_prompt=True)
+            response = client.generate_text("Test prompt", params)
+
+            # Verify that instructions parameter was added
+            mock_client.responses.create.assert_called_once()
+            call_args = mock_client.responses.create.call_args[1]
+            assert "instructions" in call_args
+            assert len(call_args["instructions"]) > 0
+            assert response.content == "Test response with system prompt"
+
+    def test_generate_text_without_system_prompt(self) -> None:
+        """Test generate_text without system prompt."""
+        mock_usage = Mock()
+        mock_usage.input_tokens = 20
+        mock_usage.output_tokens = 100
+
+        mock_content_item = Mock()
+        mock_content_item.text = "Test response without system prompt"
+        mock_message = Mock()
+        mock_message.type = "message"
+        mock_message.content = [mock_content_item]
+        mock_response = Mock()
+        mock_response.output = [mock_message]
+        mock_response.usage = mock_usage
+
+        with patch("mlb_watchability.llm_client.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_client.responses.create.return_value = mock_response
+            mock_openai_class.return_value = mock_client
+
+            client = OpenAIClient(api_key="test-key")
+            params = create_openai_params(use_system_prompt=False)
+            response = client.generate_text("Test prompt", params)
+
+            # Verify that instructions parameter was not added
+            mock_client.responses.create.assert_called_once()
+            call_args = mock_client.responses.create.call_args[1]
+            assert "instructions" not in call_args
+            assert response.content == "Test response without system prompt"
+
 
 class TestCreateLLMClient:
     """Test LLM client factory function."""
@@ -1285,6 +1348,7 @@ class TestCallActualAPI:
             reasoning_effort="medium",
             verbosity="low",
             include_web_search=False,
+            use_system_prompt=True,
         )
         response = client.generate_text(prompt=TEST_PROMPT_MARINERS_GAME, params=params)
 
@@ -1304,6 +1368,7 @@ class TestCallActualAPI:
             reasoning_effort="medium",
             verbosity="low",
             include_web_search=True,
+            use_system_prompt=True,
         )
 
         response = client.generate_text(
