@@ -183,7 +183,7 @@ exclude_lines = [
 ]
 
 [tool.uv.sources]
-pybaseball = { git = "https://github.com/aenfield/pybaseball.git" }
+pybaseball = { git = "https://github.com/aenfield/pybaseball.git", branch = "add-reliever-starter-team-pitching" }
 
 [dependency-groups]
 dev = [
