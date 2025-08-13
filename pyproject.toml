@@ -182,6 +182,9 @@ exclude_lines = [
     "if TYPE_CHECKING:",
 ]
 
+[tool.uv.sources]
+pybaseball = { path = "../pybaseball", editable = true }
+
 [dependency-groups]
 dev = [
     "black>=25.1.0",
