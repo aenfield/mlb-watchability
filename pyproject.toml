@@ -183,7 +183,7 @@ exclude_lines = [
 ]
 
 [tool.uv.sources]
-pybaseball = { path = "../pybaseball", editable = true }
+pybaseball = { git = "https://github.com/aenfield/pybaseball.git" }
 
 [dependency-groups]
 dev = [

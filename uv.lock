@@ -880,7 +880,7 @@ requires-dist = [
     { name = "openai", specifier = ">=1.99.0" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "polars", specifier = ">=0.20.0" },
-    { name = "pybaseball", editable = "../pybaseball" },
+    { name = "pybaseball", git = "https://github.com/aenfield/pybaseball.git" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -1256,7 +1256,7 @@ wheels = [
 [[package]]
 name = "pybaseball"
 version = "2.2.7"
-source = { editable = "../pybaseball" }
+source = { git = "https://github.com/aenfield/pybaseball.git#7aa71c334d4b7a901684e7dad6c133e3cd9eb8bc" }
 dependencies = [
     { name = "attrs" },
     { name = "beautifulsoup4" },
@@ -1271,28 +1271,6 @@ dependencies = [
     { name = "scipy" },
     { name = "tqdm" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "attrs", specifier = ">=20.3.0" },
-    { name = "beautifulsoup4", specifier = ">=4.4.0" },
-    { name = "curl-cffi", specifier = ">=0.10.0" },
-    { name = "lxml", specifier = ">=4.2.1" },
-    { name = "matplotlib", specifier = ">=2.0.0" },
-    { name = "mypy", marker = "extra == 'test'", specifier = ">=0.782" },
-    { name = "numpy", specifier = ">=1.13.0" },
-    { name = "pandas", specifier = ">=1.0.3" },
-    { name = "pyarrow", specifier = ">=1.0.1" },
-    { name = "pygithub", specifier = ">=1.51" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=6.0.2" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=2.10.1" },
-    { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=2.1.0" },
-    { name = "requests", specifier = ">=2.18.1" },
-    { name = "scipy", specifier = ">=1.4.0" },
-    { name = "tqdm", specifier = ">=4.50.0" },
-    { name = "types-requests", marker = "extra == 'test'", specifier = ">=2.18.1" },
-]
-provides-extras = ["test"]
 
 [[package]]
 name = "pycparser"
