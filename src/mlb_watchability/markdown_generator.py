@@ -263,6 +263,7 @@ def generate_team_breakdown_table(
         f"| {team_stats.barrel_rate:.1%} "
         f"| {team_stats.baserunning_runs:.1f} "
         f"| {team_stats.fielding_runs:.1f} "
+        f"| {team_stats.bullpen_runs:.1f} "
         f"| {payroll_str} "
         f"| {team_stats.age:.1f} "
         f"| {team_stats.luck:.1f} "
@@ -276,6 +277,7 @@ def generate_team_breakdown_table(
         f"| {team_nerd_stats.z_barrel_rate:.2f} "
         f"| {team_nerd_stats.z_baserunning_runs:.2f} "
         f"| {team_nerd_stats.z_fielding_runs:.2f} "
+        f"| {team_nerd_stats.z_bullpen_runs:.2f} "
         f"| {team_nerd_stats.z_payroll:.2f} "
         f"| {team_nerd_stats.z_age:.2f} "
         f"| {team_nerd_stats.z_luck:.2f} "
@@ -289,6 +291,7 @@ def generate_team_breakdown_table(
         f"| {team_nerd_stats.barrel_component:.2f} "
         f"| {team_nerd_stats.baserunning_component:.2f} "
         f"| {team_nerd_stats.fielding_component:.2f} "
+        f"| {team_nerd_stats.bullpen_component:.2f} "
         f"| {team_nerd_stats.payroll_component:.2f} "
         f"| {team_nerd_stats.age_component:.2f} "
         f"| {team_nerd_stats.luck_component:.2f} "
@@ -301,8 +304,8 @@ def generate_team_breakdown_table(
         "",
         "{% wideTable %}",
         "",
-        "|              | Batting runs | Barrel % | Baserunning runs | Fielding runs | Payroll | Age   | Luck | Constant | Total |",
-        "| ------------ | ------------ | -------- | ----------- | -------- | ------- | ----- | ---- | -------- | ----- |",
+        "|              | Batting runs | Barrel % | Baserunning runs | Fielding runs | Bullpen runs | Payroll | Age   | Luck | Constant | Total |",
+        "| ------------ | ------------ | -------- | ----------- | -------- | ------------ | ------- | ----- | ---- | -------- | ----- |",
         raw_row,
         z_row,
         tnerd_row,

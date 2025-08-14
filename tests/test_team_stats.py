@@ -19,6 +19,7 @@ class TestTeamStats:
             barrel_rate=0.089,
             baserunning_runs=8.5,
             fielding_runs=12.3,
+            bullpen_runs=15.7,
             payroll=285.6,
             age=28.5,
             luck=3.2,
@@ -29,6 +30,7 @@ class TestTeamStats:
         assert stats.barrel_rate == 0.089
         assert stats.baserunning_runs == 8.5
         assert stats.fielding_runs == 12.3
+        assert stats.bullpen_runs == 15.7
         assert stats.payroll == 285.6
         assert stats.age == 28.5
         assert stats.luck == 3.2
@@ -41,6 +43,7 @@ class TestTeamStats:
             barrel_rate=0.028,
             baserunning_runs=-12.1,
             fielding_runs=-8.7,
+            bullpen_runs=-8.2,
             payroll=65.2,
             age=26.8,
             luck=-5.5,
@@ -59,6 +62,7 @@ class TestTeamStats:
                 barrel_rate=0.045,
                 baserunning_runs=8.5,
                 fielding_runs=12.3,
+                bullpen_runs=10.0,
                 payroll=285.6,
                 age=28.5,
                 luck=3.2,
@@ -76,6 +80,7 @@ class TestTeamNerdStats:
             barrel_rate=0.040,
             baserunning_runs=5.0,
             fielding_runs=8.0,
+            bullpen_runs=5.5,
             payroll=150.0,
             age=27.5,
             luck=2.0,
@@ -91,13 +96,15 @@ class TestTeamNerdStats:
             z_barrel_rate=0.5,
             z_baserunning_runs=0.3,
             z_fielding_runs=0.6,
+            z_bullpen_runs=1.0,
             z_luck=-0.2,
             z_payroll=0.4,
             z_age=-0.3,
             adjusted_payroll=0.0,
             adjusted_age=0.3,
             adjusted_luck=2.0,
-            tnerd_score=8.5,
+            tnerd_score=9.5,
+            bullpen_component=1.0,
         )
 
         assert nerd_stats.team_stats == team_stats
@@ -105,13 +112,14 @@ class TestTeamNerdStats:
         assert nerd_stats.z_barrel_rate == 0.5
         assert nerd_stats.z_baserunning_runs == 0.3
         assert nerd_stats.z_fielding_runs == 0.6
+        assert nerd_stats.z_bullpen_runs == 1.0
         assert nerd_stats.z_luck == -0.2
         assert nerd_stats.z_payroll == 0.4
         assert nerd_stats.z_age == -0.3
         assert nerd_stats.adjusted_payroll == 0.0
         assert nerd_stats.adjusted_age == 0.3
         assert nerd_stats.adjusted_luck == 2.0
-        assert nerd_stats.tnerd_score == 8.5
+        assert nerd_stats.tnerd_score == 9.5
 
 
 class TestTeamNerdStatsFromStatsAndMeans:
@@ -124,6 +132,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             "barrel_rate": 0.035,
             "baserunning_runs": 0.0,
             "fielding_runs": 4.20,
+            "bullpen_runs": 0.5,
             "luck": 0.0,
             "payroll": 140.0,
             "age": 28.5,
@@ -134,6 +143,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             "barrel_rate": 0.008,
             "baserunning_runs": 15.0,
             "fielding_runs": 0.40,
+            "bullpen_runs": 5.0,
             "luck": 20.0,
             "payroll": 50.0,
             "age": 1.5,
@@ -149,6 +159,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             barrel_rate=0.043,  # Above average
             baserunning_runs=15.0,  # Above average
             fielding_runs=6.0,  # Above average but within valid z-score range
+            bullpen_runs=12.0,  # Above average
             payroll=90.0,  # Below average (better for tNERD)
             age=26.0,  # Younger than average (better)
             luck=4.0,  # Lucky
@@ -179,11 +190,16 @@ class TestTeamNerdStatsFromStatsAndMeans:
         assert nerd_stats.adjusted_luck == 0.2  # luck is 0.2, not capped
 
         # Check tNERD score calculation
+        # First calculate the expected bullpen component
+        # z_bullpen_runs = (12.0 - 0.5) / 5.0 = 2.3
+        expected_bullpen = (12.0 - 0.5) / 5.0
+
         expected_tnerd = (
             1.0  # z_batting_runs
             + 1.0  # z_barrel_rate
             + 1.0  # z_baserunning_runs
             + 4.5  # z_fielding_runs
+            + expected_bullpen  # z_bullpen_runs
             + 1.0  # adjusted_payroll
             + 1.67  # adjusted_age (approximately)
             + 0.2  # adjusted_luck
@@ -200,6 +216,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             barrel_rate=0.035,  # Average
             baserunning_runs=0.0,  # Average
             fielding_runs=4.20,  # Average
+            bullpen_runs=0.5,  # Average
             payroll=200.0,  # Above average (worse for tNERD)
             age=31.0,  # Older than average (worse)
             luck=-8.0,  # Unlucky
@@ -224,6 +241,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             barrel_rate=0.043,  # Above average
             baserunning_runs=8.0,  # Above average
             fielding_runs=6.0,  # Above average but within valid z-score range
+            bullpen_runs=8.5,  # Above average
             payroll=140.0,
             age=28.5,
             luck=50.0,  # Very lucky - should be capped at 2.0
@@ -247,6 +265,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             barrel_rate=0.035,  # League average
             baserunning_runs=0.0,  # League average
             fielding_runs=4.20,  # League average
+            bullpen_runs=0.5,  # League average
             payroll=140.0,  # League average
             age=28.5,  # League average
             luck=0.0,  # No luck
@@ -276,6 +295,58 @@ class TestTeamNerdStatsFromStatsAndMeans:
         expected_tnerd = 4.0  # constant + all zeros
         assert abs(nerd_stats.tnerd_score - expected_tnerd) < 0.01
 
+    def test_bullpen_component_calculation(self) -> None:
+        """Test that bullpen runs are correctly calculated as z-score without adjustments."""
+        team_stats = TeamStats(
+            name="Bullpen Test Team",
+            batting_runs=0.0,
+            barrel_rate=0.035,
+            baserunning_runs=0.0,
+            fielding_runs=4.20,
+            bullpen_runs=10.5,  # Above average bullpen
+            payroll=140.0,
+            age=28.5,
+            luck=0.0,
+        )
+
+        league_means, league_std_devs = self.create_sample_league_stats()
+
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
+
+        # Bullpen z-score calculation: (10.5 - 0.5) / 5.0 = 2.0
+        expected_z_bullpen = (10.5 - 0.5) / 5.0
+        assert nerd_stats.z_bullpen_runs == pytest.approx(expected_z_bullpen)
+
+        # Bullpen component should equal z-score (no adjustments like payroll/age)
+        assert nerd_stats.bullpen_component == pytest.approx(expected_z_bullpen)
+
+    def test_negative_bullpen_runs(self) -> None:
+        """Test that negative bullpen runs result in negative contribution to tNERD."""
+        team_stats = TeamStats(
+            name="Poor Bullpen Team",
+            batting_runs=0.0,
+            barrel_rate=0.035,
+            baserunning_runs=0.0,
+            fielding_runs=4.20,
+            bullpen_runs=-9.5,  # Below average bullpen
+            payroll=140.0,
+            age=28.5,
+            luck=0.0,
+        )
+
+        league_means, league_std_devs = self.create_sample_league_stats()
+
+        nerd_stats = TeamNerdStats.from_stats_and_means(
+            team_stats, league_means, league_std_devs
+        )
+
+        # Bullpen z-score calculation: (-9.5 - 0.5) / 5.0 = -2.0
+        expected_z_bullpen = (-9.5 - 0.5) / 5.0
+        assert nerd_stats.z_bullpen_runs == pytest.approx(expected_z_bullpen)
+        assert nerd_stats.bullpen_component == pytest.approx(expected_z_bullpen)
+
 
 class TestTeamNerdStatsComponents:
     """Test the component properties of TeamNerdStats."""
@@ -288,6 +359,7 @@ class TestTeamNerdStatsComponents:
             barrel_rate=0.08,
             baserunning_runs=5.0,
             fielding_runs=8.0,
+            bullpen_runs=5.0,
             payroll=150.0,
             age=27.0,
             luck=3.0,
@@ -298,6 +370,7 @@ class TestTeamNerdStatsComponents:
             "barrel_rate": 0.06,
             "baserunning_runs": 0.0,
             "fielding_runs": 0.0,
+            "bullpen_runs": 0.0,
             "payroll": 200.0,
             "age": 29.0,
             "luck": 0.0,
@@ -308,6 +381,7 @@ class TestTeamNerdStatsComponents:
             "barrel_rate": 0.02,
             "baserunning_runs": 10.0,
             "fielding_runs": 15.0,
+            "bullpen_runs": 8.0,
             "payroll": 100.0,
             "age": 2.0,
             "luck": 5.0,
@@ -353,6 +427,7 @@ class TestTeamNerdStatsComponents:
             barrel_rate=0.08,
             baserunning_runs=5.0,
             fielding_runs=8.0,
+            bullpen_runs=5.0,
             payroll=150.0,
             age=27.0,
             luck=3.0,
@@ -363,6 +438,7 @@ class TestTeamNerdStatsComponents:
             "barrel_rate": 0.06,
             "baserunning_runs": 0.0,
             "fielding_runs": 0.0,
+            "bullpen_runs": 0.0,
             "payroll": 200.0,
             "age": 29.0,
             "luck": 0.0,
@@ -373,6 +449,7 @@ class TestTeamNerdStatsComponents:
             "barrel_rate": 0.02,
             "baserunning_runs": 10.0,
             "fielding_runs": 15.0,
+            "bullpen_runs": 8.0,
             "payroll": 100.0,
             "age": 2.0,
             "luck": 5.0,
@@ -388,6 +465,7 @@ class TestTeamNerdStatsComponents:
             + nerd_stats.barrel_component
             + nerd_stats.baserunning_component
             + nerd_stats.fielding_component
+            + nerd_stats.bullpen_component
             + nerd_stats.payroll_component
             + nerd_stats.age_component
             + nerd_stats.luck_component

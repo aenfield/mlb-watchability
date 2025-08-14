@@ -9,6 +9,7 @@ import pytest
 
 from mlb_watchability.data_retrieval import (
     get_all_pitcher_stats,
+    get_all_team_bullpen_stats,
     get_all_team_stats,
     get_game_schedule,
 )
@@ -540,3 +541,28 @@ class TestGetAllTeamStatsIntegration:
                     team_stats["Luck"], int | float | np.integer | np.floating
                 )
                 assert -100 <= team_stats["Luck"] <= 100  # Luck value
+
+
+@pytest.mark.costly
+class TestGetAllTeamBullpenStatsIntegration:
+    """Integration tests for get_all_team_bullpen_stats function."""
+
+    def test_get_all_team_bullpen_stats_integration(self) -> None:
+        """Test that we can retrieve bullpen statistics for all teams."""
+        result = get_all_team_bullpen_stats(2025)
+
+        # We should get multiple teams (30 MLB teams)
+        if result:
+            # Should have multiple teams
+            assert len(result) >= 10  # At least 10 teams in a season
+
+            # Check a few random teams
+            for _, team_stats in list(result.items())[:5]:
+                assert isinstance(team_stats, dict)
+                assert team_stats["Team"]
+
+                # Validate RAR (runs above average) data type and range
+                assert isinstance(
+                    team_stats["RAR"], int | float | np.integer | np.floating
+                )
+                assert -100 <= team_stats["RAR"] <= 200  # Bullpen runs above average

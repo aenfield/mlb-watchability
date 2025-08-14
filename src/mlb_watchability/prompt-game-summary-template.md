@@ -98,6 +98,7 @@ Most lines have a calculated number, the z-score of that calculated number, and 
 - Barrel Rate: {{ "%.3f"|format(away_barrel_rate) }} (z-score: {{ "%.2f"|format(away_z_barrel_rate) }}) -> **{{ "%.2f"|format(away_barrel_component) }}**
 - Baserunning Runs: {{ "%.1f"|format(away_baserunning_runs) }} (z-score: {{ "%.2f"|format(away_z_baserunning_runs) }}) -> **{{ "%.2f"|format(away_baserunning_component) }}**
 - Fielding Runs: {{ "%.1f"|format(away_fielding_runs) }} (z-score: {{ "%.2f"|format(away_z_fielding_runs) }}) -> **{{ "%.2f"|format(away_fielding_component) }}**
+- Bullpen Runs: {{ "%.1f"|format(away_bullpen_runs) }} (z-score: {{ "%.2f"|format(away_z_bullpen_runs) }}) -> **{{ "%.2f"|format(away_bullpen_component) }}**
 - Payroll: ${{ "%.1f"|format(away_payroll) }}M (z-score: {{ "%.2f"|format(away_z_payroll) }}) -> **{{ "%.2f"|format(away_payroll_component) }}**
 - Age: {{ "%.1f"|format(away_age) }} (z-score: {{ "%.2f"|format(away_z_age) }}) -> **{{ "%.2f"|format(away_age_component) }}**
 - Luck: {{ "%.1f"|format(away_luck) }} (z-score: {{ "%.2f"|format(away_z_luck) }}) -> **{{ "%.2f"|format(away_luck_component) }}**
@@ -108,6 +109,7 @@ Most lines have a calculated number, the z-score of that calculated number, and 
 - Barrel Rate: {{ "%.3f"|format(home_barrel_rate) }} (z-score: {{ "%.2f"|format(home_z_barrel_rate) }}) -> **{{ "%.2f"|format(home_barrel_component) }}**
 - Baserunning Runs: {{ "%.1f"|format(home_baserunning_runs) }} (z-score: {{ "%.2f"|format(home_z_baserunning_runs) }}) -> **{{ "%.2f"|format(home_baserunning_component) }}**
 - Fielding Runs: {{ "%.1f"|format(home_fielding_runs) }} (z-score: {{ "%.2f"|format(home_z_fielding_runs) }}) -> **{{ "%.2f"|format(home_fielding_component) }}**
+- Bullpen Runs: {{ "%.1f"|format(home_bullpen_runs) }} (z-score: {{ "%.2f"|format(home_z_bullpen_runs) }}) -> **{{ "%.2f"|format(home_bullpen_component) }}**
 - Payroll: ${{ "%.1f"|format(home_payroll) }}M (z-score: {{ "%.2f"|format(home_z_payroll) }}) -> **{{ "%.2f"|format(home_payroll_component) }}**
 - Age: {{ "%.1f"|format(home_age) }} (z-score: {{ "%.2f"|format(home_z_age) }}) -> **{{ "%.2f"|format(home_age_component) }}**
 - Luck: {{ "%.1f"|format(home_luck) }} (z-score: {{ "%.2f"|format(home_z_luck) }}) -> **{{ "%.2f"|format(home_luck_component) }}**

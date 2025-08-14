@@ -33,6 +33,7 @@ class TestMarkdownCliIntegration:
                     barrel_rate=0.08,
                     baserunning_runs=5.0,
                     fielding_runs=15.0,
+                    bullpen_runs=5.0,
                     payroll=200.0,
                     age=28.5,
                     luck=10.0,
@@ -41,6 +42,7 @@ class TestMarkdownCliIntegration:
                 z_barrel_rate=0.5,
                 z_baserunning_runs=0.3,
                 z_fielding_runs=1.2,
+                z_bullpen_runs=0.5,
                 z_payroll=-0.8,
                 z_age=-0.5,
                 z_luck=0.4,
@@ -56,6 +58,7 @@ class TestMarkdownCliIntegration:
                     barrel_rate=0.09,
                     baserunning_runs=7.0,
                     fielding_runs=12.0,
+                    bullpen_runs=5.0,
                     payroll=250.0,
                     age=29.0,
                     luck=8.0,
@@ -64,6 +67,7 @@ class TestMarkdownCliIntegration:
                 z_barrel_rate=0.7,
                 z_baserunning_runs=0.5,
                 z_fielding_runs=1.0,
+                z_bullpen_runs=0.5,
                 z_payroll=-1.0,
                 z_age=-0.3,
                 z_luck=0.3,
@@ -79,6 +83,7 @@ class TestMarkdownCliIntegration:
                     barrel_rate=0.075,
                     baserunning_runs=4.0,
                     fielding_runs=8.0,
+                    bullpen_runs=5.0,
                     payroll=180.0,
                     age=27.5,
                     luck=5.0,
@@ -87,6 +92,7 @@ class TestMarkdownCliIntegration:
                 z_barrel_rate=0.3,
                 z_baserunning_runs=0.2,
                 z_fielding_runs=0.8,
+                z_bullpen_runs=0.5,
                 z_payroll=-0.3,
                 z_age=-0.8,
                 z_luck=0.2,
@@ -102,6 +108,7 @@ class TestMarkdownCliIntegration:
                     barrel_rate=0.095,
                     baserunning_runs=9.0,
                     fielding_runs=16.0,
+                    bullpen_runs=5.0,
                     payroll=220.0,
                     age=28.0,
                     luck=12.0,
@@ -110,6 +117,7 @@ class TestMarkdownCliIntegration:
                 z_barrel_rate=0.8,
                 z_baserunning_runs=0.7,
                 z_fielding_runs=1.3,
+                z_bullpen_runs=0.5,
                 z_payroll=-0.9,
                 z_age=-0.5,
                 z_luck=0.5,
@@ -707,6 +715,9 @@ class TestMarkdownCliIntegration:
                 "mlb_watchability.data_retrieval.pb.pitching_stats"
             ) as mock_pb_pitching,
             patch("mlb_watchability.data_retrieval.pb.team_batting") as mock_pb_team,
+            patch(
+                "mlb_watchability.data_retrieval.pb.team_pitching_relievers"
+            ) as mock_pb_bullpen,
             patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_read_csv,
         ):
             mock_pb_pitching.side_effect = requests.exceptions.HTTPError(
@@ -722,6 +733,13 @@ class TestMarkdownCliIntegration:
                     "Fld": [15.0],
                     "wRC": [100],
                     "R": [90],
+                }
+            )
+            # Mock bullpen data to succeed so we test the pitcher stats failure
+            mock_pb_bullpen.return_value = pd.DataFrame(
+                {
+                    "Team": ["NYY"],
+                    "RAR": [8.0],  # Bullpen runs above average
                 }
             )
             mock_read_csv.return_value = pd.DataFrame(
@@ -768,6 +786,9 @@ class TestMarkdownCliIntegration:
             patch(
                 "mlb_watchability.data_retrieval.pb.pitching_stats"
             ) as mock_pb_pitching,
+            patch(
+                "mlb_watchability.data_retrieval.pb.team_pitching_relievers"
+            ) as mock_pb_bullpen,
             patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_read_csv,
         ):
             mock_pb_team.side_effect = requests.exceptions.HTTPError(
@@ -788,6 +809,13 @@ class TestMarkdownCliIntegration:
                     "Pace": [23.0],
                     "ERA-": [95],
                     "KN%": [0.0],
+                }
+            )
+            # Mock bullpen data (not called due to team batting failure, but needed for consistency)
+            mock_pb_bullpen.return_value = pd.DataFrame(
+                {
+                    "Team": ["ATL"],
+                    "RAR": [5.0],
                 }
             )
             mock_read_csv.return_value = pd.DataFrame(
@@ -832,6 +860,9 @@ class TestMarkdownCliIntegration:
         with (
             patch("mlb_watchability.data_retrieval.pb.pitching_stats") as mock_pitching,
             patch("mlb_watchability.data_retrieval.pb.team_batting") as mock_batting,
+            patch(
+                "mlb_watchability.data_retrieval.pb.team_pitching_relievers"
+            ) as mock_bullpen,
             patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_read_csv,
         ):
 
@@ -841,6 +872,7 @@ class TestMarkdownCliIntegration:
             )
             mock_pitching.side_effect = error_403
             mock_batting.side_effect = error_403
+            mock_bullpen.side_effect = error_403
             mock_read_csv.return_value = pd.DataFrame(
                 {"Team": ["TEX"], "Payroll": [200000000], "Age": [28.5]}
             )

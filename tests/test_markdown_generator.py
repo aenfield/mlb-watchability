@@ -33,6 +33,7 @@ class TestMarkdownGenerator:
                     barrel_rate=0.08,
                     baserunning_runs=2.0,
                     fielding_runs=5.0,
+                    bullpen_runs=5.0,
                     payroll=180.0,
                     age=28.0,
                     luck=3.0,
@@ -41,6 +42,7 @@ class TestMarkdownGenerator:
                 z_barrel_rate=0.2,
                 z_baserunning_runs=0.1,
                 z_fielding_runs=0.5,
+                z_bullpen_runs=0.5,
                 z_payroll=-0.3,
                 z_age=-0.5,
                 z_luck=0.1,
@@ -434,6 +436,7 @@ tags: mlbw
             barrel_rate=0.098,
             baserunning_runs=-2.1,
             fielding_runs=12.7,
+            bullpen_runs=5.0,
             payroll=245.8,
             age=28.4,
             luck=8.3,
@@ -446,6 +449,7 @@ tags: mlbw
         team_nerd_stats.z_barrel_rate = 0.45
         team_nerd_stats.z_baserunning_runs = -0.32
         team_nerd_stats.z_fielding_runs = 0.89
+        team_nerd_stats.z_bullpen_runs = 0.65
         team_nerd_stats.z_payroll = -1.45
         team_nerd_stats.z_age = -0.67
         team_nerd_stats.z_luck = 0.78
@@ -453,6 +457,7 @@ tags: mlbw
         team_nerd_stats.barrel_component = 0.45
         team_nerd_stats.baserunning_component = -0.32
         team_nerd_stats.fielding_component = 0.89
+        team_nerd_stats.bullpen_component = 0.65
         team_nerd_stats.payroll_component = 1.45
         team_nerd_stats.age_component = 0.67
         team_nerd_stats.luck_component = 0.78
@@ -549,6 +554,7 @@ tags: mlbw
             barrel_rate=0.102,
             baserunning_runs=3.4,
             fielding_runs=15.2,
+            bullpen_runs=5.0,
             payroll=285.6,
             age=29.1,
             luck=5.7,
@@ -560,6 +566,7 @@ tags: mlbw
             barrel_rate=0.098,
             baserunning_runs=-2.1,
             fielding_runs=12.7,
+            bullpen_runs=5.0,
             payroll=245.8,
             age=28.4,
             luck=8.3,
@@ -599,6 +606,7 @@ tags: mlbw
         away_team_nerd.z_barrel_rate = 0.8
         away_team_nerd.z_baserunning_runs = 0.4
         away_team_nerd.z_fielding_runs = 1.1
+        away_team_nerd.z_bullpen_runs = 0.6
         away_team_nerd.z_payroll = -1.8
         away_team_nerd.z_age = -0.3
         away_team_nerd.z_luck = 0.5
@@ -606,6 +614,7 @@ tags: mlbw
         away_team_nerd.barrel_component = 0.8
         away_team_nerd.baserunning_component = 0.4
         away_team_nerd.fielding_component = 1.1
+        away_team_nerd.bullpen_component = 0.6
         away_team_nerd.payroll_component = 1.8
         away_team_nerd.age_component = 0.3
         away_team_nerd.luck_component = 0.5
@@ -618,6 +627,7 @@ tags: mlbw
         home_team_nerd.z_barrel_rate = 0.4
         home_team_nerd.z_baserunning_runs = -0.3
         home_team_nerd.z_fielding_runs = 0.9
+        home_team_nerd.z_bullpen_runs = 0.6
         home_team_nerd.z_payroll = -1.4
         home_team_nerd.z_age = -0.7
         home_team_nerd.z_luck = 0.8
@@ -625,6 +635,7 @@ tags: mlbw
         home_team_nerd.barrel_component = 0.4
         home_team_nerd.baserunning_component = -0.3
         home_team_nerd.fielding_component = 0.9
+        home_team_nerd.bullpen_component = 0.6
         home_team_nerd.payroll_component = 1.4
         home_team_nerd.age_component = 0.7
         home_team_nerd.luck_component = 0.8
@@ -719,6 +730,7 @@ tags: mlbw
             barrel_rate=0.095,
             baserunning_runs=2.1,
             fielding_runs=8.5,
+            bullpen_runs=5.0,
             payroll=195.2,
             age=28.7,
             luck=3.2,
@@ -730,6 +742,7 @@ tags: mlbw
             barrel_rate=0.088,
             baserunning_runs=-1.4,
             fielding_runs=12.1,
+            bullpen_runs=5.0,
             payroll=125.4,
             age=27.9,
             luck=-2.7,
@@ -741,6 +754,7 @@ tags: mlbw
         away_team_nerd.z_barrel_rate = 0.3
         away_team_nerd.z_baserunning_runs = 0.5
         away_team_nerd.z_fielding_runs = 0.7
+        away_team_nerd.z_bullpen_runs = 0.6
         away_team_nerd.z_payroll = -0.2
         away_team_nerd.z_age = 0.1
         away_team_nerd.z_luck = 0.3
@@ -748,6 +762,7 @@ tags: mlbw
         away_team_nerd.barrel_component = 0.3
         away_team_nerd.baserunning_component = 0.5
         away_team_nerd.fielding_component = 0.7
+        away_team_nerd.bullpen_component = 0.6
         away_team_nerd.payroll_component = 0.2
         away_team_nerd.age_component = 0.0
         away_team_nerd.luck_component = 0.3
@@ -760,6 +775,7 @@ tags: mlbw
         home_team_nerd.z_barrel_rate = 0.1
         home_team_nerd.z_baserunning_runs = -0.3
         home_team_nerd.z_fielding_runs = 0.9
+        home_team_nerd.z_bullpen_runs = 0.6
         home_team_nerd.z_payroll = 0.8
         home_team_nerd.z_age = -0.2
         home_team_nerd.z_luck = -0.2
@@ -767,6 +783,7 @@ tags: mlbw
         home_team_nerd.barrel_component = 0.1
         home_team_nerd.baserunning_component = -0.3
         home_team_nerd.fielding_component = 0.9
+        home_team_nerd.bullpen_component = 0.6
         home_team_nerd.payroll_component = 0.8
         home_team_nerd.age_component = 0.2
         home_team_nerd.luck_component = 0.0

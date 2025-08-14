@@ -24,6 +24,7 @@ class TeamStats:
     barrel_rate: float  # Barrel % (Barrel%)
     baserunning_runs: float  # Baserunning Runs (BsR)
     fielding_runs: float  # Fielding Runs Above Average (Fld)
+    bullpen_runs: float  # Bullpen Runs Above Average (RAR)
     payroll: float  # Payroll, Where Below Average Is Better (Pay)
     age: float  # Batter Age, Where Younger Is Better (Age)
     luck: float  # wRC minus Runs (Luck)
@@ -55,6 +56,7 @@ class TeamNerdStats:
     z_barrel_rate: float
     z_baserunning_runs: float
     z_fielding_runs: float
+    z_bullpen_runs: float
     z_payroll: float
     z_age: float
     z_luck: float
@@ -72,6 +74,7 @@ class TeamNerdStats:
     barrel_component: float = 0.0
     baserunning_component: float = 0.0
     fielding_component: float = 0.0
+    bullpen_component: float = 0.0
     payroll_component: float = 0.0
     age_component: float = 0.0
     luck_component: float = 0.0
@@ -112,6 +115,9 @@ class TeamNerdStats:
         z_fielding_runs = (
             team_stats.fielding_runs - league_means["fielding_runs"]
         ) / league_std_devs["fielding_runs"]
+        z_bullpen_runs = (
+            team_stats.bullpen_runs - league_means["bullpen_runs"]
+        ) / league_std_devs["bullpen_runs"]
         z_payroll = (team_stats.payroll - league_means["payroll"]) / league_std_devs[
             "payroll"
         ]
@@ -133,6 +139,7 @@ class TeamNerdStats:
         barrel_component = z_barrel_rate
         baserunning_component = z_baserunning_runs
         fielding_component = z_fielding_runs
+        bullpen_component = z_bullpen_runs
         payroll_component = adjusted_payroll
         age_component = adjusted_age
         luck_component = adjusted_luck
@@ -144,6 +151,7 @@ class TeamNerdStats:
             + barrel_component
             + baserunning_component
             + fielding_component
+            + bullpen_component
             + payroll_component
             + age_component
             + luck_component
@@ -156,6 +164,7 @@ class TeamNerdStats:
             z_barrel_rate=z_barrel_rate,
             z_baserunning_runs=z_baserunning_runs,
             z_fielding_runs=z_fielding_runs,
+            z_bullpen_runs=z_bullpen_runs,
             z_payroll=z_payroll,
             z_age=z_age,
             z_luck=z_luck,
@@ -166,6 +175,7 @@ class TeamNerdStats:
             barrel_component=barrel_component,
             baserunning_component=baserunning_component,
             fielding_component=fielding_component,
+            bullpen_component=bullpen_component,
             payroll_component=payroll_component,
             age_component=age_component,
             luck_component=luck_component,
@@ -200,6 +210,7 @@ def get_all_team_stats_objects(season: int = 2025) -> dict[str, TeamStats]:
                 barrel_rate=raw_stats["Barrel%"],
                 baserunning_runs=raw_stats["BsR"],
                 fielding_runs=raw_stats["Fld"],
+                bullpen_runs=raw_stats["Bullpen"],
                 payroll=raw_stats["Payroll"],
                 age=raw_stats["Payroll_Age"],
                 luck=raw_stats["Luck"],
@@ -234,6 +245,7 @@ def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNer
     barrel_rates = [team.barrel_rate for team in all_teams]
     baserunning_runs = [team.baserunning_runs for team in all_teams]
     fielding_runs = [team.fielding_runs for team in all_teams]
+    bullpen_runs = [team.bullpen_runs for team in all_teams]
     payrolls = [team.payroll for team in all_teams]
     ages = [team.age for team in all_teams]
     luck_values = [team.luck for team in all_teams]
@@ -244,6 +256,7 @@ def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNer
         "barrel_rate": stats.tmean(barrel_rates),
         "baserunning_runs": stats.tmean(baserunning_runs),
         "fielding_runs": stats.tmean(fielding_runs),
+        "bullpen_runs": stats.tmean(bullpen_runs),
         "payroll": stats.tmean(payrolls),
         "age": stats.tmean(ages),
         "luck": stats.tmean(luck_values),
@@ -254,6 +267,7 @@ def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNer
         "barrel_rate": stats.tstd(barrel_rates),
         "baserunning_runs": stats.tstd(baserunning_runs),
         "fielding_runs": stats.tstd(fielding_runs),
+        "bullpen_runs": stats.tstd(bullpen_runs),
         "payroll": stats.tstd(payrolls),
         "age": stats.tstd(ages),
         "luck": stats.tstd(luck_values),

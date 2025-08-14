@@ -184,11 +184,30 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         # Rename Age column in payroll data to avoid conflict
         payroll_df = payroll_df.rename(columns={"Age": "Payroll_Age"})
 
+        # Get bullpen statistics
+        bullpen_stats_dict = get_all_team_bullpen_stats(season)
+        bullpen_df = pd.DataFrame.from_dict(bullpen_stats_dict, orient="index")
+
         # Merge batting stats with payroll data
         merged_df = pd.merge(team_batting_df, payroll_df, on="Team", how="inner")
 
-        # Check for required columns
+        # Merge with bullpen data using suffixes to handle column conflicts
+        merged_df = pd.merge(
+            merged_df,
+            bullpen_df,
+            on="Team",
+            how="inner",
+            suffixes=("_batting", "_bullpen"),
+        )
+
+        # Check for required columns (using proper suffixes after merge)
+        # Note: RAR column from bullpen may be either "RAR" or "RAR_bullpen" depending on conflicts
         required_columns = ["Bat", "Barrel%", "BsR", "Fld", "wRC", "R"]
+        bullpen_rar_column = (
+            "RAR_bullpen" if "RAR_bullpen" in merged_df.columns else "RAR"
+        )
+        required_columns.append(bullpen_rar_column)
+
         missing_columns = [
             col for col in required_columns if col not in merged_df.columns
         ]
@@ -221,6 +240,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
                 "Barrel%": barrel_rate,
                 "BsR": team_row["BsR"],
                 "Fld": team_row["Fld"],
+                "Bullpen": team_row[bullpen_rar_column],  # Bullpen runs above average
                 "Payroll": payroll_millions,
                 "Payroll_Age": team_row["Payroll_Age"],
                 "Luck": luck,  # Calculated field
@@ -234,3 +254,39 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         ) from e
     else:
         return team_stats_dict
+
+
+def get_all_team_bullpen_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
+    """
+    Retrieve team bullpen statistics using pybaseball.
+
+    Args:
+        season: Season year (default: 2025)
+
+    Returns:
+        Dictionary mapping team names to bullpen statistics dictionaries
+
+    Raises:
+        RuntimeError: If API call fails or data retrieval fails
+    """
+    try:
+        # Fetch team bullpen statistics for the season
+        bullpen_stats_df = pb.team_pitching_relievers(season)
+
+        bullpen_stats_dict = {}
+
+        for _, team_row in bullpen_stats_df.iterrows():
+            # Store bullpen statistics in dictionary
+            bullpen_raw_stats = {
+                "Team": team_row["Team"],
+                "RAR": team_row["RAR"],  # Runs above average
+            }
+
+            bullpen_stats_dict[team_row["Team"]] = bullpen_raw_stats
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to retrieve bullpen statistics for season {season}: {str(e)}"
+        ) from e
+    else:
+        return bullpen_stats_dict
