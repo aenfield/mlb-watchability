@@ -154,7 +154,9 @@ Core Implementation
 
 41. ~~GPT-5 looks pretty good, and it's cheaper than Sonnet 4, and the updated web search pricing matches Anthropic instead of being 2.5x more expensive (for the search, not the tokens). I want to implement a new LLMClient subclass that uses OpenAI, and plumb through the choice of this provider from mlbw-markdown.~~
 
-42. Consider limiting allowed sites for sources via the Anthropic API to a few to prefer content from places like FanGraphs and hopefully other analytical sites with recent info (would also want to make sure there's enough general and recent game-specific info).
+42. Expand the tNERD stat to include a measurement of bullpen strength. The source stat we'll use for this is RAR, and to get aggregated team numbers from only the pitchers FanGraph calls relievers we need to use the new pybaseball 'team_pitching_relievers' function. For the contribution to tNERD, we'll do the z-score, like we do for many of the other tNERD stats, and make the actual contribution to the overall tNERD score the z-score itself. We'll need new tests, and also need to update the prompt template to show this field like it does with the other components of tNERD. And update mlbw-markdown to show the new component - in the UI detail tables for team stats, it should live in a new column called 'Bullpen runs' that's located after 'Fielding runs' and before 'Payroll'.
+
+43. Consider limiting allowed sites for sources via the Anthropic API to a few to prefer content from places like FanGraphs and hopefully other analytical sites with recent info (would also want to make sure there's enough general and recent game-specific info).
 
 ## Notes for possible integration and enhancement
 
