@@ -70,7 +70,7 @@ jobs:
           # Use defaults for scheduled runs (where the first parts will be empty)
           GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
           GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '30' }}"
-          LLM_MODEL="${{ github.event.inputs.llm-model || 'normal' }}"
+          LLM_MODEL="${{ github.event.inputs.llm-model || 'cheap' }}"
           LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'openai' }}"
 
           if [ -n "${{ github.event.inputs.date }}" ]; then
