@@ -552,17 +552,22 @@ class TestGetAllTeamBullpenStatsIntegration:
         result = get_all_team_bullpen_stats(2025)
 
         # We should get multiple teams (30 MLB teams)
-        if result:
+        if not result.empty:
             # Should have multiple teams
             assert len(result) >= 10  # At least 10 teams in a season
 
-            # Check a few random teams
-            for _, team_stats in list(result.items())[:5]:
-                assert isinstance(team_stats, dict)
-                assert team_stats["Team"]
+            # Check that we have the expected columns
+            assert "Team" in result.columns
+            assert "Bullpen_RAR" in result.columns
 
-                # Validate RAR (runs above average) data type and range
+            # Check a few random teams
+            for _, team_row in result.head(5).iterrows():
+                assert team_row["Team"]
+
+                # Validate Bullpen_RAR (runs above average) data type and range
                 assert isinstance(
-                    team_stats["RAR"], int | float | np.integer | np.floating
+                    team_row["Bullpen_RAR"], int | float | np.integer | np.floating
                 )
-                assert -100 <= team_stats["RAR"] <= 200  # Bullpen runs above average
+                assert (
+                    -100 <= team_row["Bullpen_RAR"] <= 200
+                )  # Bullpen runs above average
