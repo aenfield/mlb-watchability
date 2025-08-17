@@ -289,9 +289,9 @@ class TestPromptCli:
                 assert "WEB SOURCES:" in result.stdout
                 assert "Mock Source" in result.stdout
 
-                # Verify the LLM method was called
+                # Verify the LLM method was called with default parameters
                 mock_game_score.get_description_from_llm_using_prompt.assert_called_once_with(
-                    "Mock prompt content"
+                    "Mock prompt content", model="normal", provider="anthropic"
                 )
 
             finally:

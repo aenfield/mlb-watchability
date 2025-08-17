@@ -11,10 +11,10 @@ def main() -> None:
     )
     print(f"pybaseball location: {pyb.__file__}")
     print()
-    
+
     # Get command line argument for season, default to 2025
     season = int(sys.argv[1]) if len(sys.argv) > 1 else 2025
-    
+
     print(f"Fetching team batting data for {season}...")
     team_batting_data = pyb.team_batting(season)
     output_file = f"analysis/team_batting_{season}.csv"

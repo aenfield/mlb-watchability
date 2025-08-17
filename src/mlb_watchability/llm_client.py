@@ -495,7 +495,8 @@ class OpenAIClient(LLMClient):
                 # request_params["tools"] = [{"type": "web_search_preview"}]
                 # try below with a 'low' context size, to see what the results look like in practice
                 request_params["tools"] = [
-                    {"type": "web_search_preview", "search_context_size": "low"}
+                    # {"type": "web_search_preview", "search_context_size": "low"}
+                    {"type": "web_search_preview", "search_context_size": "medium"}
                 ]
 
             # per https://platform.openai.com/docs/guides/tools-web-search as of 8/8/25, tool_choice forces the use of

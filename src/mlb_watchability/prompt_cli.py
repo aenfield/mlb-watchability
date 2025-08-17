@@ -74,8 +74,36 @@ def main(
         "-g",
         help="Also send the prompt to LLM and output the generated description and web sources.",
     ),
+    llm_model: str = typer.Option(
+        default="normal",
+        help="LLM model to use: 'normal' (default) or 'cheap'. Only applies when --send-to-llm is specified.",
+    ),
+    llm_model_provider: str = typer.Option(
+        default="anthropic",
+        help="LLM provider to use: 'anthropic' (default) or 'openai'. Only applies when --send-to-llm is specified.",
+    ),
 ) -> None:
     """Generate a game prompt file for a specific MLB game on a given date."""
+
+    # Validate llm_model parameter
+    if llm_model not in ["normal", "cheap"]:
+        logger.error(f"Invalid llm_model: {llm_model}. Must be 'normal' or 'cheap'.")
+        typer.echo(
+            f"Error: llm_model must be 'normal' or 'cheap', not '{llm_model}'",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    # Validate llm_model_provider parameter
+    if llm_model_provider not in ["anthropic", "openai"]:
+        logger.error(
+            f"Invalid llm_model_provider: {llm_model_provider}. Must be 'anthropic' or 'openai'."
+        )
+        typer.echo(
+            f"Error: llm_model_provider must be 'anthropic' or 'openai', not '{llm_model_provider}'",
+            err=True,
+        )
+        raise typer.Exit(1)
 
     # Determine the date to use
     target_date = date if date is not None else get_today()
@@ -164,7 +192,9 @@ def main(
             try:
                 description, web_sources = (
                     selected_game_score.get_description_from_llm_using_prompt(
-                        user_prompt_content
+                        user_prompt_content,
+                        model=llm_model,
+                        provider=llm_model_provider,
                     )
                 )
 
