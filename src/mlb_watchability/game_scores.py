@@ -34,6 +34,7 @@ TEAM_STAT_FIELDS: list[tuple[str, str | None]] = [
     ("payroll", "z_payroll"),
     ("age", "z_age"),
     ("luck", "z_luck"),
+    ("broadcaster_rating", "z_broadcaster_rating"),
 ]
 
 PITCHER_STAT_FIELDS: list[tuple[str, str | None]] = [
@@ -57,6 +58,7 @@ TEAM_COMPONENT_FIELDS: list[str] = [
     "payroll_component",
     "age_component",
     "luck_component",
+    "broadcaster_component",
     "constant_component",
 ]
 

@@ -31,6 +31,7 @@ class TestGameScores:
             payroll=200.0,
             age=28.5,
             luck=10.0,
+            broadcaster_rating=3.0,
         ),
         z_batting_runs=1.0,
         z_barrel_rate=0.5,
@@ -40,10 +41,22 @@ class TestGameScores:
         z_payroll=-0.8,
         z_age=-0.5,
         z_luck=0.4,
+        z_broadcaster_rating=0.3,
         adjusted_payroll=0.8,
         adjusted_age=0.5,
         adjusted_luck=0.4,
-        tnerd_score=8.2,
+        adjusted_broadcaster_rating=0.3,
+        tnerd_score=8.5,
+        batting_component=1.0,
+        barrel_component=0.5,
+        baserunning_component=0.3,
+        fielding_component=1.2,
+        bullpen_component=0.6,
+        payroll_component=0.8,
+        age_component=0.5,
+        luck_component=0.4,
+        broadcaster_component=0.3,
+        constant_component=4.0,
     )
 
     TEAM_NYY_BASE = TeamNerdStats(
@@ -57,6 +70,7 @@ class TestGameScores:
             payroll=250.0,
             age=29.0,
             luck=5.0,
+            broadcaster_rating=2.8,
         ),
         z_batting_runs=1.5,
         z_barrel_rate=0.8,
@@ -66,10 +80,22 @@ class TestGameScores:
         z_payroll=-1.2,
         z_age=-0.3,
         z_luck=0.2,
+        z_broadcaster_rating=0.2,
         adjusted_payroll=1.2,
         adjusted_age=0.3,
         adjusted_luck=0.2,
-        tnerd_score=9.5,
+        adjusted_broadcaster_rating=0.2,
+        tnerd_score=9.7,
+        batting_component=1.5,
+        barrel_component=0.8,
+        baserunning_component=0.6,
+        fielding_component=0.9,
+        bullpen_component=0.7,
+        payroll_component=1.2,
+        age_component=0.3,
+        luck_component=0.2,
+        broadcaster_component=0.2,
+        constant_component=4.0,
     )
 
     TEAM_CHC_BASE = TeamNerdStats(
@@ -83,6 +109,7 @@ class TestGameScores:
             payroll=180.0,
             age=27.5,
             luck=3.0,
+            broadcaster_rating=3.2,
         ),
         z_batting_runs=0.5,
         z_barrel_rate=0.2,
@@ -92,10 +119,22 @@ class TestGameScores:
         z_payroll=-0.3,
         z_age=-0.8,
         z_luck=0.1,
+        z_broadcaster_rating=0.4,
         adjusted_payroll=0.3,
         adjusted_age=0.8,
         adjusted_luck=0.1,
-        tnerd_score=6.8,
+        adjusted_broadcaster_rating=0.4,
+        tnerd_score=7.2,
+        batting_component=0.5,
+        barrel_component=0.2,
+        baserunning_component=0.1,
+        fielding_component=0.8,
+        bullpen_component=0.5,
+        payroll_component=0.3,
+        age_component=0.8,
+        luck_component=0.1,
+        broadcaster_component=0.4,
+        constant_component=4.0,
     )
 
     TEAM_MIL_BASE = TeamNerdStats(
@@ -109,6 +148,7 @@ class TestGameScores:
             payroll=150.0,
             age=28.0,
             luck=7.0,
+            broadcaster_rating=2.9,
         ),
         z_batting_runs=1.2,
         z_barrel_rate=0.6,
@@ -118,10 +158,22 @@ class TestGameScores:
         z_payroll=0.2,
         z_age=-0.4,
         z_luck=0.3,
+        z_broadcaster_rating=0.1,
         adjusted_payroll=0.0,
         adjusted_age=0.4,
         adjusted_luck=0.3,
-        tnerd_score=7.9,
+        adjusted_broadcaster_rating=0.1,
+        tnerd_score=8.0,
+        batting_component=1.2,
+        barrel_component=0.6,
+        baserunning_component=0.4,
+        fielding_component=1.0,
+        bullpen_component=0.5,
+        payroll_component=0.0,
+        age_component=0.4,
+        luck_component=0.3,
+        broadcaster_component=0.1,
+        constant_component=4.0,
     )
 
     # Shared pitcher data
@@ -291,9 +343,9 @@ class TestGameScores:
             assert game_score.game_time == "7:05 PM"
 
             # Check team NERD scores
-            assert game_score.away_team_nerd_score == 8.2
-            assert game_score.home_team_nerd_score == 9.5
-            assert game_score.average_team_nerd_score == pytest.approx((8.2 + 9.5) / 2)
+            assert game_score.away_team_nerd_score == 8.5
+            assert game_score.home_team_nerd_score == 9.7
+            assert game_score.average_team_nerd_score == pytest.approx((8.5 + 9.7) / 2)
 
             # Check pitcher NERD scores
             assert game_score.away_pitcher_nerd_score == 6.8
@@ -303,7 +355,7 @@ class TestGameScores:
             )
 
             # Check final gNERD score = average team NERD + average pitcher NERD
-            expected_gnerd = ((8.2 + 9.5) / 2) + ((6.8 + 7.5) / 2)
+            expected_gnerd = ((8.5 + 9.7) / 2) + ((6.8 + 7.5) / 2)
             assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
     def test_calculate_game_scores_with_one_pitcher(self) -> None:
@@ -337,9 +389,9 @@ class TestGameScores:
             game_score = game_scores[0]
 
             # Check team scores
-            assert game_score.away_team_nerd_score == 6.8
-            assert game_score.home_team_nerd_score == 7.9
-            assert game_score.average_team_nerd_score == pytest.approx((6.8 + 7.9) / 2)
+            assert game_score.away_team_nerd_score == 7.2
+            assert game_score.home_team_nerd_score == 8.0
+            assert game_score.average_team_nerd_score == pytest.approx((7.2 + 8.0) / 2)
 
             # Check pitcher scores - one available, one defaults to 5.0
             assert game_score.away_pitcher_nerd_score == 5.5
@@ -349,7 +401,7 @@ class TestGameScores:
             )  # One pitcher available, one defaults to 5.0
 
             # Check final gNERD score
-            expected_gnerd = ((6.8 + 7.9) / 2) + ((5.5 + 5.0) / 2)
+            expected_gnerd = ((7.2 + 8.0) / 2) + ((5.5 + 5.0) / 2)
             assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
     def test_calculate_game_scores_no_pitcher_data(self) -> None:
@@ -376,6 +428,7 @@ class TestGameScores:
                     payroll=170.0,
                     age=29.5,
                     luck=2.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.8,
                 z_barrel_rate=0.3,
@@ -385,10 +438,13 @@ class TestGameScores:
                 z_payroll=0.1,
                 z_age=0.2,
                 z_luck=0.05,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.0,
                 adjusted_age=0.0,
                 adjusted_luck=0.05,
-                tnerd_score=5.95,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=6.15,
+                broadcaster_component=0.2,
             ),
             "LAD": TeamNerdStats(
                 team_stats=TeamStats(
@@ -401,6 +457,7 @@ class TestGameScores:
                     payroll=280.0,
                     age=27.0,
                     luck=12.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=2.0,
                 z_barrel_rate=1.0,
@@ -410,10 +467,13 @@ class TestGameScores:
                 z_payroll=-1.5,
                 z_age=-1.0,
                 z_luck=0.6,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=1.5,
                 adjusted_age=1.0,
                 adjusted_luck=0.6,
-                tnerd_score=11.4,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=11.6,
+                broadcaster_component=0.2,
             ),
         }
 
@@ -438,10 +498,10 @@ class TestGameScores:
             game_score = game_scores[0]
 
             # Check team scores
-            assert game_score.away_team_nerd_score == 5.95
-            assert game_score.home_team_nerd_score == 11.4
+            assert game_score.away_team_nerd_score == 6.15
+            assert game_score.home_team_nerd_score == 11.6
             assert game_score.average_team_nerd_score == pytest.approx(
-                (5.95 + 11.4) / 2
+                (6.15 + 11.6) / 2
             )
 
             # Check pitcher scores - none available, both default to 5.0
@@ -452,7 +512,7 @@ class TestGameScores:
             )  # Both pitchers default to 5.0
 
             # Check final gNERD score - team NERD + pitcher defaults
-            expected_gnerd = ((5.95 + 11.4) / 2) + ((5.0 + 5.0) / 2)
+            expected_gnerd = ((6.15 + 11.6) / 2) + ((5.0 + 5.0) / 2)
             assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
     def test_calculate_game_scores_multiple_games_sorted(self) -> None:
@@ -487,6 +547,7 @@ class TestGameScores:
                     payroll=180.0,
                     age=28.0,
                     luck=3.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.5,
                 z_barrel_rate=0.2,
@@ -496,10 +557,13 @@ class TestGameScores:
                 z_payroll=-0.3,
                 z_age=-0.5,
                 z_luck=0.1,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.3,
                 adjusted_age=0.5,
                 adjusted_luck=0.1,
-                tnerd_score=5.2,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=5.4,
+                broadcaster_component=0.2,
             ),
             "NYY": TeamNerdStats(
                 team_stats=TeamStats(
@@ -512,6 +576,7 @@ class TestGameScores:
                     payroll=250.0,
                     age=29.0,
                     luck=5.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.8,
                 z_barrel_rate=0.5,
@@ -521,10 +586,13 @@ class TestGameScores:
                 z_payroll=-1.2,
                 z_age=-0.3,
                 z_luck=0.2,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=1.2,
                 adjusted_age=0.3,
                 adjusted_luck=0.2,
-                tnerd_score=6.1,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=6.3,
+                broadcaster_component=0.2,
             ),
             "CHC": TeamNerdStats(
                 team_stats=TeamStats(
@@ -537,6 +605,7 @@ class TestGameScores:
                     payroll=200.0,
                     age=27.0,
                     luck=10.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.5,
                 z_barrel_rate=0.8,
@@ -546,10 +615,13 @@ class TestGameScores:
                 z_payroll=-0.8,
                 z_age=-1.0,
                 z_luck=0.5,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.8,
                 adjusted_age=1.0,
                 adjusted_luck=0.5,
-                tnerd_score=9.6,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=9.8,
+                broadcaster_component=0.2,
             ),
             "MIL": TeamNerdStats(
                 team_stats=TeamStats(
@@ -562,6 +634,7 @@ class TestGameScores:
                     payroll=150.0,
                     age=28.5,
                     luck=7.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.2,
                 z_barrel_rate=0.6,
@@ -571,10 +644,13 @@ class TestGameScores:
                 z_payroll=0.2,
                 z_age=-0.2,
                 z_luck=0.3,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.0,
                 adjusted_age=0.2,
                 adjusted_luck=0.3,
-                tnerd_score=7.5,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=7.7,
+                broadcaster_component=0.2,
             ),
         }
 
@@ -703,6 +779,7 @@ class TestGameScores:
                     payroll=180.0,
                     age=28.0,
                     luck=3.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.5,
                 z_barrel_rate=0.2,
@@ -712,10 +789,13 @@ class TestGameScores:
                 z_payroll=-0.3,
                 z_age=-0.5,
                 z_luck=0.1,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.3,
                 adjusted_age=0.5,
                 adjusted_luck=0.1,
-                tnerd_score=5.0,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=5.2,
+                broadcaster_component=0.2,
             )
         }
 
@@ -1637,6 +1717,7 @@ class TestGameScores:
                     payroll=200.0,
                     age=28.0,
                     luck=5.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=2.0,
                 z_barrel_rate=1.0,
@@ -1646,10 +1727,13 @@ class TestGameScores:
                 z_payroll=-0.8,
                 z_age=-0.5,
                 z_luck=0.2,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.8,
                 adjusted_age=0.5,
                 adjusted_luck=0.2,
-                tnerd_score=10.0,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=10.2,
+                broadcaster_component=0.2,
             ),
             "TEB": TeamNerdStats(
                 team_stats=TeamStats(
@@ -1662,6 +1746,7 @@ class TestGameScores:
                     payroll=180.0,
                     age=29.0,
                     luck=3.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.5,
                 z_barrel_rate=0.8,
@@ -1671,10 +1756,13 @@ class TestGameScores:
                 z_payroll=-0.5,
                 z_age=-0.2,
                 z_luck=0.1,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.5,
                 adjusted_age=0.2,
                 adjusted_luck=0.1,
-                tnerd_score=8.0,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=8.2,
+                broadcaster_component=0.2,
             ),
             "TEC": TeamNerdStats(
                 team_stats=TeamStats(
@@ -1687,6 +1775,7 @@ class TestGameScores:
                     payroll=160.0,
                     age=30.0,
                     luck=1.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.0,
                 z_barrel_rate=0.5,
@@ -1696,10 +1785,13 @@ class TestGameScores:
                 z_payroll=-0.2,
                 z_age=0.1,
                 z_luck=0.05,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.2,
                 adjusted_age=0.0,
                 adjusted_luck=0.05,
-                tnerd_score=6.0,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=6.2,
+                broadcaster_component=0.2,
             ),
         }
 
@@ -1917,6 +2009,7 @@ class TestGameScores:
                     payroll=160.0,
                     age=26.5,
                     luck=8.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.5,
                 z_barrel_rate=0.9,
@@ -1926,10 +2019,13 @@ class TestGameScores:
                 z_payroll=0.0,
                 z_age=-1.0,
                 z_luck=0.4,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.0,
                 adjusted_age=1.0,
                 adjusted_luck=0.4,
-                tnerd_score=8.7,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=8.9,
+                broadcaster_component=0.2,
             ),
             "COL": TeamNerdStats(
                 team_stats=TeamStats(
@@ -1942,6 +2038,7 @@ class TestGameScores:
                     payroll=90.0,
                     age=30.0,
                     luck=-2.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.3,
                 z_barrel_rate=0.0,
@@ -1951,10 +2048,13 @@ class TestGameScores:
                 z_payroll=1.0,
                 z_age=0.5,
                 z_luck=-0.1,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.0,
                 adjusted_age=0.0,
                 adjusted_luck=0.1,
-                tnerd_score=4.2,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=4.4,
+                broadcaster_component=0.2,
             ),
         }
 
@@ -2004,9 +2104,9 @@ class TestGameScores:
             game_score = game_scores[0]
 
             # Verify team scores
-            assert game_score.away_team_nerd_score == 8.7
-            assert game_score.home_team_nerd_score == 4.2
-            average_team_nerd = (8.7 + 4.2) / 2
+            assert game_score.away_team_nerd_score == 8.9
+            assert game_score.home_team_nerd_score == 4.4
+            average_team_nerd = (8.9 + 4.4) / 2
 
             # Verify pitcher scores - one known, one defaults to 5.0
             assert game_score.away_pitcher_nerd_score == 9.2
@@ -2043,6 +2143,7 @@ class TestGameScores:
                     payroll=60.0,
                     age=25.0,
                     luck=-8.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=-0.5,
                 z_barrel_rate=-0.3,
@@ -2052,10 +2153,13 @@ class TestGameScores:
                 z_payroll=1.5,
                 z_age=-1.5,
                 z_luck=-0.4,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.0,
                 adjusted_age=1.5,
                 adjusted_luck=0.4,
-                tnerd_score=2.8,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=3.0,
+                broadcaster_component=0.2,
             ),
             "SEA": TeamNerdStats(
                 team_stats=TeamStats(
@@ -2068,6 +2172,7 @@ class TestGameScores:
                     payroll=190.0,
                     age=28.0,
                     luck=6.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.8,
                 z_barrel_rate=0.8,
@@ -2077,10 +2182,13 @@ class TestGameScores:
                 z_payroll=-0.5,
                 z_age=-0.2,
                 z_luck=0.3,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.5,
                 adjusted_age=0.2,
                 adjusted_luck=0.3,
-                tnerd_score=9.8,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=10.0,
+                broadcaster_component=0.2,
             ),
         }
 
@@ -2105,9 +2213,9 @@ class TestGameScores:
             game_score = game_scores[0]
 
             # Verify team scores
-            assert game_score.away_team_nerd_score == 2.8
-            assert game_score.home_team_nerd_score == 9.8
-            average_team_nerd = (2.8 + 9.8) / 2
+            assert game_score.away_team_nerd_score == 3.0
+            assert game_score.home_team_nerd_score == 10.0
+            average_team_nerd = (3.0 + 10.0) / 2
 
             # Verify pitcher scores - both default to 5.0
             assert game_score.away_pitcher_nerd_score is None
@@ -2138,6 +2246,7 @@ class TestGameScoresIntegration:
                     payroll=180.0,
                     age=27.5,
                     luck=5.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.2,
                 z_barrel_rate=0.7,
@@ -2147,10 +2256,22 @@ class TestGameScoresIntegration:
                 z_payroll=-0.3,
                 z_age=-0.8,
                 z_luck=0.3,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.3,
                 adjusted_age=0.8,
                 adjusted_luck=0.3,
-                tnerd_score=8.9,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=9.1,
+                batting_component=1.2,
+                barrel_component=0.7,
+                baserunning_component=0.6,
+                fielding_component=1.0,
+                bullpen_component=0.5,
+                payroll_component=0.3,
+                age_component=0.8,
+                luck_component=0.3,
+                broadcaster_component=0.2,
+                constant_component=4.0,
             ),
             "LAA": TeamNerdStats(
                 team_stats=TeamStats(
@@ -2163,6 +2284,7 @@ class TestGameScoresIntegration:
                     payroll=200.0,
                     age=29.0,
                     luck=8.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.6,
                 z_barrel_rate=0.3,
@@ -2172,10 +2294,22 @@ class TestGameScoresIntegration:
                 z_payroll=-0.7,
                 z_age=0.2,
                 z_luck=0.4,
+                z_broadcaster_rating=0.0,
                 adjusted_payroll=0.7,
                 adjusted_age=0.0,
                 adjusted_luck=0.4,
+                adjusted_broadcaster_rating=0.0,
                 tnerd_score=6.5,
+                batting_component=0.6,
+                barrel_component=0.3,
+                baserunning_component=0.1,
+                fielding_component=0.4,
+                bullpen_component=0.5,
+                payroll_component=0.7,
+                age_component=0.0,
+                luck_component=0.4,
+                broadcaster_component=0.0,
+                constant_component=4.0,
             ),
         }
 
@@ -2300,6 +2434,7 @@ class TestGameScoresIntegration:
                     payroll=180.0,
                     age=27.5,
                     luck=5.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.2,
                 z_barrel_rate=0.7,
@@ -2309,10 +2444,22 @@ class TestGameScoresIntegration:
                 z_payroll=-0.3,
                 z_age=-0.8,
                 z_luck=0.3,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.3,
                 adjusted_age=0.8,
                 adjusted_luck=0.3,
-                tnerd_score=8.9,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=9.1,
+                batting_component=1.2,
+                barrel_component=0.7,
+                baserunning_component=0.6,
+                fielding_component=1.0,
+                bullpen_component=0.5,
+                payroll_component=0.3,
+                age_component=0.8,
+                luck_component=0.3,
+                broadcaster_component=0.2,
+                constant_component=4.0,
             ),
             "LAA": TeamNerdStats(
                 team_stats=TeamStats(
@@ -2325,6 +2472,7 @@ class TestGameScoresIntegration:
                     payroll=200.0,
                     age=29.0,
                     luck=8.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.6,
                 z_barrel_rate=0.3,
@@ -2334,10 +2482,22 @@ class TestGameScoresIntegration:
                 z_payroll=-0.7,
                 z_age=0.2,
                 z_luck=0.4,
+                z_broadcaster_rating=0.0,
                 adjusted_payroll=0.7,
                 adjusted_age=0.0,
                 adjusted_luck=0.4,
+                adjusted_broadcaster_rating=0.0,
                 tnerd_score=6.5,
+                batting_component=0.6,
+                barrel_component=0.3,
+                baserunning_component=0.1,
+                fielding_component=0.4,
+                bullpen_component=0.5,
+                payroll_component=0.7,
+                age_component=0.0,
+                luck_component=0.4,
+                broadcaster_component=0.0,
+                constant_component=4.0,
             ),
         }
 
@@ -2469,6 +2629,7 @@ class TestGameScoresIntegration:
                     payroll=200.0,
                     age=28.5,
                     luck=12.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.0,
                 z_barrel_rate=0.8,
@@ -2478,6 +2639,7 @@ class TestGameScoresIntegration:
                 z_payroll=1.2,
                 z_age=0.3,
                 z_luck=0.6,
+                z_broadcaster_rating=0.2,
                 batting_component=1.0,
                 barrel_component=0.4,
                 baserunning_component=0.25,
@@ -2485,10 +2647,12 @@ class TestGameScoresIntegration:
                 payroll_component=1.2,
                 age_component=0.3,
                 luck_component=0.6,
+                broadcaster_component=0.2,
                 constant_component=4.0,
                 adjusted_payroll=0.8,
                 adjusted_age=0.5,
                 adjusted_luck=0.4,
+                adjusted_broadcaster_rating=0.2,
                 tnerd_score=5.0,
             ),
             "NYY": TeamNerdStats(
@@ -2502,6 +2666,7 @@ class TestGameScoresIntegration:
                     payroll=250.0,
                     age=29.0,
                     luck=8.0,
+                    broadcaster_rating=3.5,
                 ),
                 z_batting_runs=1.2,
                 z_barrel_rate=1.0,
@@ -2511,6 +2676,7 @@ class TestGameScoresIntegration:
                 z_payroll=1.5,
                 z_age=0.4,
                 z_luck=0.3,
+                z_broadcaster_rating=0.3,
                 batting_component=1.2,
                 barrel_component=0.5,
                 baserunning_component=0.4,
@@ -2518,10 +2684,12 @@ class TestGameScoresIntegration:
                 payroll_component=1.5,
                 age_component=0.4,
                 luck_component=0.3,
+                broadcaster_component=0.3,
                 constant_component=4.0,
                 adjusted_payroll=1.2,
                 adjusted_age=0.3,
                 adjusted_luck=0.2,
+                adjusted_broadcaster_rating=0.3,
                 tnerd_score=10.0,
             ),
             "CHC": TeamNerdStats(
@@ -2535,6 +2703,7 @@ class TestGameScoresIntegration:
                     payroll=150.0,
                     age=27.0,
                     luck=5.0,
+                    broadcaster_rating=2.8,
                 ),
                 z_batting_runs=0.2,
                 z_barrel_rate=0.3,
@@ -2544,6 +2713,7 @@ class TestGameScoresIntegration:
                 z_payroll=0.5,
                 z_age=0.2,
                 z_luck=0.2,
+                z_broadcaster_rating=0.1,
                 batting_component=0.2,
                 barrel_component=0.15,
                 baserunning_component=0.05,
@@ -2551,10 +2721,12 @@ class TestGameScoresIntegration:
                 payroll_component=0.5,
                 age_component=0.2,
                 luck_component=0.2,
+                broadcaster_component=0.1,
                 constant_component=4.0,
                 adjusted_payroll=0.3,
                 adjusted_age=0.8,
                 adjusted_luck=0.1,
+                adjusted_broadcaster_rating=0.1,
                 tnerd_score=3.0,
             ),
             "MIL": TeamNerdStats(
@@ -2568,6 +2740,7 @@ class TestGameScoresIntegration:
                     payroll=120.0,
                     age=26.5,
                     luck=10.0,
+                    broadcaster_rating=3.2,
                 ),
                 z_batting_runs=0.6,
                 z_barrel_rate=0.7,
@@ -2577,6 +2750,7 @@ class TestGameScoresIntegration:
                 z_payroll=0.3,
                 z_age=0.1,
                 z_luck=0.5,
+                z_broadcaster_rating=0.2,
                 batting_component=0.6,
                 barrel_component=0.35,
                 baserunning_component=0.2,
@@ -2584,10 +2758,12 @@ class TestGameScoresIntegration:
                 payroll_component=0.3,
                 age_component=0.1,
                 luck_component=0.5,
+                broadcaster_component=0.2,
                 constant_component=4.0,
                 adjusted_payroll=0.0,
                 adjusted_age=0.0,
                 adjusted_luck=0.05,
+                adjusted_broadcaster_rating=0.2,
                 tnerd_score=8.0,
             ),
         }

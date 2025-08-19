@@ -1,5 +1,6 @@
 """Data retrieval module for MLB Watchability."""
 
+import os
 import zoneinfo
 from datetime import datetime
 from typing import Any
@@ -187,14 +188,29 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         # Get bullpen statistics
         bullpen_df = get_all_team_bullpen_stats(season)
 
+        # Get broadcaster ratings
+        broadcaster_df = get_broadcaster_ratings()
+
         # Merge batting stats with payroll data
         merged_df = pd.merge(team_batting_df, payroll_df, on="Team", how="inner")
 
         # Merge with bullpen data - no conflicts since bullpen only has Team and Bullpen_RAR
         merged_df = pd.merge(merged_df, bullpen_df, on="Team", how="inner")
 
+        # Merge with broadcaster data - no conflicts since broadcaster only has Team and Broadcaster_Rating
+        merged_df = pd.merge(merged_df, broadcaster_df, on="Team", how="inner")
+
         # Check for required columns
-        required_columns = ["Bat", "Barrel%", "BsR", "Fld", "wRC", "R", "Bullpen_RAR"]
+        required_columns = [
+            "Bat",
+            "Barrel%",
+            "BsR",
+            "Fld",
+            "wRC",
+            "R",
+            "Bullpen_RAR",
+            "Broadcaster_Rating",
+        ]
         missing_columns = [
             col for col in required_columns if col not in merged_df.columns
         ]
@@ -231,6 +247,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
                 "Payroll": payroll_millions,
                 "Payroll_Age": team_row["Payroll_Age"],
                 "Luck": luck,  # Calculated field
+                "Broadcaster_Rating": team_row["Broadcaster_Rating"],
             }
 
             team_stats_dict[team_row["Team"]] = team_raw_stats
@@ -270,3 +287,40 @@ def get_all_team_bullpen_stats(season: int = 2025) -> pd.DataFrame:
         raise RuntimeError(
             f"Failed to retrieve bullpen statistics for season {season}: {str(e)}"
         ) from e
+
+
+def get_broadcaster_ratings() -> pd.DataFrame:
+    """
+    Load broadcaster ratings from CSV file.
+
+    Returns:
+        DataFrame with Team and Broadcaster_Rating columns
+
+    Raises:
+        RuntimeError: If file cannot be read or is missing required columns
+    """
+    try:
+        # Get the path to the broadcaster data file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        csv_path = os.path.join(project_root, "data", "broadcasters.tv.2025.csv")
+
+        # Load the CSV file
+        broadcaster_df = pd.read_csv(csv_path)
+
+        # Check for required columns
+        required_columns = ["Team", "Rating"]
+        missing_columns = [
+            col for col in required_columns if col not in broadcaster_df.columns
+        ]
+        if missing_columns:
+            _raise_missing_columns_error(missing_columns)
+
+        # Rename Rating to Broadcaster_Rating to match our naming convention
+        broadcaster_df = broadcaster_df.rename(columns={"Rating": "Broadcaster_Rating"})
+
+        # Return only the columns we need
+        return broadcaster_df[["Team", "Broadcaster_Rating"]].copy()
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to load broadcaster ratings: {str(e)}") from e

@@ -37,6 +37,7 @@ class TestMarkdownCliIntegration:
                     payroll=200.0,
                     age=28.5,
                     luck=10.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.0,
                 z_barrel_rate=0.5,
@@ -46,10 +47,13 @@ class TestMarkdownCliIntegration:
                 z_payroll=-0.8,
                 z_age=-0.5,
                 z_luck=0.4,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.8,
                 adjusted_age=0.5,
                 adjusted_luck=0.4,
-                tnerd_score=8.2,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=8.4,
+                broadcaster_component=0.2,
             ),
             "LAD": TeamNerdStats(
                 team_stats=TeamStats(
@@ -62,6 +66,7 @@ class TestMarkdownCliIntegration:
                     payroll=250.0,
                     age=29.0,
                     luck=8.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.2,
                 z_barrel_rate=0.7,
@@ -71,10 +76,13 @@ class TestMarkdownCliIntegration:
                 z_payroll=-1.0,
                 z_age=-0.3,
                 z_luck=0.3,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=1.0,
                 adjusted_age=0.3,
                 adjusted_luck=0.3,
-                tnerd_score=7.9,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=8.1,
+                broadcaster_component=0.2,
             ),
             "BOS": TeamNerdStats(
                 team_stats=TeamStats(
@@ -87,6 +95,7 @@ class TestMarkdownCliIntegration:
                     payroll=180.0,
                     age=27.5,
                     luck=5.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=0.8,
                 z_barrel_rate=0.3,
@@ -96,10 +105,13 @@ class TestMarkdownCliIntegration:
                 z_payroll=-0.3,
                 z_age=-0.8,
                 z_luck=0.2,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.3,
                 adjusted_age=0.8,
                 adjusted_luck=0.2,
-                tnerd_score=6.8,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=7.0,
+                broadcaster_component=0.2,
             ),
             "CHC": TeamNerdStats(
                 team_stats=TeamStats(
@@ -112,6 +124,7 @@ class TestMarkdownCliIntegration:
                     payroll=220.0,
                     age=28.0,
                     luck=12.0,
+                    broadcaster_rating=3.0,
                 ),
                 z_batting_runs=1.4,
                 z_barrel_rate=0.8,
@@ -121,10 +134,13 @@ class TestMarkdownCliIntegration:
                 z_payroll=-0.9,
                 z_age=-0.5,
                 z_luck=0.5,
+                z_broadcaster_rating=0.2,
                 adjusted_payroll=0.9,
                 adjusted_age=0.5,
                 adjusted_luck=0.5,
-                tnerd_score=9.5,
+                adjusted_broadcaster_rating=0.2,
+                tnerd_score=9.7,
+                broadcaster_component=0.2,
             ),
         }
 
@@ -756,7 +772,9 @@ class TestMarkdownCliIntegration:
 
                     assert result.exit_code == 1
                     assert "Error generating markdown file" in result.output
-                    assert "403" in result.output
+                    assert (
+                        "broadcaster ratings" in result.output or "403" in result.output
+                    )
                     # Verify no markdown file was created
                     assert not Path("mlb_what_to_watch_2025_07_31.md").exists()
 
@@ -832,7 +850,9 @@ class TestMarkdownCliIntegration:
 
                     assert result.exit_code == 1
                     assert "Error generating markdown file" in result.output
-                    assert "403" in result.output
+                    assert (
+                        "broadcaster ratings" in result.output or "403" in result.output
+                    )
                     # Verify no markdown file was created
                     assert not Path("mlb_what_to_watch_2025_07_31.md").exists()
 
@@ -885,7 +905,9 @@ class TestMarkdownCliIntegration:
                     # Test that CLI fails fast
                     result = self.runner.invoke(markdown_app, ["2025-07-31"])
                     assert result.exit_code == 1
-                    assert "403" in result.output
+                    assert (
+                        "broadcaster ratings" in result.output or "403" in result.output
+                    )
                     # Verify no markdown file was created
                     assert not Path("mlb_what_to_watch_2025_07_31.md").exists()
 
