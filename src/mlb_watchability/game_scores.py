@@ -146,6 +146,10 @@ class GameScore:
     # Statistics about all games in this set
     all_games_nerd_stats: AllGamesNerdStats | None = None
 
+    # Recommended broadcast information
+    recommended_broadcast_team: str | None = None
+    recommended_broadcast_rating: float | None = None
+
     # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
     # pitcher code figure out and make their own game score contributions (while the spec says average of
     # each of team and game and then added together, that really just boils down to 1/4 of each value)
@@ -240,6 +244,35 @@ class GameScore:
             # gNERD = average of team NERD + average of pitcher NERD
             gnerd_score = average_team_nerd_score + average_pitcher_nerd_score
 
+            # Determine recommended broadcast team (highest broadcaster rating)
+            recommended_broadcast_team = None
+            recommended_broadcast_rating = None
+
+            if away_team_nerd_stats and home_team_nerd_stats:
+                away_broadcaster_rating = (
+                    away_team_nerd_stats.team_stats.broadcaster_rating
+                )
+                home_broadcaster_rating = (
+                    home_team_nerd_stats.team_stats.broadcaster_rating
+                )
+
+                if away_broadcaster_rating >= home_broadcaster_rating:
+                    recommended_broadcast_team = away_team
+                    recommended_broadcast_rating = away_broadcaster_rating
+                else:
+                    recommended_broadcast_team = home_team
+                    recommended_broadcast_rating = home_broadcaster_rating
+            elif away_team_nerd_stats:
+                recommended_broadcast_team = away_team
+                recommended_broadcast_rating = (
+                    away_team_nerd_stats.team_stats.broadcaster_rating
+                )
+            elif home_team_nerd_stats:
+                recommended_broadcast_team = home_team
+                recommended_broadcast_rating = (
+                    home_team_nerd_stats.team_stats.broadcaster_rating
+                )
+
             game_score = cls(
                 away_team=away_team,
                 home_team=home_team,
@@ -258,6 +291,8 @@ class GameScore:
                 home_team_nerd_stats=home_team_nerd_stats,
                 away_pitcher_nerd_stats=away_pitcher_nerd_stats,
                 home_pitcher_nerd_stats=home_pitcher_nerd_stats,
+                recommended_broadcast_team=recommended_broadcast_team,
+                recommended_broadcast_rating=recommended_broadcast_rating,
             )
 
             game_scores.append(game_score)

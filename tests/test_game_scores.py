@@ -2226,6 +2226,234 @@ class TestGameScores:
             expected_gnerd = average_team_nerd + 5.0
             assert game_score.gnerd_score == pytest.approx(expected_gnerd)
 
+    def test_recommended_broadcast_selection(self) -> None:
+        """Test that recommended broadcast selects team with highest broadcaster rating."""
+        games = [
+            {
+                "away_team": "San Diego Padres",  # Higher broadcaster rating
+                "home_team": "Oakland Athletics",  # Lower broadcaster rating
+                "away_starter": "Test Pitcher A",
+                "home_starter": "Test Pitcher B",
+                "time": "7:05 PM",
+            }
+        ]
+
+        # SDP has higher broadcaster rating (3.47 vs 1.27)
+        mock_team_nerd_details = {
+            "SDP": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="SDP",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    bullpen_runs=8.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                    broadcaster_rating=3.47,  # Higher rating from Awful Announcing
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_bullpen_runs=0.6,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                z_broadcaster_rating=0.8,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                adjusted_broadcaster_rating=0.8,
+                tnerd_score=8.5,
+                broadcaster_component=0.8,
+            ),
+            "ATH": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="ATH",
+                    batting_runs=5.0,
+                    barrel_rate=0.06,
+                    baserunning_runs=2.0,
+                    fielding_runs=8.0,
+                    bullpen_runs=3.0,
+                    payroll=100.0,
+                    age=27.0,
+                    luck=5.0,
+                    broadcaster_rating=1.27,  # Lower rating from Awful Announcing
+                ),
+                z_batting_runs=0.5,
+                z_barrel_rate=0.2,
+                z_baserunning_runs=0.1,
+                z_fielding_runs=0.8,
+                z_bullpen_runs=0.3,
+                z_payroll=0.5,
+                z_age=-0.3,
+                z_luck=0.2,
+                z_broadcaster_rating=-0.5,
+                adjusted_payroll=0.0,
+                adjusted_age=0.3,
+                adjusted_luck=0.2,
+                adjusted_broadcaster_rating=0.0,
+                tnerd_score=6.0,
+                broadcaster_component=0.0,
+            ),
+        }
+
+        mock_pitcher_nerd_details: dict[str, PitcherNerdStats] = {}
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # Verify recommended broadcast is the team with higher rating
+            assert game_score.recommended_broadcast_team == "San Diego Padres"
+            assert game_score.recommended_broadcast_rating == 3.47
+
+    def test_recommended_broadcast_equal_ratings(self) -> None:
+        """Test that when teams have equal broadcaster ratings, away team is recommended."""
+        games = [
+            {
+                "away_team": "Boston Red Sox",
+                "home_team": "Chicago Cubs",
+                "away_starter": "Test Pitcher A",
+                "home_starter": "Test Pitcher B",
+                "time": "7:05 PM",
+            }
+        ]
+
+        # Both teams have same broadcaster rating
+        mock_team_nerd_details = {
+            "BOS": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="BOS",
+                    batting_runs=10.0,
+                    barrel_rate=0.08,
+                    baserunning_runs=5.0,
+                    fielding_runs=15.0,
+                    bullpen_runs=8.0,
+                    payroll=200.0,
+                    age=28.5,
+                    luck=10.0,
+                    broadcaster_rating=2.5,  # Same rating
+                ),
+                z_batting_runs=1.0,
+                z_barrel_rate=0.5,
+                z_baserunning_runs=0.3,
+                z_fielding_runs=1.2,
+                z_bullpen_runs=0.6,
+                z_payroll=-0.8,
+                z_age=-0.5,
+                z_luck=0.4,
+                z_broadcaster_rating=0.0,
+                adjusted_payroll=0.8,
+                adjusted_age=0.5,
+                adjusted_luck=0.4,
+                adjusted_broadcaster_rating=0.0,
+                tnerd_score=8.5,
+                broadcaster_component=0.0,
+            ),
+            "CHC": TeamNerdStats(
+                team_stats=TeamStats(
+                    name="CHC",
+                    batting_runs=8.0,
+                    barrel_rate=0.07,
+                    baserunning_runs=3.0,
+                    fielding_runs=12.0,
+                    bullpen_runs=6.0,
+                    payroll=180.0,
+                    age=27.5,
+                    luck=8.0,
+                    broadcaster_rating=2.5,  # Same rating
+                ),
+                z_batting_runs=0.8,
+                z_barrel_rate=0.4,
+                z_baserunning_runs=0.2,
+                z_fielding_runs=1.0,
+                z_bullpen_runs=0.5,
+                z_payroll=-0.6,
+                z_age=-0.4,
+                z_luck=0.3,
+                z_broadcaster_rating=0.0,
+                adjusted_payroll=0.6,
+                adjusted_age=0.4,
+                adjusted_luck=0.3,
+                adjusted_broadcaster_rating=0.0,
+                tnerd_score=7.8,
+                broadcaster_component=0.0,
+            ),
+        }
+
+        mock_pitcher_nerd_details: dict[str, PitcherNerdStats] = {}
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # When ratings are equal, away team should be recommended (due to >= comparison)
+            assert game_score.recommended_broadcast_team == "Boston Red Sox"
+            assert game_score.recommended_broadcast_rating == 2.5
+
+    def test_recommended_broadcast_missing_team_data(self) -> None:
+        """Test recommended broadcast when team data is missing."""
+        games = [
+            {
+                "away_team": "Unknown Team A",
+                "home_team": "Unknown Team B",
+                "away_starter": "Test Pitcher A",
+                "home_starter": "Test Pitcher B",
+                "time": "7:05 PM",
+            }
+        ]
+
+        # No team data available
+        mock_team_nerd_details: dict[str, TeamNerdStats] = {}
+        mock_pitcher_nerd_details: dict[str, PitcherNerdStats] = {}
+
+        with (
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_team_nerd_scores"
+            ) as mock_team,
+            patch(
+                "mlb_watchability.game_scores.calculate_detailed_pitcher_nerd_scores"
+            ) as mock_pitcher,
+        ):
+            mock_team.return_value = mock_team_nerd_details
+            mock_pitcher.return_value = mock_pitcher_nerd_details
+
+            game_scores = GameScore.from_games(games, 2025)
+
+            assert len(game_scores) == 1
+            game_score = game_scores[0]
+
+            # When no team data is available, recommended broadcast should be None
+            assert game_score.recommended_broadcast_team is None
+            assert game_score.recommended_broadcast_rating is None
+
 
 class TestGameScoresIntegration:
     """Integration tests for GameScore that make actual API calls."""

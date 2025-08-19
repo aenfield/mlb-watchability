@@ -485,14 +485,22 @@ def generate_game_detail_section(
 
             if source_links:
                 sources_text = ", ".join(source_links)
-                attribution_line = f"({provider_text} generated this text using instructions, the NERD scores, and these sources: {sources_text}.)"
+                attribution_line = f"({provider_text} generated the above text using instructions, the NERD scores, and these sources: {sources_text}.)"
             else:
-                attribution_line = f"({provider_text} generated this text using instructions and the NERD scores.)"
+                attribution_line = f"({provider_text} generated the above text using instructions and the NERD scores.)"
         else:
-            attribution_line = f"({provider_text} generated this text using instructions and the NERD scores.)"
+            attribution_line = f"({provider_text} generated the above text using instructions and the NERD scores.)"
 
         lines.append(attribution_line)
         lines.append("")
+
+    # Add recommended broadcast line if data is available
+    if (
+        game_score.recommended_broadcast_team
+        and game_score.recommended_broadcast_rating
+    ):
+        broadcast_line = f"**Recommended broadcast:** {game_score.recommended_broadcast_team} ([{game_score.recommended_broadcast_rating:.2f} rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
+        lines.extend([broadcast_line, ""])
 
     # Add away team breakdown
     if game_score.away_team_nerd_stats:

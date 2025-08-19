@@ -996,7 +996,7 @@ tags: mlbw
         assert "This is an exciting matchup between two powerhouse teams." in result
 
         # Check that sources are formatted in single parenthetical with numbered links
-        expected_attribution = "(An unable to be specified model (despite best intentions) generated this text using instructions, the NERD scores, and these sources: [1](https://example.com/article1), [2](https://example.com/article2).)"
+        expected_attribution = "(An unable to be specified model (despite best intentions) generated the above text using instructions, the NERD scores, and these sources: [1](https://example.com/article1), [2](https://example.com/article2).)"
         assert expected_attribution in result
 
         # Verify old multi-line format is not present
@@ -1039,7 +1039,7 @@ tags: mlbw
         assert "A competitive divisional matchup." in result
 
         # Check that attribution shows no sources in parenthetical format
-        expected_attribution = "(An unable to be specified model (despite best intentions) generated this text using instructions and the NERD scores.)"
+        expected_attribution = "(An unable to be specified model (despite best intentions) generated the above text using instructions and the NERD scores.)"
         assert expected_attribution in result
 
         # Verify old separate AI disclaimer is not present
@@ -1078,7 +1078,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=True)
 
         # Check that attribution handles mixed sources correctly in parenthetical format
-        expected_attribution = "(An unable to be specified model (despite best intentions) generated this text using instructions, the NERD scores, and these sources: 1, [2](https://example.com/article2).)"
+        expected_attribution = "(An unable to be specified model (despite best intentions) generated the above text using instructions, the NERD scores, and these sources: 1, [2](https://example.com/article2).)"
         assert expected_attribution in result
 
         # Verify old separate AI disclaimer is not present
@@ -1114,7 +1114,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=True)
 
         # Check that Anthropic attribution is used
-        expected_attribution = "(A model from [Anthropic](https://www.anthropic.com) generated this text using instructions and the NERD scores.)"
+        expected_attribution = "(A model from [Anthropic](https://www.anthropic.com) generated the above text using instructions and the NERD scores.)"
         assert expected_attribution in result
 
         # Verify old Claude attribution is not present
@@ -1152,7 +1152,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=True)
 
         # Check that OpenAI attribution is used with sources
-        expected_attribution = "(A model from [OpenAI](https://www.openai.com) generated this text using instructions, the NERD scores, and these sources: [1](https://example.com/article1).)"
+        expected_attribution = "(A model from [OpenAI](https://www.openai.com) generated the above text using instructions, the NERD scores, and these sources: [1](https://example.com/article1).)"
         assert expected_attribution in result
 
         # Verify old Claude attribution is not present
@@ -1188,7 +1188,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=True)
 
         # Check that it falls back to fallback attribution for unknown providers
-        expected_attribution = "(An unable to be specified model (despite best intentions) generated this text using instructions and the NERD scores.)"
+        expected_attribution = "(An unable to be specified model (despite best intentions) generated the above text using instructions and the NERD scores.)"
         assert expected_attribution in result
 
     def test_generate_game_detail_section_with_no_provider(self) -> None:
@@ -1221,5 +1221,84 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=True)
 
         # Check that it falls back to fallback attribution when no provider is specified
-        expected_attribution = "(An unable to be specified model (despite best intentions) generated this text using instructions and the NERD scores.)"
+        expected_attribution = "(An unable to be specified model (despite best intentions) generated the above text using instructions and the NERD scores.)"
         assert expected_attribution in result
+
+    def test_generate_game_detail_section_with_recommended_broadcast(self) -> None:
+        """Test that recommended broadcast line is included when data is available."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
+        game_score = GameScore(
+            away_team="San Diego Padres",
+            home_team="Oakland Athletics",
+            away_starter="Test Pitcher A",
+            home_starter="Test Pitcher B",
+            game_time="19:05",
+            game_date="2025-07-23",
+            away_team_nerd_score=7.5,
+            home_team_nerd_score=4.2,
+            average_team_nerd_score=5.85,
+            away_pitcher_nerd_score=8.8,
+            home_pitcher_nerd_score=6.1,
+            average_pitcher_nerd_score=7.45,
+            gnerd_score=13.3,
+            away_team_nerd_stats=team_nerd_details["TST"],
+            home_team_nerd_stats=team_nerd_details["TST"],
+            away_pitcher_nerd_stats=pitcher_nerd_details["Test Pitcher"],
+            home_pitcher_nerd_stats=pitcher_nerd_details["Test Pitcher"],
+            recommended_broadcast_team="San Diego Padres",
+            recommended_broadcast_rating=3.47,
+        )
+
+        result = generate_game_detail_section(game_score, include_descriptions=False)
+
+        # Check that recommended broadcast line is included
+        expected_line = "**Recommended broadcast:** San Diego Padres ([3.47 rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
+        assert expected_line in result
+
+        # Verify it appears after the header and before team details
+        lines = result.split("\n")
+        header_index = next(
+            i
+            for i, line in enumerate(lines)
+            if line.startswith("## San Diego Padres @ Oakland Athletics")
+        )
+        broadcast_index = next(
+            i
+            for i, line in enumerate(lines)
+            if line.startswith("**Recommended broadcast:**")
+        )
+
+        assert broadcast_index > header_index
+        assert broadcast_index < len(lines) - 5  # Should be near the top
+
+    def test_generate_game_detail_section_without_recommended_broadcast(self) -> None:
+        """Test that no recommended broadcast line is included when data is missing."""
+        team_nerd_details, pitcher_nerd_details = self.create_minimal_stats()
+
+        game_score = GameScore(
+            away_team="San Diego Padres",
+            home_team="Oakland Athletics",
+            away_starter="Test Pitcher A",
+            home_starter="Test Pitcher B",
+            game_time="19:05",
+            game_date="2025-07-23",
+            away_team_nerd_score=7.5,
+            home_team_nerd_score=4.2,
+            average_team_nerd_score=5.85,
+            away_pitcher_nerd_score=8.8,
+            home_pitcher_nerd_score=6.1,
+            average_pitcher_nerd_score=7.45,
+            gnerd_score=13.3,
+            away_team_nerd_stats=team_nerd_details["TST"],
+            home_team_nerd_stats=team_nerd_details["TST"],
+            away_pitcher_nerd_stats=pitcher_nerd_details["Test Pitcher"],
+            home_pitcher_nerd_stats=pitcher_nerd_details["Test Pitcher"],
+            recommended_broadcast_team=None,
+            recommended_broadcast_rating=None,
+        )
+
+        result = generate_game_detail_section(game_score, include_descriptions=False)
+
+        # Check that no recommended broadcast line is included
+        assert "Recommended broadcast:" not in result
