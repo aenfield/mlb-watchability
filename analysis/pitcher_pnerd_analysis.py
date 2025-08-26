@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import pandas as pd
+import pybaseball as pb
 
 from mlb_watchability.pitcher_stats import calculate_detailed_pitcher_nerd_scores
 
@@ -37,6 +38,15 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
         print(f"Retrieved pNERD scores for {len(pitcher_nerd_details)} pitchers")
         print("(Filtered to starting pitchers with 1+ GS and 20+ IP)")
         print()
+
+        # Retrieve additional pitcher data for IP and GS
+        print("Retrieving additional pitcher data (IP, GS)...")
+        raw_pitcher_df = pb.pitching_stats(season, qual=20)
+        starting_pitchers_df = raw_pitcher_df[raw_pitcher_df["GS"] > 0]
+        
+        # Create IP/GS DataFrame for merging
+        ip_gs_df = starting_pitchers_df[["Name", "IP", "GS"]].copy()
+        ip_gs_df = ip_gs_df.rename(columns={"Name": "name", "IP": "innings_pitched", "GS": "games_started"})
 
         # Convert to comprehensive DataFrame
         export_data = []
@@ -90,8 +100,16 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
 
             export_data.append(row)
 
-        # Create DataFrame and sort by pNERD score (highest first)
+        # Create DataFrame and merge with IP/GS data
         df = pd.DataFrame(export_data)
+        df = df.merge(ip_gs_df, on="name", how="left")
+        
+        # Reorder columns to put IP and GS after pnerd_score
+        basic_cols = ["name", "team", "pnerd_score", "innings_pitched", "games_started"]
+        other_cols = [col for col in df.columns if col not in basic_cols]
+        df = df[basic_cols + other_cols]
+        
+        # Sort by pNERD score (highest first)
         df = df.sort_values("pnerd_score", ascending=False)
 
         # Display summary statistics
@@ -124,7 +142,7 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
         # Show column summary organized by category
         print("\nExported columns:")
         
-        basic_cols = ["name", "team", "pnerd_score"]
+        basic_cols = ["name", "team", "pnerd_score", "innings_pitched", "games_started"]
         raw_cols = [col for col in df.columns if col.startswith("raw_")]
         z_cols = [col for col in df.columns if col.startswith("z_")]
         adj_cols = [col for col in df.columns if col.startswith("adjusted_")]
