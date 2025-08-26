@@ -18,10 +18,10 @@ import pybaseball as pb
 from mlb_watchability.pitcher_stats import calculate_detailed_pitcher_nerd_scores
 
 
-def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
+def generate_comprehensive_pnerd_analysis(season: int = 2025) -> pd.DataFrame | None:
     """
     Generate comprehensive pNERD analysis for all pitchers and export to CSV.
-    
+
     Args:
         season: Season year (default: 2025)
     """
@@ -43,10 +43,12 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
         print("Retrieving additional pitcher data (IP, GS)...")
         raw_pitcher_df = pb.pitching_stats(season, qual=20)
         starting_pitchers_df = raw_pitcher_df[raw_pitcher_df["GS"] > 0]
-        
+
         # Create IP/GS DataFrame for merging
         ip_gs_df = starting_pitchers_df[["Name", "IP", "GS"]].copy()
-        ip_gs_df = ip_gs_df.rename(columns={"Name": "name", "IP": "innings_pitched", "GS": "games_started"})
+        ip_gs_df = ip_gs_df.rename(
+            columns={"Name": "name", "IP": "innings_pitched", "GS": "games_started"}
+        )
 
         # Convert to comprehensive DataFrame
         export_data = []
@@ -59,10 +61,8 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
                 # Basic pitcher info
                 "name": pitcher_name,
                 "team": pitcher_stats.team,
-                
                 # Total pNERD score
                 "pnerd_score": nerd_stats.pnerd_score,
-                
                 # Raw statistics
                 "raw_xfip_minus": pitcher_stats.xfip_minus,
                 "raw_swinging_strike_rate": pitcher_stats.swinging_strike_rate,
@@ -72,7 +72,6 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
                 "raw_pace": pitcher_stats.pace,
                 "raw_luck": pitcher_stats.luck,
                 "raw_knuckleball_rate": pitcher_stats.knuckleball_rate,
-                
                 # Z-scores
                 "z_xfip_minus": nerd_stats.z_xfip_minus,
                 "z_swinging_strike_rate": nerd_stats.z_swinging_strike_rate,
@@ -80,12 +79,10 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
                 "z_velocity": nerd_stats.z_velocity,
                 "z_age": nerd_stats.z_age,
                 "z_pace": nerd_stats.z_pace,
-                
                 # Adjusted values (after caps and rules)
                 "adjusted_velocity": nerd_stats.adjusted_velocity,
                 "adjusted_age": nerd_stats.adjusted_age,
                 "adjusted_luck": nerd_stats.adjusted_luck,
-                
                 # pNERD formula components
                 "component_xfip": nerd_stats.xfip_component,
                 "component_swinging_strike": nerd_stats.swinging_strike_component,
@@ -103,12 +100,12 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
         # Create DataFrame and merge with IP/GS data
         df = pd.DataFrame(export_data)
         df = df.merge(ip_gs_df, on="name", how="left")
-        
+
         # Reorder columns to put IP and GS after pnerd_score
         basic_cols = ["name", "team", "pnerd_score", "innings_pitched", "games_started"]
         other_cols = [col for col in df.columns if col not in basic_cols]
         df = df[basic_cols + other_cols]
-        
+
         # Sort by pNERD score (highest first)
         df = df.sort_values("pnerd_score", ascending=False)
 
@@ -123,7 +120,7 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
         # Show top 10 pitchers
         print("Top 10 pitchers by pNERD score:")
         top_10 = df[["name", "team", "pnerd_score"]].head(10)
-        for i, row in top_10.iterrows():
+        for i, row in top_10.iterrows():  # type: ignore[assignment]
             print(f"  {row['name']} ({row['team']}): {row['pnerd_score']:.2f}")
         print()
 
@@ -141,13 +138,13 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
 
         # Show column summary organized by category
         print("\nExported columns:")
-        
+
         basic_cols = ["name", "team", "pnerd_score", "innings_pitched", "games_started"]
         raw_cols = [col for col in df.columns if col.startswith("raw_")]
         z_cols = [col for col in df.columns if col.startswith("z_")]
         adj_cols = [col for col in df.columns if col.startswith("adjusted_")]
         comp_cols = [col for col in df.columns if col.startswith("component_")]
-        
+
         print("  Basic info:")
         for col in basic_cols:
             print(f"    {col}")
@@ -167,17 +164,17 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
         # Verify component totals add up correctly
         print("\nVerifying pNERD calculations...")
         component_sum = (
-            df["component_xfip"] +
-            df["component_swinging_strike"] +
-            df["component_strike_rate"] +
-            df["component_velocity"] +
-            df["component_age"] +
-            df["component_pace"] +
-            df["component_luck"] +
-            df["component_knuckleball"] +
-            df["component_constant"]
+            df["component_xfip"]
+            + df["component_swinging_strike"]
+            + df["component_strike_rate"]
+            + df["component_velocity"]
+            + df["component_age"]
+            + df["component_pace"]
+            + df["component_luck"]
+            + df["component_knuckleball"]
+            + df["component_constant"]
         )
-        
+
         max_diff = abs(df["pnerd_score"] - component_sum).max()
         if max_diff < 0.001:
             print("✓ All pNERD calculations verified (components sum to total)")
@@ -189,6 +186,7 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         return None
 
@@ -196,7 +194,7 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> None:
 def main() -> None:
     """Main function to handle command line arguments."""
     season = int(sys.argv[1]) if len(sys.argv) > 1 else 2025
-    
+
     try:
         generate_comprehensive_pnerd_analysis(season)
     except KeyboardInterrupt:
