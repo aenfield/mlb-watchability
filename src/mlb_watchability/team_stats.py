@@ -162,8 +162,8 @@ class TeamNerdStats:
         payroll_component = adjusted_payroll
         age_component = adjusted_age
         luck_component = adjusted_luck
-        broadcaster_component = adjusted_broadcaster_rating
-        radio_broadcaster_component = adjusted_radio_broadcaster_rating
+        broadcaster_component = adjusted_broadcaster_rating / 2.0
+        radio_broadcaster_component = adjusted_radio_broadcaster_rating / 2.0
         constant_component = constant
 
         # Calculate tNERD score using the components

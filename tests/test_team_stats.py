@@ -232,8 +232,8 @@ class TestTeamNerdStatsFromStatsAndMeans:
             + 1.0  # adjusted_payroll
             + 1.67  # adjusted_age (approximately)
             + 0.2  # adjusted_luck
-            + 1.0  # adjusted_broadcaster_rating
-            + 1.25  # adjusted_radio_broadcaster_rating (2.8 - 2.3) / 0.4 = 1.25
+            + 0.5  # adjusted_broadcaster_rating / 2.0
+            + 0.625  # adjusted_radio_broadcaster_rating / 2.0 (1.25 / 2.0 = 0.625)
             + 4.0  # constant
         )
 
@@ -468,7 +468,8 @@ class TestTeamNerdStatsComponents:
 
         # z_broadcaster_rating = (3.0 - 2.5) / 0.5 = 1.0
         # adjusted_broadcaster_rating = max(0.0, 1.0) = 1.0
-        assert nerd_stats.broadcaster_component == pytest.approx(1.0)
+        # broadcaster_component = adjusted_broadcaster_rating / 2.0 = 0.5
+        assert nerd_stats.broadcaster_component == pytest.approx(0.5)
 
         # constant = 4.0
         assert nerd_stats.constant_component == pytest.approx(4.0)
