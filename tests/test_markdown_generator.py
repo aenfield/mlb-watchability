@@ -1272,7 +1272,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=False)
 
         # Check that recommended broadcast line is included
-        expected_line = "**Recommended TV broadcast:** San Diego Padres ([3.47 rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
+        expected_line = "**Recommended broadcasts:** TV, San Diego Padres ([3.47](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
         assert expected_line in result
 
         # Verify it appears after the header and before team details
@@ -1285,7 +1285,7 @@ tags: mlbw
         broadcast_index = next(
             i
             for i, line in enumerate(lines)
-            if line.startswith("**Recommended TV broadcast:**")
+            if line.startswith("**Recommended broadcasts:**")
         )
 
         assert broadcast_index > header_index
@@ -1320,4 +1320,4 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=False)
 
         # Check that no recommended broadcast line is included
-        assert "Recommended TV broadcast:" not in result
+        assert "Recommended broadcasts:" not in result
