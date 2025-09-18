@@ -29,6 +29,7 @@ class TeamStats:
     age: float  # Batter Age, Where Younger Is Better (Age)
     luck: float  # wRC minus Runs (Luck)
     broadcaster_rating: float  # TV Broadcaster Rating (TV)
+    radio_broadcaster_rating: float  # Radio Broadcaster Rating (Radio)
 
     def __post_init__(self) -> None:
         """Validate team statistics after initialization."""
@@ -62,12 +63,14 @@ class TeamNerdStats:
     z_age: float
     z_luck: float
     z_broadcaster_rating: float
+    z_radio_broadcaster_rating: float
 
     # Adjusted values (after caps and positive-only rules)
     adjusted_payroll: float  # Positive only (below average is better)
     adjusted_age: float  # Positive only (younger is better)
     adjusted_luck: float  # Capped at 2.0, positive only
     adjusted_broadcaster_rating: float  # Positive only (higher is better)
+    adjusted_radio_broadcaster_rating: float  # Positive only (higher is better)
 
     # Final tNERD score
     tnerd_score: float
@@ -82,6 +85,7 @@ class TeamNerdStats:
     age_component: float = 0.0
     luck_component: float = 0.0
     broadcaster_component: float = 0.0
+    radio_broadcaster_component: float = 0.0
     constant_component: float = 0.0
 
     @classmethod
@@ -130,6 +134,10 @@ class TeamNerdStats:
         z_broadcaster_rating = (
             team_stats.broadcaster_rating - league_means["broadcaster_rating"]
         ) / league_std_devs["broadcaster_rating"]
+        z_radio_broadcaster_rating = (
+            team_stats.radio_broadcaster_rating
+            - league_means["radio_broadcaster_rating"]
+        ) / league_std_devs["radio_broadcaster_rating"]
 
         # Apply caps and positive-only rules
         # For payroll, below average is better, so we want negative z_payroll values
@@ -142,6 +150,8 @@ class TeamNerdStats:
         adjusted_luck = max(0.0, min(2.0, z_luck))
         # For broadcaster rating, apply positive-only rule (higher is better)
         adjusted_broadcaster_rating = max(0.0, z_broadcaster_rating)
+        # For radio broadcaster rating, apply positive-only rule (higher is better)
+        adjusted_radio_broadcaster_rating = max(0.0, z_radio_broadcaster_rating)
 
         # Calculate individual components (stored to avoid duplication)
         batting_component = z_batting_runs
@@ -153,6 +163,7 @@ class TeamNerdStats:
         age_component = adjusted_age
         luck_component = adjusted_luck
         broadcaster_component = adjusted_broadcaster_rating
+        radio_broadcaster_component = adjusted_radio_broadcaster_rating
         constant_component = constant
 
         # Calculate tNERD score using the components
@@ -166,6 +177,7 @@ class TeamNerdStats:
             + age_component
             + luck_component
             + broadcaster_component
+            + radio_broadcaster_component
             + constant_component
         )
 
@@ -180,10 +192,12 @@ class TeamNerdStats:
             z_age=z_age,
             z_luck=z_luck,
             z_broadcaster_rating=z_broadcaster_rating,
+            z_radio_broadcaster_rating=z_radio_broadcaster_rating,
             adjusted_payroll=adjusted_payroll,
             adjusted_age=adjusted_age,
             adjusted_luck=adjusted_luck,
             adjusted_broadcaster_rating=adjusted_broadcaster_rating,
+            adjusted_radio_broadcaster_rating=adjusted_radio_broadcaster_rating,
             batting_component=batting_component,
             barrel_component=barrel_component,
             baserunning_component=baserunning_component,
@@ -193,6 +207,7 @@ class TeamNerdStats:
             age_component=age_component,
             luck_component=luck_component,
             broadcaster_component=broadcaster_component,
+            radio_broadcaster_component=radio_broadcaster_component,
             constant_component=constant_component,
             tnerd_score=tnerd_score,
         )
@@ -229,6 +244,7 @@ def get_all_team_stats_objects(season: int = 2025) -> dict[str, TeamStats]:
                 age=raw_stats["Payroll_Age"],
                 luck=raw_stats["Luck"],
                 broadcaster_rating=raw_stats["Broadcaster_Rating"],
+                radio_broadcaster_rating=raw_stats["Radio_Broadcaster_Rating"],
             )
             team_stats_dict[team_name] = team_stats
 
@@ -265,6 +281,7 @@ def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNer
     ages = [team.age for team in all_teams]
     luck_values = [team.luck for team in all_teams]
     broadcaster_ratings = [team.broadcaster_rating for team in all_teams]
+    radio_broadcaster_ratings = [team.radio_broadcaster_rating for team in all_teams]
 
     # Calculate means and standard deviations
     league_means = {
@@ -277,6 +294,7 @@ def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNer
         "age": stats.tmean(ages),
         "luck": stats.tmean(luck_values),
         "broadcaster_rating": stats.tmean(broadcaster_ratings),
+        "radio_broadcaster_rating": stats.tmean(radio_broadcaster_ratings),
     }
 
     league_std_devs = {
@@ -289,6 +307,7 @@ def calculate_detailed_team_nerd_scores(season: int = 2025) -> dict[str, TeamNer
         "age": stats.tstd(ages),
         "luck": stats.tstd(luck_values),
         "broadcaster_rating": stats.tstd(broadcaster_ratings),
+        "radio_broadcaster_rating": stats.tstd(radio_broadcaster_ratings),
     }
 
     # Calculate tNERD for each team

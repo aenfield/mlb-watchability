@@ -38,6 +38,7 @@ class TestMarkdownGenerator:
                     age=28.0,
                     luck=3.0,
                     broadcaster_rating=3.0,
+                    radio_broadcaster_rating=2.3,
                 ),
                 z_batting_runs=0.5,
                 z_barrel_rate=0.2,
@@ -48,12 +49,15 @@ class TestMarkdownGenerator:
                 z_age=-0.5,
                 z_luck=0.1,
                 z_broadcaster_rating=0.2,
+                z_radio_broadcaster_rating=0.0,
                 adjusted_payroll=0.3,
                 adjusted_age=0.5,
                 adjusted_luck=0.1,
                 adjusted_broadcaster_rating=0.2,
+                adjusted_radio_broadcaster_rating=0.0,
                 tnerd_score=5.2,
                 broadcaster_component=0.2,
+                radio_broadcaster_component=0.0,
             )
         }
 
@@ -445,6 +449,7 @@ tags: mlbw
             age=28.4,
             luck=8.3,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.3,
         )
 
         # Create mock team NERD stats
@@ -459,6 +464,7 @@ tags: mlbw
         team_nerd_stats.z_age = -0.67
         team_nerd_stats.z_luck = 0.78
         team_nerd_stats.z_broadcaster_rating = 0.2
+        team_nerd_stats.z_radio_broadcaster_rating = 0.0
         team_nerd_stats.batting_component = 1.23
         team_nerd_stats.barrel_component = 0.45
         team_nerd_stats.baserunning_component = -0.32
@@ -468,6 +474,7 @@ tags: mlbw
         team_nerd_stats.age_component = 0.67
         team_nerd_stats.luck_component = 0.78
         team_nerd_stats.broadcaster_component = 0.2
+        team_nerd_stats.radio_broadcaster_component = 0.0
         team_nerd_stats.constant_component = 4.00
         team_nerd_stats.tnerd_score = 9.15
 
@@ -566,6 +573,7 @@ tags: mlbw
             age=29.1,
             luck=5.7,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.3,
         )
 
         home_team_stats = TeamStats(
@@ -579,6 +587,7 @@ tags: mlbw
             age=28.4,
             luck=8.3,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.3,
         )
 
         # Create properly structured mock pitcher stats
@@ -620,6 +629,7 @@ tags: mlbw
         away_team_nerd.z_age = -0.3
         away_team_nerd.z_luck = 0.5
         away_team_nerd.z_broadcaster_rating = 0.2
+        away_team_nerd.z_radio_broadcaster_rating = 0.0
         away_team_nerd.batting_component = 1.5
         away_team_nerd.barrel_component = 0.8
         away_team_nerd.baserunning_component = 0.4
@@ -629,6 +639,7 @@ tags: mlbw
         away_team_nerd.age_component = 0.3
         away_team_nerd.luck_component = 0.5
         away_team_nerd.broadcaster_component = 0.2
+        away_team_nerd.radio_broadcaster_component = 0.0
         away_team_nerd.constant_component = 4.0
         away_team_nerd.tnerd_score = 10.4
 
@@ -643,6 +654,7 @@ tags: mlbw
         home_team_nerd.z_age = -0.7
         home_team_nerd.z_luck = 0.8
         home_team_nerd.z_broadcaster_rating = 0.2
+        home_team_nerd.z_radio_broadcaster_rating = 0.0
         home_team_nerd.batting_component = 1.2
         home_team_nerd.barrel_component = 0.4
         home_team_nerd.baserunning_component = -0.3
@@ -652,6 +664,7 @@ tags: mlbw
         home_team_nerd.age_component = 0.7
         home_team_nerd.luck_component = 0.8
         home_team_nerd.broadcaster_component = 0.2
+        home_team_nerd.radio_broadcaster_component = 0.0
         home_team_nerd.constant_component = 4.0
         home_team_nerd.tnerd_score = 9.1
 
@@ -748,6 +761,7 @@ tags: mlbw
             age=28.7,
             luck=3.2,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.3,
         )
 
         home_team_stats = TeamStats(
@@ -761,6 +775,7 @@ tags: mlbw
             age=27.9,
             luck=-2.7,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.3,
         )
 
         away_team_nerd = MagicMock()
@@ -774,6 +789,7 @@ tags: mlbw
         away_team_nerd.z_age = 0.1
         away_team_nerd.z_luck = 0.3
         away_team_nerd.z_broadcaster_rating = 0.2
+        away_team_nerd.z_radio_broadcaster_rating = 0.0
         away_team_nerd.batting_component = 0.8
         away_team_nerd.barrel_component = 0.3
         away_team_nerd.baserunning_component = 0.5
@@ -783,6 +799,7 @@ tags: mlbw
         away_team_nerd.age_component = 0.0
         away_team_nerd.luck_component = 0.3
         away_team_nerd.broadcaster_component = 0.2
+        away_team_nerd.radio_broadcaster_component = 0.0
         away_team_nerd.constant_component = 4.0
         away_team_nerd.tnerd_score = 6.8
 
@@ -797,6 +814,7 @@ tags: mlbw
         home_team_nerd.z_age = -0.2
         home_team_nerd.z_luck = -0.2
         home_team_nerd.z_broadcaster_rating = 0.2
+        home_team_nerd.z_radio_broadcaster_rating = 0.0
         home_team_nerd.batting_component = 0.5
         home_team_nerd.barrel_component = 0.1
         home_team_nerd.baserunning_component = -0.3
@@ -806,6 +824,7 @@ tags: mlbw
         home_team_nerd.age_component = 0.2
         home_team_nerd.luck_component = 0.0
         home_team_nerd.broadcaster_component = 0.2
+        home_team_nerd.radio_broadcaster_component = 0.0
         home_team_nerd.constant_component = 4.0
         home_team_nerd.tnerd_score = 6.2
 
@@ -1253,7 +1272,7 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=False)
 
         # Check that recommended broadcast line is included
-        expected_line = "**Recommended broadcast:** San Diego Padres ([3.47 rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
+        expected_line = "**Recommended TV broadcast:** San Diego Padres ([3.47 rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
         assert expected_line in result
 
         # Verify it appears after the header and before team details
@@ -1266,7 +1285,7 @@ tags: mlbw
         broadcast_index = next(
             i
             for i, line in enumerate(lines)
-            if line.startswith("**Recommended broadcast:**")
+            if line.startswith("**Recommended TV broadcast:**")
         )
 
         assert broadcast_index > header_index
@@ -1301,4 +1320,4 @@ tags: mlbw
         result = generate_game_detail_section(game_score, include_descriptions=False)
 
         # Check that no recommended broadcast line is included
-        assert "Recommended broadcast:" not in result
+        assert "Recommended TV broadcast:" not in result

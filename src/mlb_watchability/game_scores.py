@@ -23,6 +23,43 @@ from .team_stats import TeamNerdStats, calculate_detailed_team_nerd_scores
 
 logger = logging.getLogger(__name__)
 
+
+def _determine_recommended_broadcast(
+    away_team: str,
+    home_team: str,
+    away_team_nerd_stats: "TeamNerdStats | None",
+    home_team_nerd_stats: "TeamNerdStats | None",
+    rating_getter: Any,
+) -> tuple[str | None, float | None]:
+    """
+    Determine recommended broadcast team based on rating comparison.
+
+    Args:
+        away_team: Away team name
+        home_team: Home team name
+        away_team_nerd_stats: Away team NERD statistics
+        home_team_nerd_stats: Home team NERD statistics
+        rating_getter: Function to extract rating from team_stats
+
+    Returns:
+        Tuple of (recommended_team, recommended_rating)
+    """
+    if away_team_nerd_stats and home_team_nerd_stats:
+        away_rating = rating_getter(away_team_nerd_stats.team_stats)
+        home_rating = rating_getter(home_team_nerd_stats.team_stats)
+
+        if away_rating >= home_rating:
+            return away_team, away_rating
+        else:
+            return home_team, home_rating
+    elif away_team_nerd_stats:
+        return away_team, rating_getter(away_team_nerd_stats.team_stats)
+    elif home_team_nerd_stats:
+        return home_team, rating_getter(home_team_nerd_stats.team_stats)
+    else:
+        return None, None
+
+
 # Field mappings for stats dictionaries
 # Format: (field_name, z_score_field_name)
 TEAM_STAT_FIELDS: list[tuple[str, str | None]] = [
@@ -35,6 +72,7 @@ TEAM_STAT_FIELDS: list[tuple[str, str | None]] = [
     ("age", "z_age"),
     ("luck", "z_luck"),
     ("broadcaster_rating", "z_broadcaster_rating"),
+    ("radio_broadcaster_rating", "z_radio_broadcaster_rating"),
 ]
 
 PITCHER_STAT_FIELDS: list[tuple[str, str | None]] = [
@@ -59,6 +97,7 @@ TEAM_COMPONENT_FIELDS: list[str] = [
     "age_component",
     "luck_component",
     "broadcaster_component",
+    "radio_broadcaster_component",
     "constant_component",
 ]
 
@@ -149,6 +188,8 @@ class GameScore:
     # Recommended broadcast information
     recommended_broadcast_team: str | None = None
     recommended_broadcast_rating: float | None = None
+    recommended_radio_broadcast_team: str | None = None
+    recommended_radio_broadcast_rating: float | None = None
 
     # TODO: This impl below seems like it might be overly complex? And/or what about having the team and
     # pitcher code figure out and make their own game score contributions (while the spec says average of
@@ -244,34 +285,27 @@ class GameScore:
             # gNERD = average of team NERD + average of pitcher NERD
             gnerd_score = average_team_nerd_score + average_pitcher_nerd_score
 
-            # Determine recommended broadcast team (highest broadcaster rating)
-            recommended_broadcast_team = None
-            recommended_broadcast_rating = None
+            # Determine recommended TV broadcast team (highest broadcaster rating)
+            recommended_broadcast_team, recommended_broadcast_rating = (
+                _determine_recommended_broadcast(
+                    away_team,
+                    home_team,
+                    away_team_nerd_stats,
+                    home_team_nerd_stats,
+                    lambda stats: stats.broadcaster_rating,
+                )
+            )
 
-            if away_team_nerd_stats and home_team_nerd_stats:
-                away_broadcaster_rating = (
-                    away_team_nerd_stats.team_stats.broadcaster_rating
+            # Determine recommended radio broadcast team (highest radio broadcaster rating)
+            recommended_radio_broadcast_team, recommended_radio_broadcast_rating = (
+                _determine_recommended_broadcast(
+                    away_team,
+                    home_team,
+                    away_team_nerd_stats,
+                    home_team_nerd_stats,
+                    lambda stats: stats.radio_broadcaster_rating,
                 )
-                home_broadcaster_rating = (
-                    home_team_nerd_stats.team_stats.broadcaster_rating
-                )
-
-                if away_broadcaster_rating >= home_broadcaster_rating:
-                    recommended_broadcast_team = away_team
-                    recommended_broadcast_rating = away_broadcaster_rating
-                else:
-                    recommended_broadcast_team = home_team
-                    recommended_broadcast_rating = home_broadcaster_rating
-            elif away_team_nerd_stats:
-                recommended_broadcast_team = away_team
-                recommended_broadcast_rating = (
-                    away_team_nerd_stats.team_stats.broadcaster_rating
-                )
-            elif home_team_nerd_stats:
-                recommended_broadcast_team = home_team
-                recommended_broadcast_rating = (
-                    home_team_nerd_stats.team_stats.broadcaster_rating
-                )
+            )
 
             game_score = cls(
                 away_team=away_team,
@@ -293,6 +327,8 @@ class GameScore:
                 home_pitcher_nerd_stats=home_pitcher_nerd_stats,
                 recommended_broadcast_team=recommended_broadcast_team,
                 recommended_broadcast_rating=recommended_broadcast_rating,
+                recommended_radio_broadcast_team=recommended_radio_broadcast_team,
+                recommended_radio_broadcast_rating=recommended_radio_broadcast_rating,
             )
 
             game_scores.append(game_score)

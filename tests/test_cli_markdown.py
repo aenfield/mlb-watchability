@@ -29,6 +29,7 @@ class TestCliMarkdownFormatting:
                     age=28.0,
                     luck=3.0,
                     broadcaster_rating=3.0,
+                    radio_broadcaster_rating=2.3,
                 ),
                 z_batting_runs=0.5,
                 z_barrel_rate=0.2,
@@ -39,10 +40,12 @@ class TestCliMarkdownFormatting:
                 z_age=-0.5,
                 z_luck=0.1,
                 z_broadcaster_rating=0.2,
+                z_radio_broadcaster_rating=0.0,
                 adjusted_payroll=0.3,
                 adjusted_age=0.5,
                 adjusted_luck=0.1,
                 adjusted_broadcaster_rating=0.2,
+                adjusted_radio_broadcaster_rating=0.0,
                 tnerd_score=5.2,
                 batting_component=0.5,
                 barrel_component=0.2,
@@ -53,6 +56,7 @@ class TestCliMarkdownFormatting:
                 age_component=0.5,
                 luck_component=0.1,
                 broadcaster_component=0.2,
+                radio_broadcaster_component=0.0,
                 constant_component=4.0,
             )
         }

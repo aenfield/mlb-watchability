@@ -103,6 +103,7 @@ Most lines have a calculated number, the z-score of that calculated number, and 
 - Age: {{ "%.1f"|format(away_age) }} (z-score: {{ "%.2f"|format(away_z_age) }}) -> **{{ "%.2f"|format(away_age_component) }}**
 - Luck: {{ "%.1f"|format(away_luck) }} (z-score: {{ "%.2f"|format(away_z_luck) }}) -> **{{ "%.2f"|format(away_luck_component) }}**
 - Broadcaster Rating: {{ "%.2f"|format(away_broadcaster_rating) }} (z-score: {{ "%.2f"|format(away_z_broadcaster_rating) }}) -> **{{ "%.2f"|format(away_broadcaster_component) }}**
+- Radio Broadcaster Rating: {{ "%.2f"|format(away_radio_broadcaster_rating) }} (z-score: {{ "%.2f"|format(away_z_radio_broadcaster_rating) }}) -> **{{ "%.2f"|format(away_radio_broadcaster_component) }}**
 
 ### {{ home_team }} Team Stats (tNERD: {{ "%.2f"|format(home_team_nerd) }})
 
@@ -115,6 +116,7 @@ Most lines have a calculated number, the z-score of that calculated number, and 
 - Age: {{ "%.1f"|format(home_age) }} (z-score: {{ "%.2f"|format(home_z_age) }}) -> **{{ "%.2f"|format(home_age_component) }}**
 - Luck: {{ "%.1f"|format(home_luck) }} (z-score: {{ "%.2f"|format(home_z_luck) }}) -> **{{ "%.2f"|format(home_luck_component) }}**
 - Broadcaster Rating: {{ "%.2f"|format(home_broadcaster_rating) }} (z-score: {{ "%.2f"|format(home_z_broadcaster_rating) }}) -> **{{ "%.2f"|format(home_broadcaster_component) }}**
+- Radio Broadcaster Rating: {{ "%.2f"|format(home_radio_broadcaster_rating) }} (z-score: {{ "%.2f"|format(home_z_radio_broadcaster_rating) }}) -> **{{ "%.2f"|format(home_radio_broadcaster_component) }}**
 
 ### {{ away_starter }} Pitcher Stats (pNERD: {{ "%.2f"|format(away_pitcher_nerd) }})
 

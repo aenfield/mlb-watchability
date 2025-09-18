@@ -12,6 +12,7 @@ from mlb_watchability.data_retrieval import (
     get_all_team_bullpen_stats,
     get_all_team_stats,
     get_game_schedule,
+    get_radio_broadcaster_ratings,
 )
 
 
@@ -571,3 +572,33 @@ class TestGetAllTeamBullpenStatsIntegration:
                 assert (
                     -100 <= team_row["Bullpen_RAR"] <= 200
                 )  # Bullpen runs above average
+
+
+class TestGetRadioBroadcasterRatings:
+    """Test cases for the get_radio_broadcaster_ratings function."""
+
+    def test_get_radio_broadcaster_ratings_success(self) -> None:
+        """Test that get_radio_broadcaster_ratings loads and processes data correctly."""
+        result = get_radio_broadcaster_ratings()
+
+        # Should return a DataFrame
+        assert isinstance(result, pd.DataFrame)
+
+        # Should have the expected columns
+        expected_columns = ["Team", "Radio_Broadcaster_Rating"]
+        assert list(result.columns) == expected_columns
+
+        # Should have 30 teams (all MLB teams)
+        assert len(result) == 30
+
+        # Should have valid team abbreviations and ratings
+        for _, row in result.iterrows():
+            assert isinstance(row["Team"], str)
+            assert len(row["Team"]) == 3  # Team abbreviations are 3 letters
+            assert isinstance(row["Radio_Broadcaster_Rating"], int | float)
+            assert 1.0 <= row["Radio_Broadcaster_Rating"] <= 4.0  # Rating range
+
+        # Check that we have some expected teams
+        teams = set(result["Team"])
+        expected_teams = {"SFG", "LAD", "CHC", "NYY", "BOS"}
+        assert expected_teams.issubset(teams)

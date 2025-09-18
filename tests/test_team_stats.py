@@ -24,6 +24,7 @@ class TestTeamStats:
             age=28.5,
             luck=3.2,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.8,
         )
 
         assert stats.name == "Los Angeles Dodgers"
@@ -36,6 +37,7 @@ class TestTeamStats:
         assert stats.age == 28.5
         assert stats.luck == 3.2
         assert stats.broadcaster_rating == 3.0
+        assert stats.radio_broadcaster_rating == 2.8
 
     def test_low_payroll_team_stats(self) -> None:
         """Test team statistics for a low payroll team."""
@@ -50,6 +52,7 @@ class TestTeamStats:
             age=26.8,
             luck=-5.5,
             broadcaster_rating=2.0,
+            radio_broadcaster_rating=1.8,
         )
 
         assert stats.payroll == 65.2  # Low payroll
@@ -70,6 +73,7 @@ class TestTeamStats:
                 age=28.5,
                 luck=3.2,
                 broadcaster_rating=3.0,
+                radio_broadcaster_rating=2.8,
             )
 
 
@@ -89,6 +93,7 @@ class TestTeamNerdStats:
             age=27.5,
             luck=2.0,
             broadcaster_rating=2.5,
+            radio_broadcaster_rating=2.3,
         )
 
     def test_valid_team_nerd_stats_creation(self) -> None:
@@ -106,13 +111,16 @@ class TestTeamNerdStats:
             z_payroll=0.4,
             z_age=-0.3,
             z_broadcaster_rating=0.2,
+            z_radio_broadcaster_rating=0.1,
             adjusted_payroll=0.0,
             adjusted_age=0.3,
             adjusted_luck=2.0,
             adjusted_broadcaster_rating=0.2,
+            adjusted_radio_broadcaster_rating=0.1,
             tnerd_score=9.7,
             bullpen_component=1.0,
             broadcaster_component=0.2,
+            radio_broadcaster_component=0.1,
         )
 
         assert nerd_stats.team_stats == team_stats
@@ -148,6 +156,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             "payroll": 140.0,
             "age": 28.5,
             "broadcaster_rating": 2.5,
+            "radio_broadcaster_rating": 2.3,
         }
 
         league_std_devs = {
@@ -160,6 +169,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             "payroll": 50.0,
             "age": 1.5,
             "broadcaster_rating": 0.5,
+            "radio_broadcaster_rating": 0.4,
         }
 
         return league_means, league_std_devs
@@ -177,6 +187,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             age=26.0,  # Younger than average (better)
             luck=4.0,  # Lucky
             broadcaster_rating=3.0,  # Above average
+            radio_broadcaster_rating=2.8,  # Above average
         )
 
         league_means, league_std_devs = self.create_sample_league_stats()
@@ -222,6 +233,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             + 1.67  # adjusted_age (approximately)
             + 0.2  # adjusted_luck
             + 1.0  # adjusted_broadcaster_rating
+            + 1.25  # adjusted_radio_broadcaster_rating (2.8 - 2.3) / 0.4 = 1.25
             + 4.0  # constant
         )
 
@@ -240,6 +252,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             age=31.0,  # Older than average (worse)
             luck=-8.0,  # Unlucky
             broadcaster_rating=2.0,  # Below average (worse for tNERD)
+            radio_broadcaster_rating=1.8,  # Below average
         )
 
         league_means, league_std_devs = self.create_sample_league_stats()
@@ -269,6 +282,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             age=28.5,
             luck=50.0,  # Very lucky - should be capped at 2.0
             broadcaster_rating=3.5,  # Above average
+            radio_broadcaster_rating=3.2,  # Above average
         )
 
         league_means, league_std_devs = self.create_sample_league_stats()
@@ -294,6 +308,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             age=28.5,  # League average
             luck=0.0,  # No luck
             broadcaster_rating=2.5,  # League average
+            radio_broadcaster_rating=2.3,  # League average
         )
 
         league_means, league_std_devs = self.create_sample_league_stats()
@@ -333,6 +348,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             age=28.5,
             luck=0.0,
             broadcaster_rating=2.5,
+            radio_broadcaster_rating=2.5,
         )
 
         league_means, league_std_devs = self.create_sample_league_stats()
@@ -361,6 +377,7 @@ class TestTeamNerdStatsFromStatsAndMeans:
             age=28.5,
             luck=0.0,
             broadcaster_rating=2.5,
+            radio_broadcaster_rating=2.5,
         )
 
         league_means, league_std_devs = self.create_sample_league_stats()
@@ -391,6 +408,7 @@ class TestTeamNerdStatsComponents:
             age=27.0,
             luck=3.0,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.8,
         )
 
         league_means = {
@@ -403,6 +421,7 @@ class TestTeamNerdStatsComponents:
             "age": 29.0,
             "luck": 0.0,
             "broadcaster_rating": 2.5,
+            "radio_broadcaster_rating": 2.3,
         }
 
         league_std_devs = {
@@ -415,6 +434,7 @@ class TestTeamNerdStatsComponents:
             "age": 2.0,
             "luck": 5.0,
             "broadcaster_rating": 0.5,
+            "radio_broadcaster_rating": 0.4,
         }
 
         nerd_stats = TeamNerdStats.from_stats_and_means(
@@ -466,6 +486,7 @@ class TestTeamNerdStatsComponents:
             age=27.0,
             luck=3.0,
             broadcaster_rating=3.0,
+            radio_broadcaster_rating=2.8,
         )
 
         league_means = {
@@ -478,6 +499,7 @@ class TestTeamNerdStatsComponents:
             "age": 29.0,
             "luck": 0.0,
             "broadcaster_rating": 2.5,
+            "radio_broadcaster_rating": 2.3,
         }
 
         league_std_devs = {
@@ -490,6 +512,7 @@ class TestTeamNerdStatsComponents:
             "age": 2.0,
             "luck": 5.0,
             "broadcaster_rating": 0.5,
+            "radio_broadcaster_rating": 0.4,
         }
 
         nerd_stats = TeamNerdStats.from_stats_and_means(
@@ -507,6 +530,7 @@ class TestTeamNerdStatsComponents:
             + nerd_stats.age_component
             + nerd_stats.luck_component
             + nerd_stats.broadcaster_component
+            + nerd_stats.radio_broadcaster_component
             + nerd_stats.constant_component
         )
         assert abs(calculated_total - nerd_stats.tnerd_score) < 0.001

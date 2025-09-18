@@ -268,6 +268,7 @@ def generate_team_breakdown_table(
         f"| {team_stats.age:.1f} "
         f"| {team_stats.luck:.1f} "
         f"| {team_stats.broadcaster_rating:.2f} "
+        f"| {team_stats.radio_broadcaster_rating:.2f} "
         f"| — "
         f"| — |"
     )
@@ -283,6 +284,7 @@ def generate_team_breakdown_table(
         f"| {team_nerd_stats.z_age:.2f} "
         f"| {team_nerd_stats.z_luck:.2f} "
         f"| {team_nerd_stats.z_broadcaster_rating:.2f} "
+        f"| {team_nerd_stats.z_radio_broadcaster_rating:.2f} "
         f"| — "
         f"| — |"
     )
@@ -298,6 +300,7 @@ def generate_team_breakdown_table(
         f"| {team_nerd_stats.age_component:.2f} "
         f"| {team_nerd_stats.luck_component:.2f} "
         f"| {team_nerd_stats.broadcaster_component:.2f} "
+        f"| {team_nerd_stats.radio_broadcaster_component:.2f} "
         f"| {team_nerd_stats.constant_component:.2f} "
         f"| {team_nerd_stats.tnerd_score:.2f} |"
     )
@@ -307,7 +310,7 @@ def generate_team_breakdown_table(
         "",
         "{% wideTable %}",
         "",
-        "|              | Batting runs | Barrel % | Baserunning runs | Fielding runs | Bullpen runs | Payroll | Age   | Luck | TV   | Constant | Total |",
+        "|              | Batting runs | Barrel % | Baserunning runs | Fielding runs | Bullpen runs | Payroll | Age   | Luck | TV   | Radio | Constant | Total |",
         "| ------------ | ------------ | -------- | ----------- | -------- | ------------ | ------- | ----- | ---- | ---- | -------- | ----- |",
         raw_row,
         z_row,
@@ -499,8 +502,16 @@ def generate_game_detail_section(
         game_score.recommended_broadcast_team
         and game_score.recommended_broadcast_rating
     ):
-        broadcast_line = f"**Recommended broadcast:** {game_score.recommended_broadcast_team} ([{game_score.recommended_broadcast_rating:.2f} rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
-        lines.extend([broadcast_line, ""])
+        tv_broadcast_line = f"**Recommended TV broadcast:** {game_score.recommended_broadcast_team} ([{game_score.recommended_broadcast_rating:.2f} rating](https://awfulannouncing.com/orig/2025-mlb-local-broadcaster-rankings.html))"
+        lines.extend([tv_broadcast_line, ""])
+
+    # Add recommended radio broadcast line if data is available
+    if (
+        game_score.recommended_radio_broadcast_team
+        and game_score.recommended_radio_broadcast_rating
+    ):
+        radio_broadcast_line = f"**Recommended radio broadcast:** {game_score.recommended_radio_broadcast_team} ([{game_score.recommended_radio_broadcast_rating:.2f} rating](https://awfulannouncing.com/orig/2025-mlb-local-radio-booth-rankings-miller-rose-hughes-hamilton.html))"
+        lines.extend([radio_broadcast_line, ""])
 
     # Add away team breakdown
     if game_score.away_team_nerd_stats:

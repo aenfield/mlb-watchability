@@ -190,6 +190,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
 
         # Get broadcaster ratings
         broadcaster_df = get_broadcaster_ratings()
+        radio_broadcaster_df = get_radio_broadcaster_ratings()
 
         # Merge batting stats with payroll data
         merged_df = pd.merge(team_batting_df, payroll_df, on="Team", how="inner")
@@ -199,6 +200,9 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
 
         # Merge with broadcaster data - no conflicts since broadcaster only has Team and Broadcaster_Rating
         merged_df = pd.merge(merged_df, broadcaster_df, on="Team", how="inner")
+
+        # Merge with radio broadcaster data - no conflicts since radio broadcaster only has Team and Radio_Broadcaster_Rating
+        merged_df = pd.merge(merged_df, radio_broadcaster_df, on="Team", how="inner")
 
         # Check for required columns
         required_columns = [
@@ -210,6 +214,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
             "R",
             "Bullpen_RAR",
             "Broadcaster_Rating",
+            "Radio_Broadcaster_Rating",
         ]
         missing_columns = [
             col for col in required_columns if col not in merged_df.columns
@@ -248,6 +253,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
                 "Payroll_Age": team_row["Payroll_Age"],
                 "Luck": luck,  # Calculated field
                 "Broadcaster_Rating": team_row["Broadcaster_Rating"],
+                "Radio_Broadcaster_Rating": team_row["Radio_Broadcaster_Rating"],
             }
 
             team_stats_dict[team_row["Team"]] = team_raw_stats
@@ -289,12 +295,16 @@ def get_all_team_bullpen_stats(season: int = 2025) -> pd.DataFrame:
         ) from e
 
 
-def get_broadcaster_ratings() -> pd.DataFrame:
+def _load_broadcaster_ratings(filename: str, column_name: str) -> pd.DataFrame:
     """
-    Load broadcaster ratings from CSV file.
+    Load broadcaster ratings from CSV file (helper function).
+
+    Args:
+        filename: Name of the CSV file in the data directory
+        column_name: Name for the rating column in the returned DataFrame
 
     Returns:
-        DataFrame with Team and Broadcaster_Rating columns
+        DataFrame with Team and rating columns
 
     Raises:
         RuntimeError: If file cannot be read or is missing required columns
@@ -303,7 +313,7 @@ def get_broadcaster_ratings() -> pd.DataFrame:
         # Get the path to the broadcaster data file
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(os.path.dirname(current_dir))
-        csv_path = os.path.join(project_root, "data", "broadcasters.tv.2025.csv")
+        csv_path = os.path.join(project_root, "data", filename)
 
         # Load the CSV file
         broadcaster_df = pd.read_csv(csv_path)
@@ -316,11 +326,41 @@ def get_broadcaster_ratings() -> pd.DataFrame:
         if missing_columns:
             _raise_missing_columns_error(missing_columns)
 
-        # Rename Rating to Broadcaster_Rating to match our naming convention
-        broadcaster_df = broadcaster_df.rename(columns={"Rating": "Broadcaster_Rating"})
+        # Rename Rating to the specified column name
+        broadcaster_df = broadcaster_df.rename(columns={"Rating": column_name})
 
         # Return only the columns we need
-        return broadcaster_df[["Team", "Broadcaster_Rating"]].copy()
+        return broadcaster_df[["Team", column_name]].copy()
 
     except Exception as e:
-        raise RuntimeError(f"Failed to load broadcaster ratings: {str(e)}") from e
+        raise RuntimeError(
+            f"Failed to load broadcaster ratings from {filename}: {str(e)}"
+        ) from e
+
+
+def get_broadcaster_ratings() -> pd.DataFrame:
+    """
+    Load TV broadcaster ratings from CSV file.
+
+    Returns:
+        DataFrame with Team and Broadcaster_Rating columns
+
+    Raises:
+        RuntimeError: If file cannot be read or is missing required columns
+    """
+    return _load_broadcaster_ratings("broadcasters.tv.2025.csv", "Broadcaster_Rating")
+
+
+def get_radio_broadcaster_ratings() -> pd.DataFrame:
+    """
+    Load radio broadcaster ratings from CSV file.
+
+    Returns:
+        DataFrame with Team and Radio_Broadcaster_Rating columns
+
+    Raises:
+        RuntimeError: If file cannot be read or is missing required columns
+    """
+    return _load_broadcaster_ratings(
+        "broadcasters.radio.2025.csv", "Radio_Broadcaster_Rating"
+    )
