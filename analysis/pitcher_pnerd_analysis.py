@@ -82,7 +82,6 @@ def generate_comprehensive_pnerd_analysis(season: int = 2025) -> pd.DataFrame | 
                 # Adjusted values (after caps and rules)
                 "adjusted_velocity": nerd_stats.adjusted_velocity,
                 "adjusted_age": nerd_stats.adjusted_age,
-                "adjusted_luck": nerd_stats.adjusted_luck,
                 # pNERD formula components
                 "component_xfip": nerd_stats.xfip_component,
                 "component_swinging_strike": nerd_stats.swinging_strike_component,

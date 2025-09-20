@@ -94,9 +94,6 @@ def analyze_pitcher_nerd(pitcher_name: str, season: int = 2025) -> None:
     print(
         f"Adjusted Age:       {nerd_stats.adjusted_age:>8.2f}  (capped at 2.0, positive only)"
     )
-    print(
-        f"Adjusted Luck:      {nerd_stats.adjusted_luck:>8.2f}  (capped at 1.0, positive only)"
-    )
     print()
 
     # pNERD Formula Breakdown

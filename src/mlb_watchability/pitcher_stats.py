@@ -67,7 +67,6 @@ class PitcherNerdStats:
     # Adjusted values (after caps and positive-only rules)
     adjusted_velocity: float  # Capped at 2.0, positive only
     adjusted_age: float  # Capped at 2.0, positive only
-    adjusted_luck: float  # Capped at 1.0, positive only
 
     # Final pNERD score
     pnerd_score: float
@@ -127,9 +126,6 @@ class PitcherNerdStats:
         # Apply caps and adjustments
         adjusted_velocity = max(0.0, min(2.0, z_velocity))
         adjusted_age = max(0.0, min(2.0, -z_age))  # Negative because younger is better
-        adjusted_luck = max(
-            0.0, min(1.0, pitcher_stats.luck)
-        )  # Cap directly without negating
 
         # Calculate individual components
         xfip_component = -z_xfip_minus * 2  # Negated because lower xFIP- is better
@@ -138,7 +134,9 @@ class PitcherNerdStats:
         velocity_component = adjusted_velocity
         age_component = adjusted_age
         pace_component = -z_pace / 2  # Negated because lower pace (faster) is better
-        luck_component = adjusted_luck / 20
+        luck_component = max(
+            0.0, min(1.0, pitcher_stats.luck / 20)
+        )  # Divide first, then cap
         knuckleball_component = pitcher_stats.knuckleball_rate * 5.0
         constant_component = 3.8
 
@@ -165,7 +163,6 @@ class PitcherNerdStats:
             z_pace=z_pace,
             adjusted_velocity=adjusted_velocity,
             adjusted_age=adjusted_age,
-            adjusted_luck=adjusted_luck,
             pnerd_score=pnerd_score,
             xfip_component=xfip_component,
             swinging_strike_component=swinging_strike_component,

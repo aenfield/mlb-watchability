@@ -52,7 +52,7 @@ class TestMarkdownGenerator:
                 z_radio_broadcaster_rating=0.0,
                 adjusted_payroll=0.3,
                 adjusted_age=0.5,
-                adjusted_luck=0.1,
+                adjusted_luck=0.0,
                 adjusted_broadcaster_rating=0.2,
                 adjusted_radio_broadcaster_rating=0.0,
                 tnerd_score=5.2,
@@ -83,7 +83,6 @@ class TestMarkdownGenerator:
                 z_pace=-0.3,
                 adjusted_velocity=0.5,
                 adjusted_age=0.2,
-                adjusted_luck=0.25,
                 pnerd_score=7.0,
             )
         }

@@ -124,7 +124,6 @@ class TestPitcherNerdStats:
             z_pace=0.2,
             adjusted_velocity=1.5,
             adjusted_age=0.0,
-            adjusted_luck=0.0,
             pnerd_score=12.5,
         )
 
@@ -137,7 +136,6 @@ class TestPitcherNerdStats:
         assert nerd_stats.z_pace == 0.2
         assert nerd_stats.adjusted_velocity == 1.5
         assert nerd_stats.adjusted_age == 0.0
-        assert nerd_stats.adjusted_luck == 0.0
         assert nerd_stats.pnerd_score == 12.5
 
 
@@ -202,7 +200,6 @@ class TestPitcherNerdStatsFromStatsAndMeans:
         assert (
             nerd_stats.adjusted_age == 0.75
         )  # -z_age = -(-0.75) = 0.75, younger is better
-        assert nerd_stats.adjusted_luck == 1.0  # luck is 5.0, capped at 1.0
 
         # Check pNERD score calculation
         expected_pnerd = (
@@ -214,7 +211,9 @@ class TestPitcherNerdStatsFromStatsAndMeans:
             + 1.0  # adjusted_velocity
             + 0.75  # adjusted_age
             + (1.0 / 2)  # -z_pace / 2 (faster pace is better)
-            + (1.0 / 20)  # adjusted_luck / 20
+            + (
+                0.25
+            )  # max(0.0, min(1.0, luck / 20)) = max(0.0, min(1.0, 5.0 / 20)) = 0.25
             + (0.0 * 5)  # knuckleball_rate * 5
             + 3.8  # constant
         )
@@ -273,7 +272,9 @@ class TestPitcherNerdStatsFromStatsAndMeans:
         # Check that caps are applied
         assert nerd_stats.adjusted_velocity == 2.0  # Should be capped at 2.0
         assert nerd_stats.adjusted_age == 1.75  # -z_age = -(-1.75) = 1.75, not capped
-        assert nerd_stats.adjusted_luck == 1.0  # Should be capped at 1.0
+        assert nerd_stats.luck_component == pytest.approx(
+            1.0
+        )  # luck_component = min(1.0, 25.0 / 20) = 1.0 (capped)
 
     def test_from_stats_and_means_negative_adjustments(self) -> None:
         """Test that negative values are set to zero for velocity, age, and luck."""
@@ -299,7 +300,9 @@ class TestPitcherNerdStatsFromStatsAndMeans:
         # Check that negative values are set to zero
         assert nerd_stats.adjusted_velocity == 0.0  # z_velocity is negative
         assert nerd_stats.adjusted_age == 0.0  # -z_age = -(2.25) = -2.25, set to 0.0
-        assert nerd_stats.adjusted_luck == 0.0  # luck is negative
+        assert nerd_stats.luck_component == pytest.approx(
+            0.0
+        )  # luck is negative, so component is 0.0
 
 
 class TestPitcherFormatting:
@@ -516,7 +519,6 @@ class TestFindPitcherNerdStatsFuzzy:
             z_pace=0.2,
             adjusted_velocity=1.5,
             adjusted_age=0.3,
-            adjusted_luck=0.0,
             pnerd_score=8.5,
         )
 
@@ -530,7 +532,6 @@ class TestFindPitcherNerdStatsFuzzy:
             z_pace=0.5,
             adjusted_velocity=1.0,
             adjusted_age=0.8,
-            adjusted_luck=0.1,
             pnerd_score=7.2,
         )
 
@@ -626,7 +627,6 @@ class TestFindPitcherNerdStatsFuzzy:
             z_pace=0.0,
             adjusted_velocity=0.0,
             adjusted_age=0.0,
-            adjusted_luck=0.0,
             pnerd_score=5.0,
         )
 
@@ -704,9 +704,9 @@ class TestPitcherNerdStatsComponents:
         # pace_component = -(-0.25) / 2 = 0.125
         assert nerd_stats.pace_component == pytest.approx(0.125)
 
-        # luck = 2.5, adjusted_luck = max(0.0, min(1.0, 2.5)) = 1.0
-        # luck_component = 1.0 / 20 = 0.05
-        assert nerd_stats.luck_component == pytest.approx(0.05)
+        # luck = 2.5
+        # luck_component = max(0.0, min(1.0, 2.5 / 20)) = max(0.0, min(1.0, 0.125)) = 0.125
+        assert nerd_stats.luck_component == pytest.approx(0.125)
 
         # knuckleball_rate = 0.0
         # knuckleball_component = 0.0 * 5 = 0.0
