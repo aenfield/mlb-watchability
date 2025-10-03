@@ -89,6 +89,7 @@ jobs:
           name: mlb-watchability-markdown
           path: mlb_what_to_watch_*.md
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Checkout blog repository
         uses: actions/checkout@v4
@@ -108,8 +109,8 @@ jobs:
             echo "Copying $MARKDOWN_FILE to blog repository"
             cp "$MARKDOWN_FILE" blog-repo/content/blog/mlbw/
           else
-            echo "No markdown file found to copy"
-            exit 1
+            echo "No markdown file found to copy (likely no games scheduled for today)"
+            echo "This is expected behavior when there are no MLB games - skipping copy step"
           fi
 
       - name: Commit and push to blog repository
