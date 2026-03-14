@@ -1405,6 +1405,39 @@ class TestCallActualAPI:
             assert isinstance(source["url"], str), "URL should be a string"
             assert isinstance(source["title"], str), "Title should be a string"
 
+    @pytest.mark.costly
+    def test_anthropic_real_api_call_full_model(self) -> None:
+        """Test Anthropic client with real API call using the full model."""
+        params = create_anthropic_params(
+            max_tokens=100, temperature=0.0, include_web_search=False
+        )
+        text, sources = generate_text_from_llm(
+            prompt=TEST_PROMPT_MARINERS_GAME,
+            params=params,
+            model=ANTHROPIC_MODEL_FULL,
+        )
+
+        assert len(text) > 0
+        assert sources == []
+
+    @pytest.mark.costly
+    def test_openai_real_api_call_full_model(self) -> None:
+        """Test OpenAI client with real API call using the full model."""
+        client = create_llm_client(provider="openai", model="full")
+
+        params = create_openai_params(
+            reasoning_effort="medium",
+            verbosity="low",
+            include_web_search=False,
+            use_system_prompt=True,
+        )
+        response = client.generate_text(prompt=TEST_PROMPT_MARINERS_GAME, params=params)
+
+        assert isinstance(response, LLMResponse)
+        assert response.model == OPENAI_MODEL_FULL
+        assert len(response.content) > 0
+        assert response.web_sources == []
+
 
 class TestUtilityFunctions:
     """Test utility functions from the llm_client module."""

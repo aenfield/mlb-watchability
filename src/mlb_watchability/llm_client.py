@@ -85,11 +85,11 @@ class OpenAIParams(LLMParams):
 
 # Model constants
 # Anthropic Models
-ANTHROPIC_MODEL_FULL = "claude-sonnet-4-5-20250929"
-ANTHROPIC_MODEL_CHEAP = "claude-3-5-haiku-latest"
+ANTHROPIC_MODEL_FULL = "claude-sonnet-4-6"
+ANTHROPIC_MODEL_CHEAP = "claude-haiku-4-5-20251001"
 
 # OpenAI Models
-OPENAI_MODEL_FULL = "gpt-5"
+OPENAI_MODEL_FULL = "gpt-5.4"
 OPENAI_MODEL_CHEAP = "gpt-5-mini"
 
 
