@@ -48,10 +48,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
 
@@ -92,7 +92,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Checkout blog repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: aenfield/blog-eleventy
           token: ${{ secrets.BLOG_REPO_TOKEN }}
