@@ -95,6 +95,9 @@ def get_game_schedule(date: str) -> list[dict[str, Any]]:
         return games
 
 
+MIN_IP_FOR_PITCHER_STATS = 20
+
+
 def get_all_pitcher_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
     """
     Retrieve pitcher statistics for all starting pitchers using pybaseball.
@@ -109,12 +112,16 @@ def get_all_pitcher_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         RuntimeError: If API call fails or data retrieval fails
     """
     try:
-        # Fetch pitcher statistics for the season
-        # Using qual=20 to get starting pitchers with at least 20 innings pitched
-        pitcher_stats_df = pb.pitching_stats(season, qual=20)
+        # Fetch pitcher statistics for the season; qual=1 ensures pybaseball
+        # always gets a valid DataFrame even early in the season when few
+        # pitchers have accumulated innings.
+        pitcher_stats_df = pb.pitching_stats(season, qual=1)
 
-        # Filter for starting pitchers only (pitchers with at least 1 game started)
-        starting_pitchers = pitcher_stats_df[pitcher_stats_df["GS"] > 0]
+        # Filter for starting pitchers with at least 1 GS and MIN_IP_FOR_PITCHER_STATS IP
+        starting_pitchers = pitcher_stats_df[
+            (pitcher_stats_df["GS"] >= 1)
+            & (pitcher_stats_df["IP"] >= MIN_IP_FOR_PITCHER_STATS)
+        ]
 
         pitcher_stats_dict = {}
 
@@ -237,6 +244,11 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
             if pd.isna(barrel_rate):
                 barrel_rate = 0.0
 
+            # Handle missing Fld values (fielding runs above average - 0.0 = exactly average)
+            fielding_runs = team_row["Fld"]
+            if pd.isna(fielding_runs):
+                fielding_runs = 0.0
+
             # Convert barrel rate from percentage to decimal if needed
             if barrel_rate > 1.0:
                 barrel_rate = barrel_rate / 100.0
@@ -247,7 +259,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
                 "Bat": team_row["Bat"],
                 "Barrel%": barrel_rate,
                 "BsR": team_row["BsR"],
-                "Fld": team_row["Fld"],
+                "Fld": fielding_runs,
                 "Bullpen": team_row["Bullpen_RAR"],  # Bullpen runs above average
                 "Payroll": payroll_millions,
                 "Payroll_Age": team_row["Payroll_Age"],

@@ -326,7 +326,7 @@ class TestGetAllPitcherStats:
             assert waldron_stats["Strike_Rate"] == 0.59375  # 950/1600
             assert waldron_stats["Luck"] == 5.0  # 110 - 105
 
-            mock_pitching_stats.assert_called_once_with(2024, qual=20)
+            mock_pitching_stats.assert_called_once_with(2024, qual=1)
 
     def test_get_all_pitcher_stats_with_knuckleball_nan(self) -> None:
         """Test that get_all_pitcher_stats handles NaN KN% values correctly."""
@@ -438,7 +438,42 @@ class TestGetAllPitcherStats:
 
             # Should call with the correct season
             assert len(result) == 1
-            mock_pitching_stats.assert_called_once_with(2023, qual=20)
+            mock_pitching_stats.assert_called_once_with(2023, qual=1)
+
+    def test_get_all_pitcher_stats_excludes_pitchers_with_insufficient_ip(
+        self,
+    ) -> None:
+        """Test that pitchers with fewer than 20 IP are excluded from results."""
+
+        mock_pitcher_data = pd.DataFrame(
+            {
+                "Name": ["Early Season Starter", "Established Starter"],
+                "Team": ["AAA", "BBB"],
+                "GS": [1, 5],
+                "IP": [6.0, 30.0],  # 6 IP is below threshold, 30 is above
+                "xFIP-": [100, 95],
+                "SwStr%": [0.10, 0.11],
+                "Strikes": [60, 300],
+                "Pitches": [100, 520],
+                "FBv": [93.0, 92.0],
+                "Age": [25, 29],
+                "Pace": [22.0, 23.0],
+                "ERA-": [100, 90],
+                "KN%": [0.0, 0.0],
+            }
+        )
+
+        with patch(
+            "mlb_watchability.data_retrieval.pb.pitching_stats"
+        ) as mock_pitching_stats:
+            mock_pitching_stats.return_value = mock_pitcher_data
+
+            result = get_all_pitcher_stats(season=2026)
+
+            # Only the pitcher with 30 IP should be included
+            assert len(result) == 1
+            assert "Established Starter" in result
+            assert "Early Season Starter" not in result
 
 
 @pytest.mark.costly
@@ -449,7 +484,7 @@ class TestGetAllPitcherStatsIntegration:
         """Test that get_all_pitcher_stats works with real API data."""
 
         # Call the real API
-        result = get_all_pitcher_stats(season=2025)
+        result = get_all_pitcher_stats(season=2026)
 
         # Basic validation that we got reasonable data
         assert isinstance(result, dict)
@@ -484,6 +519,61 @@ class TestGetAllPitcherStatsIntegration:
 
                 assert isinstance(pitcher_stats["Age"], int | np.integer)
                 assert 18 <= pitcher_stats["Age"] <= 50
+
+
+class TestGetAllTeamStats:
+    """Unit tests for the get_all_team_stats function."""
+
+    def test_get_all_team_stats_replaces_nan_fld_with_zero(self) -> None:
+        """Test that NaN Fld values are replaced with 0.0 (average fielding)."""
+
+        mock_team_batting = pd.DataFrame(
+            {
+                "Team": ["NYY", "LAD"],
+                "Bat": [10.0, 5.0],
+                "Barrel%": [0.08, 0.09],
+                "BsR": [3.0, -1.0],
+                "Fld": [float("nan"), 8.0],  # NYY has no fielding data yet
+                "wRC": [100, 90],
+                "R": [95, 85],
+            }
+        )
+        mock_payroll = pd.DataFrame(
+            {
+                "Team": ["NYY", "LAD"],
+                "Payroll": [300_000_000, 250_000_000],
+                "Age": [28.5, 27.0],
+            }
+        )
+        mock_bullpen = pd.DataFrame({"Team": ["NYY", "LAD"], "Bullpen_RAR": [5.0, 3.0]})
+        mock_broadcaster = pd.DataFrame(
+            {"Team": ["NYY", "LAD"], "Broadcaster_Rating": [3.0, 2.5]}
+        )
+        mock_radio = pd.DataFrame(
+            {"Team": ["NYY", "LAD"], "Radio_Broadcaster_Rating": [2.8, 2.2]}
+        )
+
+        with (
+            patch("mlb_watchability.data_retrieval.pb.team_batting") as mock_tb,
+            patch("mlb_watchability.data_retrieval.pd.read_csv") as mock_csv,
+            patch(
+                "mlb_watchability.data_retrieval.get_all_team_bullpen_stats"
+            ) as mock_bull,
+            patch("mlb_watchability.data_retrieval.get_broadcaster_ratings") as mock_bc,
+            patch(
+                "mlb_watchability.data_retrieval.get_radio_broadcaster_ratings"
+            ) as mock_rbc,
+        ):
+            mock_tb.return_value = mock_team_batting
+            mock_csv.return_value = mock_payroll
+            mock_bull.return_value = mock_bullpen
+            mock_bc.return_value = mock_broadcaster
+            mock_rbc.return_value = mock_radio
+
+            result = get_all_team_stats(season=2026)
+
+            assert result["NYY"]["Fld"] == 0.0
+            assert result["LAD"]["Fld"] == 8.0
 
 
 @pytest.mark.costly
