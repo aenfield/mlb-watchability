@@ -71,7 +71,7 @@ jobs:
           GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
           GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '30' }}"
           LLM_MODEL="${{ github.event.inputs.llm-model || 'normal' }}"
-          LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'openai' }}"
+          LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'anthropic' }}"
 
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
