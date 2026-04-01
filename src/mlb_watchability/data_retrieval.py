@@ -182,7 +182,7 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         team_batting_df = pb.team_batting(season)
 
         # Load payroll data from CSV file
-        payroll_df = pd.read_csv("data/payroll-spotrac.2025.csv")
+        payroll_df = pd.read_csv("data/payroll-spotrac.2026.csv")
 
         # Apply team name mapping to payroll data to match batting stats
         payroll_df["Team"] = payroll_df["Team"].apply(

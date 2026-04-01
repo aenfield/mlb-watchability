@@ -13,7 +13,7 @@ from scipy import stats  # type: ignore
 
 def load_payroll_data() -> pd.DataFrame:
     """Load payroll data from CSV file."""
-    return pd.read_csv("data/payroll-spotrac.2025.csv")
+    return pd.read_csv("data/payroll-spotrac.2026.csv")
 
 
 def get_team_batting_stats() -> Any:
