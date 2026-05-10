@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -880,7 +880,7 @@ requires-dist = [
     { name = "openai", specifier = ">=1.99.0" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "polars", specifier = ">=0.20.0" },
-    { name = "pybaseball", git = "https://github.com/aenfield/pybaseball.git?branch=add-reliever-starter-team-pitching" },
+    { name = "pybaseball", git = "https://github.com/aenfield/pybaseball.git?branch=try-scrape-do" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -1256,7 +1256,7 @@ wheels = [
 [[package]]
 name = "pybaseball"
 version = "2.2.7"
-source = { git = "https://github.com/aenfield/pybaseball.git?branch=add-reliever-starter-team-pitching#7aa71c334d4b7a901684e7dad6c133e3cd9eb8bc" }
+source = { git = "https://github.com/aenfield/pybaseball.git?branch=try-scrape-do#202cc59aa9d208a8c5e19b481e9128693f8acb3e" }
 dependencies = [
     { name = "attrs" },
     { name = "beautifulsoup4" },

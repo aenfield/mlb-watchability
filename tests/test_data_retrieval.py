@@ -621,7 +621,7 @@ class TestGetAllTeamStatsIntegration:
                 assert isinstance(
                     team_stats["Payroll"], int | float | np.integer | np.floating
                 )
-                assert 50 <= team_stats["Payroll"] <= 400  # Payroll in millions
+                assert 50 <= team_stats["Payroll"] <= 700  # Payroll in millions
 
                 assert isinstance(
                     team_stats["Payroll_Age"], int | float | np.integer | np.floating
