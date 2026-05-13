@@ -326,7 +326,25 @@ class TestGetAllPitcherStats:
             assert waldron_stats["Strike_Rate"] == 0.59375  # 950/1600
             assert waldron_stats["Luck"] == 5.0  # 110 - 105
 
-            mock_pitching_stats.assert_called_once_with(2024, qual=1)
+            mock_pitching_stats.assert_called_once_with(
+                2024,
+                qual=1,
+                stat_columns=[
+                    "NAME",
+                    "TEAM",
+                    "AGE",
+                    "GS",
+                    "IP",
+                    "STRIKES",
+                    "PITCHES",
+                    "FBV",
+                    "KN_PCT",
+                    "SWSTR_PCT",
+                    "ERA_MINUS",
+                    "XFIP_MINUS",
+                    "PACE",
+                ],
+            )
 
     def test_get_all_pitcher_stats_with_knuckleball_nan(self) -> None:
         """Test that get_all_pitcher_stats handles NaN KN% values correctly."""
@@ -438,7 +456,25 @@ class TestGetAllPitcherStats:
 
             # Should call with the correct season
             assert len(result) == 1
-            mock_pitching_stats.assert_called_once_with(2023, qual=1)
+            mock_pitching_stats.assert_called_once_with(
+                2023,
+                qual=1,
+                stat_columns=[
+                    "NAME",
+                    "TEAM",
+                    "AGE",
+                    "GS",
+                    "IP",
+                    "STRIKES",
+                    "PITCHES",
+                    "FBV",
+                    "KN_PCT",
+                    "SWSTR_PCT",
+                    "ERA_MINUS",
+                    "XFIP_MINUS",
+                    "PACE",
+                ],
+            )
 
     def test_get_all_pitcher_stats_excludes_pitchers_with_insufficient_ip(
         self,

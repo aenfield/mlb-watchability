@@ -115,7 +115,25 @@ def get_all_pitcher_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
         # Fetch pitcher statistics for the season; qual=1 ensures pybaseball
         # always gets a valid DataFrame even early in the season when few
         # pitchers have accumulated innings.
-        pitcher_stats_df = pb.pitching_stats(season, qual=1)
+        pitcher_stats_df = pb.pitching_stats(
+            season,
+            qual=1,
+            stat_columns=[
+                "NAME",
+                "TEAM",
+                "AGE",
+                "GS",
+                "IP",
+                "STRIKES",
+                "PITCHES",
+                "FBV",
+                "KN_PCT",
+                "SWSTR_PCT",
+                "ERA_MINUS",
+                "XFIP_MINUS",
+                "PACE",
+            ],
+        )
 
         # Filter for starting pitchers with at least 1 GS and MIN_IP_FOR_PITCHER_STATS IP
         starting_pitchers = pitcher_stats_df[
@@ -179,7 +197,19 @@ def get_all_team_stats(season: int = 2025) -> dict[str, dict[str, Any]]:
     """
     try:
         # Fetch team batting statistics for the season
-        team_batting_df = pb.team_batting(season)
+        team_batting_df = pb.team_batting(
+            season,
+            stat_columns=[
+                "NAME",
+                "TEAM",
+                "R",
+                "WRC",
+                "BATTING",
+                "FIELDING",
+                "BASE_RUNNING",
+                "BARREL_PCT",
+            ],
+        )
 
         # Load payroll data from CSV file
         payroll_df = pd.read_csv("data/payroll-spotrac.2026.csv")
@@ -293,7 +323,10 @@ def get_all_team_bullpen_stats(season: int = 2025) -> pd.DataFrame:
     """
     try:
         # Fetch team bullpen statistics for the season
-        bullpen_stats_df = pb.team_pitching_relievers(season)
+        bullpen_stats_df = pb.team_pitching_relievers(
+            season,
+            stat_columns=["NAME", "TEAM", "RAR"],
+        )
 
         # Rename RAR to Bullpen_RAR to avoid conflicts during merge
         bullpen_stats_df = bullpen_stats_df.rename(columns={"RAR": "Bullpen_RAR"})

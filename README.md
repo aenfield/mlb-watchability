@@ -28,8 +28,8 @@ As of early August 2025, every day, code automatically:
 - **Format code**: `uv run black .`
 - **Check types**: `uv run mypy .`
 - **Install dependencies**: `uv sync`
-- `./run_all_checks.sh` runs normal tests, lints, formats, and checks types
-- `./run_all_checks.sh --include-costly` runs all tests, lints, formats, and checks types
+- `./run-all-checks.sh` runs normal tests, lints, formats, and checks types
+- `./run-all-checks.sh --include-costly` runs all tests, lints, formats, and checks types
 
 ### Other commands
 
