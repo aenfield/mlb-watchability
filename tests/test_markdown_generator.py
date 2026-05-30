@@ -557,6 +557,48 @@ tags: mlbw
         )
         assert "### Gerrit Cole, New York Yankees" in result_away
 
+    def test_generate_pitcher_breakdown_table_none_velocity(self) -> None:
+        """Test that None velocity displays as '--' in both raw stat and z-score rows."""
+        pitcher_stats = PitcherStats(
+            name="Mason Fluharty",
+            team="TOR",
+            xfip_minus=100,
+            swinging_strike_rate=0.09,
+            strike_rate=0.62,
+            velocity=None,
+            age=25,
+            pace=20.0,
+            luck=0.0,
+            knuckleball_rate=0.0,
+        )
+
+        pitcher_nerd_stats = MagicMock()
+        pitcher_nerd_stats.pitcher_stats = pitcher_stats
+        pitcher_nerd_stats.z_xfip_minus = 0.0
+        pitcher_nerd_stats.z_swinging_strike_rate = 0.0
+        pitcher_nerd_stats.z_strike_rate = 0.0
+        pitcher_nerd_stats.z_velocity = 0.0
+        pitcher_nerd_stats.z_age = 0.0
+        pitcher_nerd_stats.z_pace = 0.0
+        pitcher_nerd_stats.xfip_component = 0.0
+        pitcher_nerd_stats.swinging_strike_component = 0.0
+        pitcher_nerd_stats.strike_component = 0.0
+        pitcher_nerd_stats.velocity_component = 0.0
+        pitcher_nerd_stats.age_component = 0.0
+        pitcher_nerd_stats.pace_component = 0.0
+        pitcher_nerd_stats.luck_component = 0.0
+        pitcher_nerd_stats.knuckleball_component = 0.0
+        pitcher_nerd_stats.constant_component = 3.80
+        pitcher_nerd_stats.pnerd_score = 3.80
+
+        result = generate_pitcher_breakdown_table(
+            "Mason Fluharty", pitcher_nerd_stats, "Toronto Blue Jays"
+        )
+
+        # Raw velocity and z-score should both show '--', not a number or 'nan'
+        assert "-- " in result  # '--' in raw stat row
+        assert "mph" not in result  # no velocity value shown
+
     def test_generate_game_detail_section(self) -> None:
         """Test game detail section generation."""
 

@@ -1,5 +1,7 @@
 """Unit tests for pitcher statistics data structures."""
 
+import math
+
 import pytest
 
 from mlb_watchability.pitcher_stats import (
@@ -58,6 +60,22 @@ class TestPitcherStats:
 
         assert stats.knuckleball_rate == 0.85
         assert stats.velocity == 72.5  # Low velocity for knuckleball
+
+    def test_pitcher_stats_allows_none_velocity(self) -> None:
+        """Test that PitcherStats can be created with None velocity for pitchers without FBv data."""
+        stats = PitcherStats(
+            name="Mason Fluharty",
+            team="TOR",
+            xfip_minus=100,
+            swinging_strike_rate=0.09,
+            strike_rate=0.62,
+            velocity=None,
+            age=25,
+            pace=20.0,
+            luck=0.0,
+            knuckleball_rate=0.0,
+        )
+        assert stats.velocity is None
 
     def test_empty_name_validation(self) -> None:
         """Test that empty pitcher name raises ValueError."""
@@ -275,6 +293,32 @@ class TestPitcherNerdStatsFromStatsAndMeans:
         assert nerd_stats.luck_component == pytest.approx(
             1.0
         )  # luck_component = min(1.0, 25.0 / 20) = 1.0 (capped)
+
+    def test_from_stats_and_means_with_none_velocity(self) -> None:
+        """Test that None velocity results in zero velocity contribution and a valid pNERD score."""
+        pitcher_stats = PitcherStats(
+            name="No Velocity Pitcher",
+            team="TOR",
+            xfip_minus=100,
+            swinging_strike_rate=0.11,
+            strike_rate=0.64,
+            velocity=None,
+            age=29,
+            pace=20.0,
+            luck=0.0,
+            knuckleball_rate=0.0,
+        )
+
+        league_means, league_std_devs = self.create_sample_league_stats()
+
+        nerd_stats = PitcherNerdStats.from_stats_and_means(
+            pitcher_stats, league_means, league_std_devs
+        )
+
+        assert nerd_stats.z_velocity == 0.0
+        assert nerd_stats.adjusted_velocity == 0.0
+        assert nerd_stats.velocity_component == 0.0
+        assert not math.isnan(nerd_stats.pnerd_score)
 
     def test_from_stats_and_means_negative_adjustments(self) -> None:
         """Test that negative values are set to zero for velocity, age, and luck."""

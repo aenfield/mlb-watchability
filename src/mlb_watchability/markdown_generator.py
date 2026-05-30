@@ -364,8 +364,17 @@ def generate_pitcher_breakdown_table(
     """
     pitcher_stats = pitcher_nerd_stats.pitcher_stats
 
-    # Format velocity with mph suffix
-    velocity_str = f"{pitcher_stats.velocity:.1f} mph"
+    # Format velocity with mph suffix, or '--' if FBv data is unavailable
+    velocity_str = (
+        f"{pitcher_stats.velocity:.1f} mph"
+        if pitcher_stats.velocity is not None
+        else "--"
+    )
+    z_velocity_str = (
+        f"{pitcher_nerd_stats.z_velocity:.2f}"
+        if pitcher_stats.velocity is not None
+        else "--"
+    )
 
     # Format pace with seconds suffix
     pace_str = f"{pitcher_stats.pace:.1f}s"
@@ -390,7 +399,7 @@ def generate_pitcher_breakdown_table(
         f"| {pitcher_nerd_stats.z_xfip_minus:.2f} "
         f"| {pitcher_nerd_stats.z_swinging_strike_rate:.2f} "
         f"| {pitcher_nerd_stats.z_strike_rate:.2f} "
-        f"| {pitcher_nerd_stats.z_velocity:.2f} "
+        f"| {z_velocity_str} "
         f"| {pitcher_nerd_stats.z_age:.2f} "
         f"| {pitcher_nerd_stats.z_pace:.2f} "
         f"| — "

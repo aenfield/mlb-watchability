@@ -26,7 +26,9 @@ class PitcherStats:
     xfip_minus: float  # xFIP- (lower is better)
     swinging_strike_rate: float  # SwStr% (higher is better)
     strike_rate: float  # Strike% (higher is better)
-    velocity: float  # Average fastball velocity in mph (higher is better)
+    velocity: (
+        float | None
+    )  # Average fastball velocity in mph (higher is better); None if FBv data unavailable
     age: int  # Age in years
     pace: float  # Pace between pitches in seconds (lower is better)
     luck: float  # ERA- minus xFIP- (can be positive or negative)
@@ -115,9 +117,12 @@ class PitcherNerdStats:
             pitcher_stats.strike_rate - league_means["strike_rate"]
         ) / league_std_devs["strike_rate"]
 
-        z_velocity = (
-            pitcher_stats.velocity - league_means["velocity"]
-        ) / league_std_devs["velocity"]
+        if pitcher_stats.velocity is None:
+            z_velocity = 0.0
+        else:
+            z_velocity = (
+                pitcher_stats.velocity - league_means["velocity"]
+            ) / league_std_devs["velocity"]
 
         z_age = (pitcher_stats.age - league_means["age"]) / league_std_devs["age"]
 
@@ -202,7 +207,7 @@ def get_all_pitcher_stats_objects(season: int = 2025) -> dict[str, PitcherStats]
                 xfip_minus=raw_stats["xFIP-"],
                 swinging_strike_rate=raw_stats["SwStr%"],
                 strike_rate=raw_stats["Strike_Rate"],
-                velocity=raw_stats["FBv"],
+                velocity=None if pd.isna(raw_stats["FBv"]) else raw_stats["FBv"],
                 age=raw_stats["Age"],
                 pace=raw_stats["Pace"],
                 luck=raw_stats["Luck"],
@@ -237,11 +242,14 @@ def calculate_detailed_pitcher_nerd_scores(
     # Calculate league means and standard deviations
     all_pitchers = list(pitcher_stats_dict.values())
 
-    # Extract values for each stat
+    # Extract values for each stat; filter out None velocities so a single pitcher
+    # without FBv data doesn't corrupt the league mean/std for everyone
     xfip_minus_values = [pitcher.xfip_minus for pitcher in all_pitchers]
     swinging_strike_rates = [pitcher.swinging_strike_rate for pitcher in all_pitchers]
     strike_rates = [pitcher.strike_rate for pitcher in all_pitchers]
-    velocities = [pitcher.velocity for pitcher in all_pitchers]
+    velocities = [
+        pitcher.velocity for pitcher in all_pitchers if pitcher.velocity is not None
+    ]
     ages = [pitcher.age for pitcher in all_pitchers]
     paces = [pitcher.pace for pitcher in all_pitchers]
 
