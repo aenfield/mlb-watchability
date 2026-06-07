@@ -7,6 +7,7 @@ from pathlib import Path
 import typer
 from dotenv import load_dotenv
 
+from pybaseball.datasources.http_fetcher import get_scrape_do_config
 from .data_retrieval import get_game_schedule
 from .game_scores import GameScore
 from .markdown_generator import (
@@ -56,9 +57,20 @@ def main(
     else:
         logger.debug("No .env file found or loaded")
 
-    # Log current LLM retry configuration
+    # Log current retry configuration
     llm_retries_enabled = os.getenv("ENABLE_LLM_RETRIES", "")
     logger.info(f"ENABLE_LLM_RETRIES environment variable: '{llm_retries_enabled}'")
+    scrape_do_config = get_scrape_do_config()
+    scrape_do_max_retries_raw = os.getenv("SCRAPE_DO_MAX_RETRIES", "")
+    logger.info(
+        f"SCRAPE_DO_MAX_RETRIES environment variable: '{scrape_do_max_retries_raw}'"
+        + (f" (default: {scrape_do_config['max_retries']})" if not scrape_do_max_retries_raw else "")
+    )
+    scrape_do_backoff_raw = os.getenv("SCRAPE_DO_BACKOFF_ENABLED", "")
+    logger.info(
+        f"SCRAPE_DO_BACKOFF_ENABLED environment variable: '{scrape_do_backoff_raw}'"
+        + (f" (default: {str(scrape_do_config['backoff_enabled']).lower()})" if not scrape_do_backoff_raw else "")
+    )
 
     # Handle parameter defaults and validation
     if game_desc_source is not None and game_desc_limit is None:

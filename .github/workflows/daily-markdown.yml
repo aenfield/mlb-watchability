@@ -41,6 +41,19 @@ on:
           - openai
           - anthropic
         default: openai
+      scrape-do-max-retries:
+        description: "Max scrape.do retry attempts for 502 errors (defaults to 7)"
+        required: false
+        type: string
+        default: "7"
+      scrape-do-backoff-enabled:
+        description: "Enable exponential backoff between scrape.do retries (defaults to 'true')"
+        required: false
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "true"
 
 jobs:
   generate-markdown:
@@ -66,6 +79,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DAILYGEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_DAILYGEN }}
           SCRAPE_DO_API_KEY: ${{ secrets.SCRAPE_DO_API_KEY }}
+          SCRAPE_DO_MAX_RETRIES: ${{ github.event.inputs.scrape-do-max-retries || '7' }}
+          SCRAPE_DO_BACKOFF_ENABLED: ${{ github.event.inputs.scrape-do-backoff-enabled || 'true' }}
           ENABLE_LLM_RETRIES: "true"
         run: |
           # Use defaults for scheduled runs (where the first parts will be empty)
