@@ -6,8 +6,8 @@ from pathlib import Path
 
 import typer
 from dotenv import load_dotenv
-
 from pybaseball.datasources.http_fetcher import get_scrape_do_config
+
 from .data_retrieval import get_game_schedule
 from .game_scores import GameScore
 from .markdown_generator import (
@@ -64,12 +64,20 @@ def main(
     scrape_do_max_retries_raw = os.getenv("SCRAPE_DO_MAX_RETRIES", "")
     logger.info(
         f"SCRAPE_DO_MAX_RETRIES environment variable: '{scrape_do_max_retries_raw}'"
-        + (f" (default: {scrape_do_config['max_retries']})" if not scrape_do_max_retries_raw else "")
+        + (
+            f" (default: {scrape_do_config['max_retries']})"
+            if not scrape_do_max_retries_raw
+            else ""
+        )
     )
     scrape_do_backoff_raw = os.getenv("SCRAPE_DO_BACKOFF_ENABLED", "")
     logger.info(
         f"SCRAPE_DO_BACKOFF_ENABLED environment variable: '{scrape_do_backoff_raw}'"
-        + (f" (default: {str(scrape_do_config['backoff_enabled']).lower()})" if not scrape_do_backoff_raw else "")
+        + (
+            f" (default: {str(scrape_do_config['backoff_enabled']).lower()})"
+            if not scrape_do_backoff_raw
+            else ""
+        )
     )
 
     # Handle parameter defaults and validation
