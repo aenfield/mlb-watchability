@@ -2,8 +2,8 @@ name: Daily MLB Watchability Markdown
 
 on:
   schedule:
-    # Run every day at 5:30 AM Pacific Time (1230 UTC during PDT)
-    - cron: "30 12 * * *"
+    # Run every day at 8:30 AM Pacific Time (1530 UTC during PDT)
+    - cron: "30 15 * * *"
 
   # Allow manual triggering, with particular defaults suitable for manually triggered jobs
   workflow_dispatch:
@@ -42,10 +42,10 @@ on:
           - anthropic
         default: openai
       scrape-do-max-retries:
-        description: "Max scrape.do retry attempts for 502 errors (defaults to 7)"
+        description: "Max scrape.do retry attempts for 502 errors (defaults to 15)"
         required: false
         type: string
-        default: "7"
+        default: "15"
       scrape-do-backoff-enabled:
         description: "Enable exponential backoff between scrape.do retries (defaults to 'true')"
         required: false
@@ -79,7 +79,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DAILYGEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_DAILYGEN }}
           SCRAPE_DO_API_KEY: ${{ secrets.SCRAPE_DO_API_KEY }}
-          SCRAPE_DO_MAX_RETRIES: ${{ github.event.inputs.scrape-do-max-retries || '7' }}
+          SCRAPE_DO_MAX_RETRIES: ${{ github.event.inputs.scrape-do-max-retries || '15' }}
           SCRAPE_DO_BACKOFF_ENABLED: ${{ github.event.inputs.scrape-do-backoff-enabled || 'true' }}
           ENABLE_LLM_RETRIES: "true"
         run: |

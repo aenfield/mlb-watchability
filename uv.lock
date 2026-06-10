@@ -1256,7 +1256,7 @@ wheels = [
 [[package]]
 name = "pybaseball"
 version = "2.2.7"
-source = { git = "https://github.com/aenfield/pybaseball.git?branch=try-scrape-do#bf66f28fbbaa6eb69428719b012ce009e71ccc1b" }
+source = { git = "https://github.com/aenfield/pybaseball.git?branch=try-scrape-do#589993945c8b14afd5b04f689dc0ac6cc2ff284f" }
 dependencies = [
     { name = "attrs" },
     { name = "beautifulsoup4" },
