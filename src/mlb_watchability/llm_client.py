@@ -89,8 +89,8 @@ ANTHROPIC_MODEL_FULL = "claude-sonnet-4-6"
 ANTHROPIC_MODEL_CHEAP = "claude-haiku-4-5-20251001"
 
 # OpenAI Models
-OPENAI_MODEL_FULL = "gpt-5.4"
-OPENAI_MODEL_CHEAP = "gpt-5-mini"
+OPENAI_MODEL_FULL = "gpt-5.6-terra"
+OPENAI_MODEL_CHEAP = "gpt-5.6-luna"
 
 
 def _raise_empty_response_error() -> None:
@@ -501,11 +501,12 @@ class OpenAIClient(LLMClient):
 
             # per https://platform.openai.com/docs/guides/tools-web-search as of 8/8/25, tool_choice forces the use of
             # web search, which "can help ensure lower latency and more consistent results", so we'll use it... but
-            # gpt-5-mini doesn't support its use, so we'll only include it when we're not gpt-5-mini
-            # actually, per the following this (and concise mode for results?) are both borked right now:
+            # gpt-5-mini didn't support its use as of 8/8/25, so it was only included when not gpt-5-mini
+            # as of that date it was also reported as borked for gpt-5-mini specifically:
             # https://github.com/openai/openai-python/issues/2537?utm_source=chatgpt.com
-            # if model_to_use != OPENAI_MODEL_CHEAP:
-            # request_params["tool_choice"] = {"type": "web_search_preview"}
+            # re-enabling unconditionally (including for the cheap model) to test whether this still holds
+            # for the newer gpt-5.6 models - if the cheap model call errors, this is why
+            request_params["tool_choice"] = {"type": "web_search_preview"}
 
             # Create response with Responses API with retry logic
             # @retry(
