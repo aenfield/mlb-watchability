@@ -499,14 +499,14 @@ class OpenAIClient(LLMClient):
                     {"type": "web_search_preview", "search_context_size": "medium"}
                 ]
 
-            # per https://platform.openai.com/docs/guides/tools-web-search as of 8/8/25, tool_choice forces the use of
-            # web search, which "can help ensure lower latency and more consistent results", so we'll use it... but
-            # gpt-5-mini didn't support its use as of 8/8/25, so it was only included when not gpt-5-mini
-            # as of that date it was also reported as borked for gpt-5-mini specifically:
-            # https://github.com/openai/openai-python/issues/2537?utm_source=chatgpt.com
-            # re-enabling unconditionally (including for the cheap model) to test whether this still holds
-            # for the newer gpt-5.6 models - if the cheap model call errors, this is why
-            request_params["tool_choice"] = {"type": "web_search_preview"}
+                # per https://platform.openai.com/docs/guides/tools-web-search as of 8/8/25, tool_choice forces the use of
+                # web search, which "can help ensure lower latency and more consistent results", so we'll use it... but
+                # gpt-5-mini didn't support its use as of 8/8/25, so it was only included when not gpt-5-mini
+                # as of that date it was also reported as borked for gpt-5-mini specifically:
+                # https://github.com/openai/openai-python/issues/2537?utm_source=chatgpt.com
+                # re-enabling unconditionally (including for the cheap model) - confirmed working via a live
+                # 3-game mlbw-markdown run on 2026-07-11 against gpt-5.6-luna, no errors
+                request_params["tool_choice"] = {"type": "web_search_preview"}
 
             # Create response with Responses API with retry logic
             # @retry(
