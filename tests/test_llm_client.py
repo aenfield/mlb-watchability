@@ -281,11 +281,11 @@ class TestAnthropicClient:
                 "web_search_requests": 0,
             }
 
-            # Verify the API call
+            # Verify the API call. `temperature` is deliberately omitted - Sonnet 5
+            # and other current-gen models reject non-default sampling params.
             mock_client.messages.create.assert_called_once_with(
                 model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
-                temperature=0.5,
                 max_tokens=150,
             )
 
@@ -315,7 +315,6 @@ class TestAnthropicClient:
             mock_client.messages.create.assert_called_once_with(
                 model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
-                temperature=0.7,
                 max_tokens=1000,
             )
 
@@ -1295,11 +1294,12 @@ class TestIntegrationScenarios:
                     "web_search_requests": 0,
                 }
 
-                # Verify the API was called correctly
+                # Verify the API was called correctly. `temperature` is deliberately
+                # omitted - Sonnet 5 and other current-gen models reject non-default
+                # sampling params with a 400, so it's no longer sent to the API.
                 expected_call = {
                     "model": ANTHROPIC_MODEL_CHEAP,
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.8,
                     "max_tokens": 100,
                 }
                 mock_client.messages.create.assert_called_once_with(**expected_call)

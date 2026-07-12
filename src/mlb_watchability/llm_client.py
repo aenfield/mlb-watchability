@@ -85,8 +85,8 @@ class OpenAIParams(LLMParams):
 
 # Model constants
 # Anthropic Models
-ANTHROPIC_MODEL_FULL = "claude-sonnet-4-6"
-ANTHROPIC_MODEL_CHEAP = "claude-haiku-4-5-20251001"
+ANTHROPIC_MODEL_FULL = "claude-sonnet-5"
+ANTHROPIC_MODEL_CHEAP = "claude-haiku-4-5"
 
 # OpenAI Models
 OPENAI_MODEL_FULL = "gpt-5.6-terra"
@@ -287,11 +287,12 @@ class AnthropicClient(LLMClient):
         model_to_use = model or self.default_model
 
         try:
-            # Prepare request parameters
+            # Prepare request parameters. `temperature` is intentionally not sent -
+            # Sonnet 5 and other current-gen models reject non-default sampling
+            # params (temperature/top_p/top_k) with a 400 error.
             request_params: dict[str, Any] = {
                 "model": model_to_use,
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": params.temperature,
                 "max_tokens": params.max_tokens
                 or 1000,  # Anthropic requires max_tokens
             }

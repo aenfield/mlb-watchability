@@ -26,21 +26,21 @@ on:
         type: string
         default: "1"
       llm-model:
-        description: "LLM model to use ('normal' or 'cheap', defaults to 'cheap')"
+        description: "LLM model to use ('normal' or 'cheap', defaults to 'normal')"
         required: false
         type: choice
         options:
           - normal
           - cheap
-        default: cheap
+        default: normal
       llm-provider:
-        description: "LLM model provider ('anthropic' or 'openai', defaults to 'openai')"
+        description: "LLM model provider ('anthropic' or 'openai', defaults to 'anthropic')"
         required: false
         type: choice
         options:
-          - openai
           - anthropic
-        default: openai
+          - openai
+        default: anthropic
       scrape-do-max-retries:
         description: "Max scrape.do retry attempts for 502 errors (defaults to 15)"
         required: false
@@ -86,8 +86,8 @@ jobs:
           # Use defaults for scheduled runs (where the first parts will be empty)
           GAME_DESC_SOURCE="${{ github.event.inputs.game-desc-source || 'llm' }}"
           GAME_DESC_LIMIT="${{ github.event.inputs.game-desc-limit || '30' }}"
-          LLM_MODEL="${{ github.event.inputs.llm-model || 'cheap' }}"
-          LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'openai' }}"
+          LLM_MODEL="${{ github.event.inputs.llm-model || 'normal' }}"
+          LLM_PROVIDER="${{ github.event.inputs.llm-provider || 'anthropic' }}"
 
           if [ -n "${{ github.event.inputs.date }}" ]; then
             echo "Running mlbw-markdown with specified date: ${{ github.event.inputs.date }}"
