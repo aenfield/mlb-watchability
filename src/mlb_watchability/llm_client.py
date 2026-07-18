@@ -53,6 +53,7 @@ class AnthropicParams(LLMParams):
     max_tokens: int | None = None
     temperature: float = 0.7
     include_web_search: bool = False
+    effort: str = "medium"
 
 
 @dataclass
@@ -290,11 +291,20 @@ class AnthropicClient(LLMClient):
             # Prepare request parameters. `temperature` is intentionally not sent -
             # Sonnet 5 and other current-gen models reject non-default sampling
             # params (temperature/top_p/top_k) with a 400 error.
+            #
+            # `thinking: {"type": "adaptive"}` + `output_config.effort` steer Sonnet
+            # 5's adaptive thinking (on by default since Sonnet 5, and it consumes
+            # from the same max_tokens budget as the response text - see
+            # https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking).
+            # `output_config` isn't in the installed SDK's typed signature yet, so it
+            # goes through extra_body.
+            max_tokens_to_use = params.max_tokens or 3000
             request_params: dict[str, Any] = {
                 "model": model_to_use,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": params.max_tokens
-                or 1000,  # Anthropic requires max_tokens
+                "max_tokens": max_tokens_to_use,  # Anthropic requires max_tokens
+                "thinking": {"type": "adaptive"},
+                "extra_body": {"output_config": {"effort": params.effort}},
             }
 
             # Add web search tool if requested
@@ -310,11 +320,31 @@ class AnthropicClient(LLMClient):
             # Log prompt character counts (Anthropic doesn't use system prompts in our implementation)
             _log_prompt_character_counts(0, len(prompt))
 
-            logger.debug(
-                f"Making Anthropic request with model: {model_to_use}, web_search: {params.include_web_search}"
+            logger.info(
+                f"Making Anthropic request with model: {model_to_use}, "
+                f"effort: {params.effort}, max_tokens: {max_tokens_to_use}, "
+                f"web_search: {params.include_web_search}"
             )
 
             response = self.client.messages.create(**request_params)
+
+            # Log stop_reason and thinking-token breakdown unconditionally (even if
+            # content ends up empty below) so truncated/empty responses are diagnosable.
+            if hasattr(response, "usage") and response.usage is not None:
+                thinking_tokens = 0
+                if (
+                    hasattr(response.usage, "output_tokens_details")
+                    and response.usage.output_tokens_details is not None
+                ):
+                    thinking_tokens = getattr(
+                        response.usage.output_tokens_details, "thinking_tokens", 0
+                    )
+                logger.info(
+                    f"Anthropic response stop_reason: {response.stop_reason}, "
+                    f"input_tokens: {response.usage.input_tokens}, "
+                    f"output_tokens: {response.usage.output_tokens} "
+                    f"(thinking_tokens: {thinking_tokens})"
+                )
 
             # Extract content from response
             content = ""

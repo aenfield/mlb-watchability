@@ -322,6 +322,10 @@ def main(
         today_season = extract_year_from_date(today)
 
         # Calculate detailed breakdowns
+        # TODO: this duplicates the calculate_detailed_team_nerd_scores/
+        # calculate_detailed_pitcher_nerd_scores calls that GameScore.from_games makes
+        # internally below, so the same season's stats (and the scrape.do calls behind
+        # them) get fetched twice per run. Fetch once and pass the results through.
         team_nerd_details = calculate_detailed_team_nerd_scores(today_season)
         pitcher_nerd_details = calculate_detailed_pitcher_nerd_scores(today_season)
 

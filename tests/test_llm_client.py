@@ -44,12 +44,14 @@ def create_anthropic_params(
     max_tokens: int | None = None,
     temperature: float = 0.7,
     include_web_search: bool = False,
+    effort: str = "medium",
 ) -> AnthropicParams:
     """Helper to create AnthropicParams for tests."""
     return AnthropicParams(
         max_tokens=max_tokens,
         temperature=temperature,
         include_web_search=include_web_search,
+        effort=effort,
     )
 
 
@@ -123,15 +125,17 @@ class TestLLMParams:
         assert params.max_tokens is None
         assert params.temperature == 0.7
         assert params.include_web_search is False
+        assert params.effort == "medium"
 
     def test_anthropic_params_custom_values(self) -> None:
         """Test AnthropicParams with custom values."""
         params = AnthropicParams(
-            max_tokens=500, temperature=0.9, include_web_search=True
+            max_tokens=500, temperature=0.9, include_web_search=True, effort="high"
         )
         assert params.max_tokens == 500
         assert params.temperature == 0.9
         assert params.include_web_search is True
+        assert params.effort == "high"
 
     def test_openai_params_defaults(self) -> None:
         """Test OpenAIParams default values."""
@@ -287,6 +291,8 @@ class TestAnthropicClient:
                 model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 max_tokens=150,
+                thinking={"type": "adaptive"},
+                extra_body={"output_config": {"effort": "medium"}},
             )
 
     def test_generate_text_with_custom_model(self) -> None:
@@ -315,7 +321,35 @@ class TestAnthropicClient:
             mock_client.messages.create.assert_called_once_with(
                 model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
-                max_tokens=1000,
+                max_tokens=3000,
+                thinking={"type": "adaptive"},
+                extra_body={"output_config": {"effort": "medium"}},
+            )
+
+    def test_generate_text_custom_effort(self) -> None:
+        """Test that a non-default effort value is forwarded to the API request."""
+        mock_content_block = Mock()
+        mock_content_block.text = "Generated response"
+
+        mock_response = Mock()
+        mock_response.content = [mock_content_block]
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(api_key="test-key")
+            params = create_anthropic_params(effort="high")
+            client.generate_text("Test prompt", params)
+
+            mock_client.messages.create.assert_called_once_with(
+                model=ANTHROPIC_MODEL_FULL,
+                messages=[{"role": "user", "content": "Test prompt"}],
+                max_tokens=3000,
+                thinking={"type": "adaptive"},
+                extra_body={"output_config": {"effort": "high"}},
             )
 
     def test_generate_text_empty_response(self) -> None:
@@ -1301,6 +1335,8 @@ class TestIntegrationScenarios:
                     "model": ANTHROPIC_MODEL_CHEAP,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 100,
+                    "thinking": {"type": "adaptive"},
+                    "extra_body": {"output_config": {"effort": "medium"}},
                 }
                 mock_client.messages.create.assert_called_once_with(**expected_call)
 
