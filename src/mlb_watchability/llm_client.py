@@ -298,6 +298,12 @@ class AnthropicClient(LLMClient):
             # https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking).
             # `output_config` isn't in the installed SDK's typed signature yet, so it
             # goes through extra_body.
+            # No prompt caching (cache_control) here: investigated 2026-07-18 and
+            # skipped for now - the cacheable static prefix is small (~2.4K tokens)
+            # relative to per-call input token volume (22K-150K, dominated by
+            # web_search tool-use results), so the savings don't justify splitting
+            # this prompt into cached/uncached content blocks. See issue for details
+            # and to revisit: https://github.com/aenfield/mlb-watchability/issues/19
             max_tokens_to_use = params.max_tokens or 3000
             request_params: dict[str, Any] = {
                 "model": model_to_use,
@@ -503,7 +509,17 @@ class OpenAIClient(LLMClient):
         #     )
 
         try:
-            # Prepare request parameters for Responses API
+            # Prepare request parameters for Responses API.
+            #
+            # Prompt caching: the prompt template already puts the static
+            # Instructions/Historic-context sections before the per-game dynamic
+            # content (done in issue #16, 2025-08-10) so OpenAI's automatic prefix
+            # caching could apply. But GPT-5.6 (current default model here) changed
+            # caching to require `prompt_cache_key` for reliable matching, which we
+            # don't set - so it's unclear whether this still gets cache hits the way
+            # it did on the older gpt-5 model in #16. Not verified either way since
+            # production has been on the Anthropic provider since 2026-07-12. See
+            # https://github.com/aenfield/mlb-watchability/issues/19 to revisit.
             request_params: dict[str, Any] = {
                 "model": model_to_use,
                 "input": prompt,
