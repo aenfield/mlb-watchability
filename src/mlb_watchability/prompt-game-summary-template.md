@@ -28,41 +28,41 @@ You're a wry and witty writer who needs to come up with a concise summary of an 
 
 Consider the following historical context from previous games when evaluating the NERD scores, as input to determine how today's scores compare. Don't call this historical summary data 'a recent dataset' or try to describe from where it comes (since you don't know).
 
-gNERD Scores (n=175, nulls=0):
+gNERD Scores (n=2402, nulls=0):
 
-- Mean: 10.11
-- Min: 2.90 (2025-07-27: COL @ BAL)
-- Max: 19.80 (2025-08-02: DET @ PHI)
+- Mean: 10.81
+- Min: 1.60 (2025-09-20: LAA @ COL)
+- Max: 20.20 (2026-08-15: MIL @ LAD)
 - Percentiles:
-- 5%: 5.47
-- 25%: 8.35
-- 50%: 10.10
-- 75%: 12.00
-- 95%: 14.76
+- 5%: 6.30
+- 25%: 8.90
+- 50%: 10.80
+- 75%: 12.60
+- 95%: 15.60
 
-tNERD Scores (n=350, nulls=0):
+tNERD Scores (n=4804, nulls=0):
 
-- Mean: 5.23
-- Min: 1.50 (2025-08-02: SFG)
-- Max: 9.60 (2025-07-23: CHC)
+- Mean: 5.60
+- Min: -1.50 (2026-03-27: ARI)
+- Max: 14.30 (2026-03-31: MIA)
 - Percentiles:
-- 5%: 2.00
-- 25%: 2.90
+- 5%: 1.50
+- 25%: 3.60
 - 50%: 5.60
-- 75%: 6.90
-- 95%: 8.60
+- 75%: 7.60
+- 95%: 9.70
 
-pNERD Scores (n=318, nulls=32):
+pNERD Scores (n=3912, nulls=892):
 
-- Mean: 4.89
-- Min: -2.30 (2025-07-26: Randy Vásquez)
-- Max: 14.60 (2025-07-26: Tarik Skubal)
+- Mean: 5.26
+- Min: -3.50 (2026-08-05: Mitch Bratt)
+- Max: 16.00 (2026-08-15: Jacob Misiorowski)
 - Percentiles:
-- 5%: 0.60
-- 25%: 3.02
-- 50%: 4.55
-- 75%: 6.40
-- 95%: 10.23
+- 5%: 1.00
+- 25%: 3.30
+- 50%: 4.90
+- 75%: 6.90
+- 95%: 10.50
 
 {% if min_gnerd is defined -%}
 
