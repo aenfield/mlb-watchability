@@ -1291,6 +1291,58 @@ class TestGameScores:
         template_data_tbd = game_score_no_date._prepare_template_data()
         assert template_data_tbd["game_date"] == "TBD"
 
+    def test_generate_formatted_prompt_with_missing_pitcher_velocity(self) -> None:
+        """Test that prompt generation doesn't crash when a pitcher has no FBv (velocity) data."""
+        pitcher_no_velocity = PitcherNerdStats(
+            pitcher_stats=PitcherStats(
+                name="No Velocity Pitcher",
+                team="BOS",
+                xfip_minus=95.0,
+                swinging_strike_rate=0.12,
+                strike_rate=0.65,
+                velocity=None,
+                age=28,
+                pace=22.0,
+                luck=5.0,
+                knuckleball_rate=0.0,
+            ),
+            z_xfip_minus=-0.5,
+            z_swinging_strike_rate=1.2,
+            z_strike_rate=0.8,
+            z_velocity=0.0,
+            z_age=-0.3,
+            z_pace=-0.5,
+            adjusted_velocity=0.0,
+            adjusted_age=0.3,
+            pnerd_score=6.8,
+        )
+
+        game_score = GameScore(
+            away_team="Boston Red Sox",
+            home_team="New York Yankees",
+            away_starter="No Velocity Pitcher",
+            home_starter="Jane Starter",
+            game_time="7:05 PM",
+            game_date="2025-07-27",
+            away_team_nerd_score=8.5,
+            home_team_nerd_score=9.7,
+            average_team_nerd_score=9.1,
+            away_pitcher_nerd_score=6.8,
+            home_pitcher_nerd_score=7.5,
+            average_pitcher_nerd_score=7.15,
+            gnerd_score=16.25,
+            away_team_nerd_stats=self.TEAM_BOS_BASE,
+            home_team_nerd_stats=self.TEAM_NYY_BASE,
+            away_pitcher_nerd_stats=pitcher_no_velocity,
+            home_pitcher_nerd_stats=self.PITCHER_JANE_BASE,
+        )
+
+        # Should not raise, even though away pitcher's velocity is None
+        formatted_prompt = game_score.generate_formatted_prompt()
+
+        assert "No Velocity Pitcher" in formatted_prompt
+        assert "-- mph" in formatted_prompt
+
     def test_from_games_extracts_game_date(self) -> None:
         """Test that from_games method extracts and stores game_date from game dictionaries."""
         games = [

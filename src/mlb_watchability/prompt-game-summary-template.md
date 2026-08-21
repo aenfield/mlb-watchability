@@ -127,7 +127,7 @@ Most lines have a calculated number, the z-score of that calculated number, and 
 - xFIP-: {{ "%.1f"|format(away_pitcher_xfip_minus) }} (z-score: {{ "%.2f"|format(away_pitcher_z_xfip_minus) }}) -> **{{ "%.2f"|format(away_pitcher_xfip_component) }}**
 - SwStr%: {{ "%.1f"|format(away_pitcher_swinging_strike_rate) }}% (z-score: {{ "%.2f"|format(away_pitcher_z_swinging_strike_rate) }}) -> **{{ "%.2f"|format(away_pitcher_swinging_strike_component) }}**
 - Strike%: {{ "%.1f"|format(away_pitcher_strike_rate) }}% (z-score: {{ "%.2f"|format(away_pitcher_z_strike_rate) }}) -> **{{ "%.2f"|format(away_pitcher_strike_component) }}**
-- Velocity: {{ "%.1f"|format(away_pitcher_velocity) }} mph (z-score: {{ "%.2f"|format(away_pitcher_z_velocity) }}) -> **{{ "%.2f"|format(away_pitcher_velocity_component) }}**
+- Velocity: {{ "%.1f"|format(away_pitcher_velocity) ~ " mph" if away_pitcher_velocity is not none else "-- mph" }} (z-score: {{ "%.2f"|format(away_pitcher_z_velocity) }}) -> **{{ "%.2f"|format(away_pitcher_velocity_component) }}**
 - Age: {{ away_pitcher_age }} (z-score: {{ "%.2f"|format(away_pitcher_z_age) }}) -> **{{ "%.2f"|format(away_pitcher_age_component) }}**
 - Pace: {{ "%.1f"|format(away_pitcher_pace) }}s (z-score: {{ "%.2f"|format(away_pitcher_z_pace) }}) -> **{{ "%.2f"|format(away_pitcher_pace_component) }}**
 - Luck: {{ "%.1f"|format(away_pitcher_luck) }} -> **{{ "%.2f"|format(away_pitcher_luck_component) }}**
@@ -143,7 +143,7 @@ Most lines have a calculated number, the z-score of that calculated number, and 
 - xFIP-: {{ "%.1f"|format(home_pitcher_xfip_minus) }} (z-score: {{ "%.2f"|format(home_pitcher_z_xfip_minus) }}) -> **{{ "%.2f"|format(home_pitcher_xfip_component) }}**
 - SwStr%: {{ "%.1f"|format(home_pitcher_swinging_strike_rate) }}% (z-score: {{ "%.2f"|format(home_pitcher_z_swinging_strike_rate) }}) -> **{{ "%.2f"|format(home_pitcher_swinging_strike_component) }}**
 - Strike%: {{ "%.1f"|format(home_pitcher_strike_rate) }}% (z-score: {{ "%.2f"|format(home_pitcher_z_strike_rate) }}) -> **{{ "%.2f"|format(home_pitcher_strike_component) }}**
-- Velocity: {{ "%.1f"|format(home_pitcher_velocity) }} mph (z-score: {{ "%.2f"|format(home_pitcher_z_velocity) }}) -> **{{ "%.2f"|format(home_pitcher_velocity_component) }}**
+- Velocity: {{ "%.1f"|format(home_pitcher_velocity) ~ " mph" if home_pitcher_velocity is not none else "-- mph" }} (z-score: {{ "%.2f"|format(home_pitcher_z_velocity) }}) -> **{{ "%.2f"|format(home_pitcher_velocity_component) }}**
 - Age: {{ home_pitcher_age }} (z-score: {{ "%.2f"|format(home_pitcher_z_age) }}) -> **{{ "%.2f"|format(home_pitcher_age_component) }}**
 - Pace: {{ "%.1f"|format(home_pitcher_pace) }}s (z-score: {{ "%.2f"|format(home_pitcher_z_pace) }}) -> **{{ "%.2f"|format(home_pitcher_pace_component) }}**
 - Luck: {{ "%.1f"|format(home_pitcher_luck) }} -> **{{ "%.2f"|format(home_pitcher_luck_component) }}**
