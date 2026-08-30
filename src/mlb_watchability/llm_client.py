@@ -89,6 +89,12 @@ class OpenAIParams(LLMParams):
 ANTHROPIC_MODEL_FULL = "claude-sonnet-5"
 ANTHROPIC_MODEL_CHEAP = "claude-haiku-4-5"
 
+# Anthropic models that support adaptive thinking and output_config.effort.
+# Older-generation models like Haiku 4.5 reject both with a 400 ("adaptive
+# thinking is not supported on this model"), so these are only sent to models
+# known to support them.
+ANTHROPIC_MODELS_SUPPORTING_ADAPTIVE_THINKING = frozenset({ANTHROPIC_MODEL_FULL})
+
 # OpenAI Models
 OPENAI_MODEL_FULL = "gpt-5.6-terra"
 OPENAI_MODEL_CHEAP = "gpt-5.6-luna"
@@ -297,7 +303,8 @@ class AnthropicClient(LLMClient):
             # from the same max_tokens budget as the response text - see
             # https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking).
             # `output_config` isn't in the installed SDK's typed signature yet, so it
-            # goes through extra_body.
+            # goes through extra_body. Both are only sent to models in
+            # ANTHROPIC_MODELS_SUPPORTING_ADAPTIVE_THINKING - see that constant.
             # No prompt caching (cache_control) here: investigated 2026-07-18 and
             # skipped for now - the cacheable static prefix is small (~2.4K tokens)
             # relative to per-call input token volume (22K-150K, dominated by
@@ -309,9 +316,16 @@ class AnthropicClient(LLMClient):
                 "model": model_to_use,
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": max_tokens_to_use,  # Anthropic requires max_tokens
-                "thinking": {"type": "adaptive"},
-                "extra_body": {"output_config": {"effort": params.effort}},
             }
+
+            supports_adaptive_thinking = (
+                model_to_use in ANTHROPIC_MODELS_SUPPORTING_ADAPTIVE_THINKING
+            )
+            if supports_adaptive_thinking:
+                request_params["thinking"] = {"type": "adaptive"}
+                request_params["extra_body"] = {
+                    "output_config": {"effort": params.effort}
+                }
 
             # Add web search tool if requested
             if params.include_web_search:
@@ -326,9 +340,10 @@ class AnthropicClient(LLMClient):
             # Log prompt character counts (Anthropic doesn't use system prompts in our implementation)
             _log_prompt_character_counts(0, len(prompt))
 
+            effort_description = params.effort if supports_adaptive_thinking else "n/a"
             logger.info(
                 f"Making Anthropic request with model: {model_to_use}, "
-                f"effort: {params.effort}, max_tokens: {max_tokens_to_use}, "
+                f"effort: {effort_description}, max_tokens: {max_tokens_to_use}, "
                 f"web_search: {params.include_web_search}"
             )
 

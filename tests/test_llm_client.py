@@ -287,12 +287,12 @@ class TestAnthropicClient:
 
             # Verify the API call. `temperature` is deliberately omitted - Sonnet 5
             # and other current-gen models reject non-default sampling params.
+            # `thinking`/`extra_body` are also omitted - Haiku 4.5 doesn't support
+            # adaptive thinking or output_config.effort.
             mock_client.messages.create.assert_called_once_with(
                 model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 max_tokens=150,
-                thinking={"type": "adaptive"},
-                extra_body={"output_config": {"effort": "medium"}},
             )
 
     def test_generate_text_with_custom_model(self) -> None:
@@ -322,8 +322,6 @@ class TestAnthropicClient:
                 model=ANTHROPIC_MODEL_CHEAP,
                 messages=[{"role": "user", "content": "Test prompt"}],
                 max_tokens=3000,
-                thinking={"type": "adaptive"},
-                extra_body={"output_config": {"effort": "medium"}},
             )
 
     def test_generate_text_custom_effort(self) -> None:
@@ -351,6 +349,60 @@ class TestAnthropicClient:
                 thinking={"type": "adaptive"},
                 extra_body={"output_config": {"effort": "high"}},
             )
+
+    def test_generate_text_full_model_sends_adaptive_thinking_and_effort(
+        self,
+    ) -> None:
+        """Sonnet 5 (the 'full' model) supports adaptive thinking and effort, so both are sent."""
+        mock_content_block = Mock()
+        mock_content_block.text = "Generated response"
+
+        mock_response = Mock()
+        mock_response.content = [mock_content_block]
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(
+                api_key="test-key", default_model=ANTHROPIC_MODEL_FULL
+            )
+            params = create_anthropic_params()
+            client.generate_text("Test prompt", params)
+
+            call_kwargs = mock_client.messages.create.call_args.kwargs
+            assert call_kwargs["thinking"] == {"type": "adaptive"}
+            assert call_kwargs["extra_body"] == {"output_config": {"effort": "medium"}}
+
+    def test_generate_text_cheap_model_omits_adaptive_thinking_and_effort(
+        self,
+    ) -> None:
+        """Haiku 4.5 (the 'cheap' model) doesn't support adaptive thinking or
+        output_config.effort - the Anthropic API rejects both with a 400
+        ('adaptive thinking is not supported on this model'), so neither is sent."""
+        mock_content_block = Mock()
+        mock_content_block.text = "Generated response"
+
+        mock_response = Mock()
+        mock_response.content = [mock_content_block]
+        mock_response.usage = None
+
+        with patch("mlb_watchability.llm_client.Anthropic") as mock_anthropic_class:
+            mock_client = Mock()
+            mock_client.messages.create.return_value = mock_response
+            mock_anthropic_class.return_value = mock_client
+
+            client = AnthropicClient(
+                api_key="test-key", default_model=ANTHROPIC_MODEL_CHEAP
+            )
+            params = create_anthropic_params()
+            client.generate_text("Test prompt", params)
+
+            call_kwargs = mock_client.messages.create.call_args.kwargs
+            assert "thinking" not in call_kwargs
+            assert "extra_body" not in call_kwargs
 
     def test_generate_text_empty_response(self) -> None:
         """Test handling of empty response."""
@@ -1331,12 +1383,11 @@ class TestIntegrationScenarios:
                 # Verify the API was called correctly. `temperature` is deliberately
                 # omitted - Sonnet 5 and other current-gen models reject non-default
                 # sampling params with a 400, so it's no longer sent to the API.
+                # `thinking`/`extra_body` are also omitted for Haiku 4.5.
                 expected_call = {
                     "model": ANTHROPIC_MODEL_CHEAP,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 100,
-                    "thinking": {"type": "adaptive"},
-                    "extra_body": {"output_config": {"effort": "medium"}},
                 }
                 mock_client.messages.create.assert_called_once_with(**expected_call)
 
