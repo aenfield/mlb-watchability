@@ -1,0 +1,51 @@
+2026-10-03 07:27:23,476 - INFO - Loaded environment variables from .env file
+2026-10-03 07:27:23,476 - INFO - ENABLE_LLM_RETRIES environment variable: 'true'
+2026-10-03 07:27:23,476 - INFO - SCRAPE_DO_MAX_RETRIES environment variable: '' (default: 15)
+2026-10-03 07:27:23,476 - INFO - SCRAPE_DO_BACKOFF_ENABLED environment variable: '' (default: true)
+2026-10-03 07:27:23,476 - INFO - Generating markdown file for date: 2026-10-03
+2026-10-03 07:27:23,476 - INFO - Game descriptions enabled: source=llm, limit=30, provider=anthropic, model=normal
+2026-10-03 07:27:23,476 - INFO - Using season: 2026
+2026-10-03 07:27:23,476 - INFO - Retrieving game schedule for 2026-10-03
+2026-10-03 07:27:23,565 - INFO - Found 4 games for 2026-10-03
+2026-10-03 07:27:23,565 - INFO - Calculating game scores (pNERD, tNERD, gNERD)
+2026-10-03 07:28:29,091 - INFO - Retrieving summary for San Diego Padres @ Milwaukee Brewers
+2026-10-03 07:28:29,120 - INFO - Initialized Anthropic client with model: claude-sonnet-5
+2026-10-03 07:28:29,120 - INFO - Using system prompt of 0 characters and user prompt of 9680 characters.
+2026-10-03 07:28:29,120 - INFO - Making Anthropic request with model: claude-sonnet-5, effort: medium, max_tokens: 3000, web_search: True
+2026-10-03 07:28:40,036 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-10-03 07:28:40,049 - INFO - Anthropic response stop_reason: end_turn, input_tokens: 23100, output_tokens: 864 (thinking_tokens: 0)
+2026-10-03 07:28:40,049 - INFO - Anthropic response.usage: Usage(cache_creation_input_tokens=0, cache_read_input_tokens=0, input_tokens=23100, output_tokens=864, server_tool_use=ServerToolUsage(web_search_requests=1, web_fetch_requests=0), service_tier='standard', cache_creation={'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, output_tokens_details={'thinking_tokens': 234}, inference_geo='global')
+2026-10-03 07:28:40,050 - INFO - Generated 1104 characters using claude-sonnet-5, input_tokens: 23100, output_tokens: 864, web_search_requests: 1, web_sources: 10
+2026-10-03 07:28:40,068 - INFO - Retrieving summary for Chicago White Sox @ Cleveland Guardians
+2026-10-03 07:28:40,078 - INFO - Initialized Anthropic client with model: claude-sonnet-5
+2026-10-03 07:28:40,078 - INFO - Using system prompt of 0 characters and user prompt of 9683 characters.
+2026-10-03 07:28:40,078 - INFO - Making Anthropic request with model: claude-sonnet-5, effort: medium, max_tokens: 3000, web_search: True
+2026-10-03 07:28:49,554 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-10-03 07:28:49,558 - INFO - Anthropic response stop_reason: end_turn, input_tokens: 21314, output_tokens: 690 (thinking_tokens: 0)
+2026-10-03 07:28:49,558 - INFO - Anthropic response.usage: Usage(cache_creation_input_tokens=0, cache_read_input_tokens=0, input_tokens=21314, output_tokens=690, server_tool_use=ServerToolUsage(web_search_requests=1, web_fetch_requests=0), service_tier='standard', cache_creation={'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, output_tokens_details={'thinking_tokens': 0}, inference_geo='global')
+2026-10-03 07:28:49,558 - INFO - Generated 1303 characters using claude-sonnet-5, input_tokens: 21314, output_tokens: 690, web_search_requests: 1, web_sources: 9
+2026-10-03 07:28:49,585 - INFO - Retrieving summary for Atlanta Braves @ Los Angeles Dodgers
+2026-10-03 07:28:49,596 - INFO - Initialized Anthropic client with model: claude-sonnet-5
+2026-10-03 07:28:49,596 - INFO - Using system prompt of 0 characters and user prompt of 9354 characters.
+2026-10-03 07:28:49,596 - INFO - Making Anthropic request with model: claude-sonnet-5, effort: medium, max_tokens: 3000, web_search: True
+2026-10-03 07:29:01,645 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-10-03 07:29:01,647 - INFO - Anthropic response stop_reason: end_turn, input_tokens: 22709, output_tokens: 995 (thinking_tokens: 0)
+2026-10-03 07:29:01,647 - INFO - Anthropic response.usage: Usage(cache_creation_input_tokens=0, cache_read_input_tokens=0, input_tokens=22709, output_tokens=995, server_tool_use=ServerToolUsage(web_search_requests=1, web_fetch_requests=0), service_tier='standard', cache_creation={'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, output_tokens_details={'thinking_tokens': 419}, inference_geo='global')
+2026-10-03 07:29:01,647 - INFO - Generated 1084 characters using claude-sonnet-5, input_tokens: 22709, output_tokens: 995, web_search_requests: 1, web_sources: 9
+2026-10-03 07:29:01,674 - INFO - Retrieving summary for New York Yankees @ Tampa Bay Rays
+2026-10-03 07:29:01,685 - INFO - Initialized Anthropic client with model: claude-sonnet-5
+2026-10-03 07:29:01,685 - INFO - Using system prompt of 0 characters and user prompt of 9652 characters.
+2026-10-03 07:29:01,685 - INFO - Making Anthropic request with model: claude-sonnet-5, effort: medium, max_tokens: 3000, web_search: True
+2026-10-03 07:29:10,315 - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-10-03 07:29:10,316 - INFO - Anthropic response stop_reason: end_turn, input_tokens: 22088, output_tokens: 712 (thinking_tokens: 0)
+2026-10-03 07:29:10,317 - INFO - Anthropic response.usage: Usage(cache_creation_input_tokens=0, cache_read_input_tokens=0, input_tokens=22088, output_tokens=712, server_tool_use=ServerToolUsage(web_search_requests=1, web_fetch_requests=0), service_tier='standard', cache_creation={'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, output_tokens_details={'thinking_tokens': 45}, inference_geo='global')
+2026-10-03 07:29:10,317 - INFO - Generated 1207 characters using claude-sonnet-5, input_tokens: 22088, output_tokens: 712, web_search_requests: 1, web_sources: 10
+2026-10-03 07:29:10,318 - INFO - Successfully calculated scores for 4 games
+2026-10-03 07:29:10,318 - INFO - Game 1: San Diego Padres @ Milwaukee Brewers (gNERD: 18.2)
+2026-10-03 07:29:10,318 - INFO - Game 2: Chicago White Sox @ Cleveland Guardians (gNERD: 17.3)
+2026-10-03 07:29:10,318 - INFO - Game 3: Atlanta Braves @ Los Angeles Dodgers (gNERD: 15.4)
+2026-10-03 07:29:10,318 - INFO - Game 4: New York Yankees @ Tampa Bay Rays (gNERD: 13.5)
+2026-10-03 07:29:10,318 - INFO - Generating markdown content
+2026-10-03 07:29:10,319 - INFO - Writing to file: mlb_what_to_watch_2026_10_03.md
+2026-10-03 07:29:10,320 - INFO - Successfully wrote markdown file: /Users/andrewenfield/work/github/mlb-watchability/mlb_what_to_watch_2026_10_03.md
+Markdown file generated: mlb_what_to_watch_2026_10_03.md

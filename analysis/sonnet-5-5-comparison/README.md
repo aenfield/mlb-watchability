@@ -46,3 +46,26 @@ After run 3, revert the code changes until a winner is chosen. When making the r
 ## Later, as a separate change: `web_search_20260209`
 
 The newer web search version adds dynamic filtering (the model runs code to filter results before they enter its context; no beta header, no separate `code_execution` tool). Input tokens per call (22K-150K) are dominated by search results, so this could cut cost. Before switching, check: new code-execution result blocks don't leak text into descriptions, `web_sources` extraction still works, `pause_turn` stop reasons (not handled today), consider a `max_uses` cap, and confirm current pricing.
+
+## Results (2026-10-03 run)
+
+Ran all three configs locally for the 4 postseason games on 2026-10-03 (network/API keys worked fine locally, unlike the cloud session). Outputs are the `.md`/`-run.txt` files in this directory. Code was fully reverted after - no switch has been made.
+
+- **Metrics:** all 12 calls (4 games x 3 configs) returned `stop_reason: end_turn`, 1 web search each, no `max_tokens` truncation. Average description length was similar across configs: Sonnet 5 medium 1175 chars, Sonnet 5.5 low 1056 chars, Sonnet 5.5 medium 1148 chars.
+- **Thinking tokens:** Sonnet 5 used some real thinking (0-419 tokens per call, varied). Sonnet 5.5 used **zero** thinking tokens in all 4 games at both low and medium effort. So the "notes drop into thinking blocks" risk noted above doesn't appear to be what's happening here - nothing was silently dropped, since there was no thinking at all.
+- **Quality - the real difference:** Sonnet 5's descriptions are one flowing, connected paragraph per game, weaving stats and storylines together. Sonnet 5.5's descriptions consistently split into a short bolded lead sentence followed by several short, choppy, disconnected declarative sentences/paragraphs (e.g. "Milwaukee went 103-59 and 55-26 at home." / "Robbie Ray's 0.63 pNERD is the weak spot."). This happened at both low and medium effort, across all 4 games - it reads like a fact sheet rather than a written piece, and lost most of the wit. Net impression: not ready to switch as-is.
+
+Best guess at cause: not a bug or dropped content (thinking tokens were 0), but a genuine style difference - Sonnet 5.5 is choosing to write terser, more declarative sentences at a given nominal effort level (consistent with Anthropic's note that effort levels were recalibrated between 5 and 5.5). Newer model generations often optimize for benchmarks like coding/agentic tool-use/instruction-following rather than narrative prose quality, so "newer and usually better" doesn't necessarily transfer to this kind of writing task.
+
+## Prompt tweak ideas (not yet applied)
+
+The current prompt (`src/mlb_watchability/prompt-game-summary-template.md`) bans bullets/emojis/sections and says "keep it to sentences" and "witty and wry," but never explicitly requires one connected paragraph - Sonnet 5 happened to interpret the existing instructions that way, Sonnet 5.5 is satisfying them literally with short, isolated sentences instead. "Witty and wry" is also vague enough that each model fills it in differently - goal is concise and well-written, not so wry it reads funny, like something from a site that prioritizes good writing.
+
+Two ideas to try, in order of expected impact, before deciding whether to switch models:
+
+1. Add an explicit single-paragraph/connective-prose instruction, e.g.: "Write the summary as one connected paragraph, not a string of short, standalone facts - link ideas with transitions ('but', 'which is why', 'meanwhile') so stats and storylines read as a narrative, not a list."
+2. Add one concrete example of the desired tone, pulled from a Sonnet 5 output here that reads well (a short excerpt, not a full game). A few-shot anchor is probably the most reliable lever for style - it narrows the ambiguity in "witty and wry" that's letting each model drift to its own default, without having to enumerate every forbidden adjective.
+
+Holding off on more adjective-banning (the prompt already has a decent list) - that's diminishing returns and risks blander writing, the opposite of the goal.
+
+Next step, if these are worth trying: draft the template edit (including picking a good excerpt from one of the 2026-10-03 Sonnet 5 outputs as the example), then re-run the Sonnet 5.5 comparison to see if it closes the gap.
